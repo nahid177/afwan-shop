@@ -7,8 +7,8 @@
 
 :root {
   --background-light: #ffffff; /* Light mode background */
-  --background-dark: #121823; /* Equivalent to bg-gray-900 */
-  --foreground-light: #121823;
+  --background-dark: #111827; /* Equivalent to bg-gray-900 */
+  --foreground-light: #111827;
   --foreground-dark: #ffffff;
 }
 
