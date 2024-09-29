@@ -1,27 +1,41 @@
+/* globals.css */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background-light: #ffffff; /* Light mode background */
+  --background-dark: #121823; /* Equivalent to bg-gray-900 */
+  --foreground-light: #121823;
+  --foreground-dark: #ffffff;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+[data-theme="dark"] {
+  --background: var(--background-dark);
+  --foreground: var(--foreground-dark);
+}
+
+[data-theme="light"] {
+  --background: var(--background-light);
+  --foreground: var(--foreground-light);
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--background); /* Background changes based on the theme */
+  color: var(--foreground); /* Foreground color changes based on the theme */
+}
+.btn-gradient-blue {
+  background: linear-gradient(90deg, #0072ff, #00c6ff);
+  color: white;
+  border: none;
+  font-weight: bold;
+  box-shadow: 0px 4px 15px rgba(0, 114, 255, 0.4);
+  transition: transform 0.3s ease;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
+.btn-gradient-blue:hover {
+  transform: scale(1.05);
+  box-shadow: 0px 6px 20px rgba(0, 114, 255, 0.6);
 }
