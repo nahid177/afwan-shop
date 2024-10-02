@@ -3,6 +3,7 @@ import React, { useEffect, useState, useRef } from "react";
 import Image from 'next/image';
 import { CiBookmarkCheck } from "react-icons/ci";
 import { FiShoppingCart, FiSearch, FiMenu, FiSun, FiMoon, FiBell, FiTrash2, FiHome } from "react-icons/fi";
+import Link from "next/link";
 
 // Mock data for cart items
 const initialCartItems = [
@@ -114,11 +115,7 @@ const TopNavbar: React.FC = () => {
 
         {/* Right Section */}
         <div className="flex items-center space-x-4">
-          {/* Search Icon */}
-          <button className="btn btn-ghost" onClick={toggleSearch}>
-            <FiSearch className="h-6 w-6" />
-          </button>
-
+     
           {/* Theme Toggle */}
           <button className="btn btn-ghost" onClick={toggleTheme}>
             {theme === "light" ? (
@@ -163,9 +160,9 @@ const TopNavbar: React.FC = () => {
               className={`menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
                 }`}
             >
-              <li><a href="#">Homepage</a></li>
-              <li><a href="#">Portfolio</a></li>
-              <li><a href="#">About</a></li>
+              <li><Link href="#">Homepage</Link></li>
+              <li><Link href="#">Portfolio</Link></li>
+              <li><Link href="#">About</Link></li>
             </ul>
           </div>
         </div>
