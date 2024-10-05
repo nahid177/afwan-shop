@@ -1,23 +1,23 @@
-"use client";
+"use client"; // Required for client-side Next.js components
 import React, { useEffect, useState, useRef } from "react";
-import Image from 'next/image';
+import Image from "next/image";
 import { CiBookmarkCheck } from "react-icons/ci";
 import { FiShoppingCart, FiSearch, FiMenu, FiSun, FiMoon, FiBell, FiTrash2, FiHome } from "react-icons/fi";
 import Link from "next/link";
+import { useTheme } from "@/mode/ThemeContext"; // Using ThemeProvider for global theme management
 
-// Mock data for cart items
+// Mock data for cart and wishlist items
 const initialCartItems = [
   { id: 1, name: "Wireless Headphones", price: 120, quantity: 1, imageUrl: "/images/item1.jpg" },
   { id: 2, name: "Smart Watch", price: 220, quantity: 2, imageUrl: "/images/item2.jpg" },
 ];
 
-// Mock data for wishlist items
 const initialWishlistItems = [
-  { id: 1, name: "Designer Edition Calligraphy T Shirt", price: 450, originalPrice: 550, imageUrl: "/images/tshirt.jpg" },
+  { id: 1, name: "Designer Edition Calligraphy T-Shirt", price: 450, originalPrice: 550, imageUrl: "/images/tshirt.jpg" },
 ];
 
 const TopNavbar: React.FC = () => {
-  const [theme, setTheme] = useState<string>("light");
+  const { theme, toggleTheme } = useTheme(); // Using the custom hook for theme management
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
@@ -30,20 +30,7 @@ const TopNavbar: React.FC = () => {
   const wishlistRef = useRef<HTMLDivElement | null>(null);
   const searchBarRef = useRef<HTMLDivElement | null>(null);
 
-  // Initialize theme from localStorage
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme") || "light";
-    setTheme(savedTheme);
-    document.documentElement.setAttribute("data-theme", savedTheme);
-  }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    document.documentElement.setAttribute("data-theme", newTheme);
-    localStorage.setItem("theme", newTheme);
-  };
-
+  // Search toggle functionality
   const toggleSearch = () => {
     setSearchOpen(!searchOpen);
     if (!searchOpen && searchInputRef.current) {
@@ -53,16 +40,19 @@ const TopNavbar: React.FC = () => {
     setWishlistOpen(false);
   };
 
+  // Handle search input
   const handleSearch = (query: string) => {
     setSearchQuery(query);
   };
 
+  // Cart drawer toggle
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
     setWishlistOpen(false);
     setSearchOpen(false);
   };
 
+  // Wishlist drawer toggle
   const toggleWishlist = () => {
     setWishlistOpen(!wishlistOpen);
     setDrawerOpen(false);
@@ -95,10 +85,11 @@ const TopNavbar: React.FC = () => {
 
   // Remove item from wishlist or cart
   const removeFromWishlist = (id: number) => {
-    setWishlistItems(wishlistItems.filter(item => item.id !== id));
+    setWishlistItems(wishlistItems.filter((item) => item.id !== id));
   };
+
   const removeFromCart = (id: number) => {
-    setCartItems(cartItems.filter(item => item.id !== id));
+    setCartItems(cartItems.filter((item) => item.id !== id));
   };
 
   return (
@@ -115,39 +106,33 @@ const TopNavbar: React.FC = () => {
 
         {/* Right Section */}
         <div className="flex items-center space-x-4">
-     
           {/* Theme Toggle */}
           <button className="btn btn-ghost" onClick={toggleTheme}>
-            {theme === "light" ? (
-              <FiSun className="h-6 w-6 text-yellow-500" />
-            ) : (
-              <FiMoon className="h-6 w-6 text-white" />
-            )}
+            {theme === "light" ? <FiSun className="h-6 w-6 text-yellow-500" /> : <FiMoon className="h-6 w-6 text-white" />}
           </button>
         </div>
       </div>
 
       {/* Search Bar Drawer for Mobile View */}
-      <div
-        className={`fixed top-0 left-0 w-full h-[70px] shadow-lg transform md:hidden ${searchOpen ? "translate-y-0" : "-translate-y-full"
-          } transition-transform duration-300 ease-in-out z-50 ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"}`}
-      >
-        <div className="flex items-center justify-between p-4">
-          <input
-            ref={searchInputRef}
-            type="text"
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Search..."
-            className="input input-bordered w-full rounded-md"
-          />
-          <button onClick={toggleSearch} className="ml-2 text-lg">
-            Close
-          </button>
+      {searchOpen && (
+        <div className={`fixed top-0 left-0 w-full h-[70px] shadow-lg transform md:hidden ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"} z-50`}>
+          <div className="flex items-center justify-between p-4">
+            <input
+              ref={searchInputRef}
+              type="text"
+              value={searchQuery}
+              onChange={(e) => handleSearch(e.target.value)}
+              placeholder="Search..."
+              className="input input-bordered w-full rounded-md"
+            />
+            <button onClick={toggleSearch} className="ml-2 text-lg">
+              Close
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Navbar for desktop */}
+      {/* Desktop Navbar */}
       <div className={`navbar px-4 md:px-10 lg:px-20 ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"} py-4 hidden md:flex`}>
         {/* Navbar Start */}
         <div className="navbar-start">
@@ -155,14 +140,16 @@ const TopNavbar: React.FC = () => {
             <button tabIndex={0} className="btn btn-ghost btn-circle">
               <FiMenu className={`h-6 w-6 ${theme === "light" ? "text-gray-800" : "text-gray-300"}`} />
             </button>
-            <ul
-              tabIndex={0}
-              className={`menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
-                }`}
-            >
-              <li><Link href="#">Homepage</Link></li>
-              <li><Link href="#">Portfolio</Link></li>
-              <li><Link href="#">About</Link></li>
+            <ul tabIndex={0} className={`menu menu-sm dropdown-content rounded-box z-[1] mt-3 w-52 p-2 shadow ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"}`}>
+              <li>
+                <Link href="#">Homepage</Link>
+              </li>
+              <li>
+                <Link href="#">Portfolio</Link>
+              </li>
+              <li>
+                <Link href="#">About</Link>
+              </li>
             </ul>
           </div>
         </div>
@@ -187,8 +174,7 @@ const TopNavbar: React.FC = () => {
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
                   placeholder="Search..."
-                  className={`input input-bordered rounded-full w-full md:w-64 ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
-                    }`}
+                  className={`input input-bordered rounded-full w-full md:w-64 ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"}`}
                 />
               </div>
             )}
@@ -211,26 +197,14 @@ const TopNavbar: React.FC = () => {
           <button className="btn btn-ghost btn-circle" onClick={toggleDrawer}>
             <div className="indicator">
               <FiShoppingCart className={`h-5 w-5 md:h-6 md:w-6 ${theme === "light" ? "text-gray-800" : "text-gray-300"}`} style={{ strokeWidth: 2.5 }} />
-              {totalQuantity > 0 && (
-                <span className="badge badge-xs badge-primary indicator-item">{totalQuantity}</span>
-              )}
+              {totalQuantity > 0 && <span className="badge badge-xs badge-primary indicator-item">{totalQuantity}</span>}
             </div>
           </button>
 
           {/* Theme Toggle */}
-          <label className="swap swap-rotate">
-            <input
-              type="checkbox"
-              checked={theme === "dark"}
-              onChange={toggleTheme}
-              className="hidden"
-            />
-            {theme === "light" ? (
-              <FiSun className="h-6 w-6 text-yellow-500" />
-            ) : (
-              <FiMoon className="h-6 w-6 text-white" />
-            )}
-          </label>
+          <button className="btn btn-ghost" onClick={toggleTheme}>
+            {theme === "light" ? <FiSun className="h-6 w-6 text-yellow-500" /> : <FiMoon className="h-6 w-6 text-white" />}
+          </button>
         </div>
       </div>
 
@@ -250,9 +224,7 @@ const TopNavbar: React.FC = () => {
         <button className="btn btn-ghost" onClick={toggleDrawer}>
           <div className="indicator">
             <FiShoppingCart className="h-6 w-6" />
-            {totalQuantity > 0 && (
-              <span className="badge badge-xs badge-primary indicator-item">{totalQuantity}</span>
-            )}
+            {totalQuantity > 0 && <span className="badge badge-xs badge-primary indicator-item">{totalQuantity}</span>}
           </div>
         </button>
 
@@ -263,44 +235,15 @@ const TopNavbar: React.FC = () => {
 
         {/* Theme Toggle */}
         <button className="btn btn-ghost" onClick={toggleTheme}>
-          {theme === "light" ? (
-            <FiSun className="h-6 w-6 text-yellow-500" />
-          ) : (
-            <FiMoon className="h-6 w-6 text-white" />
-          )}
+          {theme === "light" ? <FiSun className="h-6 w-6 text-yellow-500" /> : <FiMoon className="h-6 w-6 text-white" />}
         </button>
       </div>
-
-      {/* Search Drawer for Mobile View */}
-      <div
-        className={`fixed top-0 left-0 w-full h-[100px] shadow-lg transform md:hidden ${searchOpen ? "translate-y-0" : "-translate-y-full"
-          } transition-transform duration-300 ease-in-out z-50 ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
-          }`}
-      >
-        <div className="flex items-center justify-between p-4">
-          <input
-            ref={searchInputRef}
-            type="text"
-            value={searchQuery}
-            onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Search..."
-            className={`input input-bordered w-full ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"}`}
-          />
-          <button onClick={toggleSearch} className="ml-2 text-lg">
-            Close
-          </button>
-        </div>
-      </div>
-
 
       {/* Cart Drawer */}
       <div
         ref={drawerRef}
-        className={`fixed top-0 right-0 h-full w-[90%] sm:w-[50%] md:w-[40%] lg:w-[30%] shadow-2xl rounded-l-lg transform ${drawerOpen ? "translate-x-0" : "translate-x-full"
-          } transition-transform duration-300 ease-in-out z-50 flex flex-col ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
-          }`}
+        className={`fixed top-0 right-0 h-full w-[90%] sm:w-[50%] md:w-[40%] lg:w-[30%] shadow-2xl rounded-l-lg transform ${drawerOpen ? "translate-x-0" : "translate-x-full"} transition-transform duration-300 ease-in-out z-50 flex flex-col ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"}`}
       >
-        {/* Drawer Header */}
         <div className="flex justify-between items-center border-b dark:border-gray-700">
           <h2 className="text-lg mx-auto font-bold">Shopping Cart</h2>
           <button onClick={toggleDrawer} className="ml-auto text-lg">
@@ -308,7 +251,6 @@ const TopNavbar: React.FC = () => {
           </button>
         </div>
 
-        {/* Drawer Body */}
         <div className="flex-1 p-4 overflow-auto">
           {cartItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-gray-600 dark:text-gray-400">
@@ -316,15 +258,9 @@ const TopNavbar: React.FC = () => {
             </div>
           ) : (
             <ul className="space-y-4">
-              {cartItems.map(item => (
+              {cartItems.map((item) => (
                 <li key={item.id} className="flex justify-between items-center border-b pb-4">
-                  <Image
-                    src={item.imageUrl}
-                    alt={item.name}
-                    width={50}
-                    height={50}
-                    className="rounded-lg object-cover"
-                  />
+                  <Image src={item.imageUrl} alt={item.name} width={50} height={50} className="rounded-lg object-cover" />
                   <div className="flex-1 ml-4">
                     <div className="text-md">{item.name}</div>
                     <div className="text-xs text-gray-500 dark:text-gray-400">x{item.quantity}</div>
@@ -339,7 +275,6 @@ const TopNavbar: React.FC = () => {
           )}
         </div>
 
-        {/* Drawer Footer */}
         {cartItems.length > 0 && (
           <div className="p-5 border-t dark:border-gray-700">
             <div className="flex justify-between mb-4">
@@ -357,11 +292,8 @@ const TopNavbar: React.FC = () => {
       {/* Wishlist Drawer */}
       <div
         ref={wishlistRef}
-        className={`fixed top-0 right-0 h-full w-[90%] sm:w-[50%] md:w-[40%] lg:w-[30%] shadow-2xl rounded-l-lg transform ${wishlistOpen ? "translate-x-0" : "translate-x-full"
-          } transition-transform duration-300 ease-in-out z-50 flex flex-col ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
-          }`}
+        className={`fixed top-0 right-0 h-full w-[90%] sm:w-[50%] md:w-[40%] lg:w-[30%] shadow-2xl rounded-l-lg transform ${wishlistOpen ? "translate-x-0" : "translate-x-full"} transition-transform duration-300 ease-in-out z-50 flex flex-col ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"}`}
       >
-        {/* Drawer Header */}
         <div className="flex justify-between items-center p-4">
           <h2 className="text-lg font-bold mx-auto">Wish List Items</h2>
           <button onClick={toggleWishlist} className="ml-auto text-lg">
@@ -369,7 +301,6 @@ const TopNavbar: React.FC = () => {
           </button>
         </div>
 
-        {/* Drawer Body */}
         <div className="flex-1 p-4 overflow-auto">
           {wishlistItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-gray-600 dark:text-gray-400">
@@ -377,15 +308,9 @@ const TopNavbar: React.FC = () => {
             </div>
           ) : (
             <ul className="space-y-4">
-              {wishlistItems.map(item => (
+              {wishlistItems.map((item) => (
                 <li key={item.id} className="flex justify-between items-center border-b pb-4">
-                  <Image
-                    src={item.imageUrl}
-                    alt={item.name}
-                    width={50}
-                    height={50}
-                    className="rounded-lg object-cover"
-                  />
+                  <Image src={item.imageUrl} alt={item.name} width={50} height={50} className="rounded-lg object-cover" />
                   <div className="flex-1 ml-4">
                     <div className="text-md">{item.name}</div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">

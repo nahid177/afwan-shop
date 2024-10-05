@@ -5,23 +5,6 @@
 @tailwind utilities;
 
 
-:root {
-  --background-light: #ffffff; /* Light mode background */
-  --background-dark: #111827; /* Equivalent to bg-gray-900 */
-  --foreground-light: #111827;
-  --foreground-dark: #ffffff;
-}
-
-[data-theme="dark"] {
-  --background: var(--background-dark);
-  --foreground: var(--foreground-dark);
-}
-
-[data-theme="light"] {
-  --background: var(--background-light);
-  --foreground: var(--foreground-light);
-}
-
 body {
   background-color: var(--background); /* Background changes based on the theme */
   color: var(--foreground); /* Foreground color changes based on the theme */
