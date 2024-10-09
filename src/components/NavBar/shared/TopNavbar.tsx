@@ -1,23 +1,24 @@
-"use client"; // Required for client-side Next.js components
+"use client";
 import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { CiBookmarkCheck } from "react-icons/ci";
 import { FiShoppingCart, FiSearch, FiMenu, FiSun, FiMoon, FiBell, FiTrash2, FiHome } from "react-icons/fi";
 import Link from "next/link";
-import { useTheme } from "@/mode/ThemeContext"; // Using ThemeProvider for global theme management
+import { useTheme } from "@/mode/ThemeContext";
+import { usePathname } from "next/navigation";
 
-// Mock data for cart and wishlist items
 const initialCartItems = [
-  { id: 1, name: "Wireless Headphones", price: 120, quantity: 1, imageUrl: "/images/item1.jpg" },
-  { id: 2, name: "Smart Watch", price: 220, quantity: 2, imageUrl: "/images/item2.jpg" },
+  { id: 1, name: "Wireless Headphones", price: 120, quantity: 1, imageUrl: "" },
+  { id: 2, name: "Smart Watch", price: 220, quantity: 2, imageUrl: "" },
 ];
 
 const initialWishlistItems = [
-  { id: 1, name: "Designer Edition Calligraphy T-Shirt", price: 450, originalPrice: 550, imageUrl: "/images/tshirt.jpg" },
+  { id: 1, name: "Designer Edition Calligraphy T-Shirt", price: 450, originalPrice: 550, imageUrl: "" },
 ];
 
 const TopNavbar: React.FC = () => {
-  const { theme, toggleTheme } = useTheme(); // Using the custom hook for theme management
+  const { theme, toggleTheme } = useTheme();
+  const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
   const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
@@ -91,6 +92,11 @@ const TopNavbar: React.FC = () => {
   const removeFromCart = (id: number) => {
     setCartItems(cartItems.filter((item) => item.id !== id));
   };
+
+  const isAdminPage = pathname.startsWith("/admin");
+
+  // Render nothing if it's an admin page
+  if (isAdminPage) return null;
 
   return (
     <>

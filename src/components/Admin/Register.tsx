@@ -2,12 +2,16 @@
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { useTheme } from "@/mode/ThemeContext"; // Assuming you have a ThemeContext for managing dark/light mode
+import { useRouter } from 'next/navigation'; // Import useRouter for navigation
+import Link from 'next/link'; // Import Link for client-side navigation
 
 const Register = () => {
   const { theme } = useTheme(); // Get the current theme (light or dark)
+  const router = useRouter(); // Initialize the router for navigation
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [deviceId, setDeviceId] = useState('');
+  const [loading, setLoading] = useState(false); // Loading state
   const [toast, setToast] = useState({ type: '', message: '' });
 
   // On component mount, either fetch the existing deviceId from localStorage or create a new one
@@ -26,6 +30,8 @@ const Register = () => {
 
   const handleSubmit = async (e: { preventDefault: () => void; }) => {
     e.preventDefault();
+
+    setLoading(true); // Set loading state when form is submitted
 
     // Prepare the registration data
     const data = {
@@ -49,6 +55,13 @@ const Register = () => {
       if (res.status === 201) {
         // Successful registration - show success toast
         setToast({ type: 'success', message: 'Registration successful!' });
+        setUsername(''); // Clear the username
+        setPassword(''); // Clear the password
+        
+        // Redirect to the login page after a short delay (optional)
+        setTimeout(() => {
+          router.push('/login'); // Redirect to the login page
+        }, 2000); // Redirect after 2 seconds (optional)
       } else {
         // Handle errors - show error toast
         setToast({ type: 'error', message: result.message });
@@ -56,6 +69,8 @@ const Register = () => {
     } catch (error) {
       console.error('Error during registration:', error);
       setToast({ type: 'error', message: 'An error occurred during registration.' });
+    } finally {
+      setLoading(false); // Reset loading state after submission
     }
   };
 
@@ -105,8 +120,8 @@ const Register = () => {
 
             {/* Submit Button */}
             <div className="form-control mt-6">
-              <button type="submit" className="btn btn-primary w-full">
-                Register
+              <button type="submit" className="btn btn-primary w-full" disabled={loading}>
+                {loading ? "Registering..." : "Register"}
               </button>
             </div>
           </form>
@@ -137,6 +152,16 @@ const Register = () => {
               )}
             </div>
           )}
+
+          {/* Link to Admin (Login) Page */}
+          <div className="text-center mt-4">
+            <p className="text-sm">
+              Already have an admin account?{" "}
+              <Link href="/login" className="text-blue-500 hover:underline">
+                Go to Login
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </div>

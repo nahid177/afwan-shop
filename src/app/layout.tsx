@@ -1,12 +1,9 @@
-
 import React from "react";
-import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import TopNavbar from "@/components/NavBar/shared/TopNavbar";
-import { ThemeProvider } from "@/mode/ThemeContext"; // Import ThemeProvider for dark/light mode
+import { ThemeProvider } from "@/mode/ThemeContext";
 
-// Importing custom fonts
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
@@ -19,23 +16,17 @@ const geistMono = localFont({
   weight: "100 900",
 });
 
-// Metadata for SEO purposes
-export const metadata: Metadata = {
+export const metadata = {
   title: "Afwan Shop",
   description: "Welcome to my shop",
 };
 
-// Main RootLayout component
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <ThemeProvider> {/* Wrapping the app with ThemeProvider for dark/light mode */}
+      <ThemeProvider>
         <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-          <TopNavbar /> {/* NavBar placed outside children to appear on every page */}
+          <TopNavbar />
           <main>{children}</main>
         </body>
       </ThemeProvider>
