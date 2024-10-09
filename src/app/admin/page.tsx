@@ -1,8 +1,8 @@
 "use client";
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import AdminNavbar from "@/components/Admin/AdminNavbar";
 import Cookies from "js-cookie";
+import AdminLayout from "./AdminLayout";
 
 const AdminPage: React.FC = () => {
   const router = useRouter();
@@ -20,10 +20,9 @@ const AdminPage: React.FC = () => {
   }, [router]);
 
   return (
-    <div>
-      <AdminNavbar />
-      <div>Admin Page Content</div>
-    </div>
+    <AdminLayout>
+      <div>Admin Page Content goes here.</div>
+    </AdminLayout>
   );
 };
 
