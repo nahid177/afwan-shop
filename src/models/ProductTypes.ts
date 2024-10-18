@@ -16,7 +16,7 @@ interface IProduct extends Document {
   quantity: number;
   originalPrice: number;
   offerPrice: number;
-  title: string[];
+  title: string[]; // Array of strings
   subtitle: ISubtitle[];
   description: string;
   images: string[];
@@ -48,7 +48,7 @@ const ProductSchema = new Schema<IProduct>(
     quantity: { type: Number },
     originalPrice: { type: Number },
     offerPrice: { type: Number },
-    title: [{ type: String }],
+    title: [{ type: String }], // This field is correctly defined
     subtitle: [SubtitleSchema],
     description: { type: String },
     images: [{ type: String }],

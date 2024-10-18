@@ -21,7 +21,7 @@ interface IProduct {
   quantity: number;
   originalPrice: number;
   offerPrice: number;
-  title: string[];
+  title: string[]; // Array of strings
   subtitle: ISubtitle[];
   description: string;
   images: string[]; // URLs of uploaded images
@@ -47,7 +47,7 @@ const CreateProductType: React.FC = () => {
           quantity: 0,
           originalPrice: 0,
           offerPrice: 0,
-          title: [""],
+          title: [""], // Initialize with an empty string in the array
           subtitle: [{ title: "", titledetail: "" }],
           description: "",
           images: [],
@@ -101,6 +101,64 @@ const CreateProductType: React.FC = () => {
       [field]: value,
     };
     newCategories[catIndex].product[prodIndex] = updatedProduct;
+    setProductCategories(newCategories);
+  };
+
+  // Handle change for subtitles in a product
+  const handleSubtitleChange = (
+    catIndex: number,
+    prodIndex: number,
+    subIndex: number,
+    field: keyof ISubtitle,
+    value: string
+  ) => {
+    const newCategories = [...productCategories];
+    const product = newCategories[catIndex].product[prodIndex];
+    const updatedSubtitle = { ...product.subtitle[subIndex], [field]: value };
+    product.subtitle[subIndex] = updatedSubtitle;
+    setProductCategories(newCategories);
+  };
+
+  // Handle change for titles in a product
+  const handleTitleChange = (
+    catIndex: number,
+    prodIndex: number,
+    titleIndex: number,
+    value: string
+  ) => {
+    const newCategories = [...productCategories];
+    newCategories[catIndex].product[prodIndex].title[titleIndex] = value;
+    setProductCategories(newCategories);
+  };
+
+  // Add a new title to a product
+  const addTitle = (catIndex: number, prodIndex: number) => {
+    const newCategories = [...productCategories];
+    newCategories[catIndex].product[prodIndex].title.push("");
+    setProductCategories(newCategories);
+  };
+
+  // Remove a title from a product
+  const removeTitle = (catIndex: number, prodIndex: number, titleIndex: number) => {
+    const newCategories = [...productCategories];
+    newCategories[catIndex].product[prodIndex].title.splice(titleIndex, 1);
+    setProductCategories(newCategories);
+  };
+
+  // Add a new subtitle to a product
+  const addSubtitle = (catIndex: number, prodIndex: number) => {
+    const newCategories = [...productCategories];
+    newCategories[catIndex].product[prodIndex].subtitle.push({
+      title: "",
+      titledetail: "",
+    });
+    setProductCategories(newCategories);
+  };
+
+  // Remove a subtitle from a product
+  const removeSubtitle = (catIndex: number, prodIndex: number, subIndex: number) => {
+    const newCategories = [...productCategories];
+    newCategories[catIndex].product[prodIndex].subtitle.splice(subIndex, 1);
     setProductCategories(newCategories);
   };
 
@@ -358,6 +416,47 @@ const CreateProductType: React.FC = () => {
                   />
                 </div>
 
+                {/* Product Titles */}
+                <div className="form-group">
+                  <label className="block text-lg font-medium">Titles</label>
+                  {product.title.map((titleItem, titleIndex) => (
+                    <div key={titleIndex} className="flex items-center mb-2">
+                      <input
+                        type="text"
+                        className="input input-bordered w-full"
+                        placeholder="Enter title"
+                        value={titleItem}
+                        onChange={(e) =>
+                          handleTitleChange(
+                            catIndex,
+                            prodIndex,
+                            titleIndex,
+                            e.target.value
+                          )
+                        }
+                      />
+                      <button
+                        type="button"
+                        className="ml-2 text-red-500"
+                        onClick={() =>
+                          removeTitle(catIndex, prodIndex, titleIndex)
+                        }
+                        title="Remove Title"
+                      >
+                        <FiTrash2 size={20} />
+                      </button>
+                    </div>
+                  ))}
+                  {/* Add Title Button */}
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-secondary mt-2"
+                    onClick={() => addTitle(catIndex, prodIndex)}
+                  >
+                    Add Title
+                  </button>
+                </div>
+
                 {/* Product Codes */}
                 <div className="form-group">
                   <label className="block text-lg font-medium">
@@ -545,6 +644,70 @@ const CreateProductType: React.FC = () => {
                       )
                     }
                   ></textarea>
+                </div>
+
+                {/* Subtitles */}
+                <div className="form-group">
+                  <label className="block text-lg font-medium">Subtitles</label>
+                  {product.subtitle.map((sub, subIndex) => (
+                    <div key={subIndex} className="border p-2 rounded mb-2 relative">
+                      {/* Remove Subtitle Button */}
+                      <button
+                        type="button"
+                        className="absolute top-1 right-1 text-red-500"
+                        onClick={() =>
+                          removeSubtitle(catIndex, prodIndex, subIndex)
+                        }
+                        title="Remove Subtitle"
+                      >
+                        <FiTrash2 size={16} />
+                      </button>
+                      <div className="form-group">
+                        <label className="block text-sm font-medium">Title</label>
+                        <input
+                          type="text"
+                          className="input input-bordered w-full"
+                          value={sub.title}
+                          onChange={(e) =>
+                            handleSubtitleChange(
+                              catIndex,
+                              prodIndex,
+                              subIndex,
+                              "title",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="block text-sm font-medium">
+                          Title Detail
+                        </label>
+                        <input
+                          type="text"
+                          className="input input-bordered w-full"
+                          value={sub.titledetail}
+                          onChange={(e) =>
+                            handleSubtitleChange(
+                              catIndex,
+                              prodIndex,
+                              subIndex,
+                              "titledetail",
+                              e.target.value
+                            )
+                          }
+                        />
+                      </div>
+                    </div>
+                  ))}
+                  {/* Add Subtitle Button */}
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-secondary mt-2"
+                    onClick={() => addSubtitle(catIndex, prodIndex)}
+                  >
+                    Add Subtitle
+                  </button>
                 </div>
 
                 {/* Add more fields as needed */}
