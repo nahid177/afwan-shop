@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
-import { uploadFileToS3 } from '@/utils/uploadToS3'; // Import your S3 helper functions
+import { uploadFileToS3 } from '@/utils/s3'; // Import your S3 helper functions
 import Carousel from '@/models/Carousel'; // Import the Carousel schema
 
 // Connect to the database
