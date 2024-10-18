@@ -1,10 +1,11 @@
 import React from 'react';
+import AdminLayout from '../AdminLayout';
 
 const page = () => {
     return (
-        <div>
-             show all product
-        </div>
+        <AdminLayout>
+            <div>hellow</div>
+        </AdminLayout>
     );
 };
 

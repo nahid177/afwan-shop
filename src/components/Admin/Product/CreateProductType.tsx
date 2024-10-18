@@ -13,12 +13,16 @@ interface ISubtitle {
   titledetail: string;
 }
 
+interface ISizeQuantity {
+  size: string;
+  quantity: number;
+}
+
 interface IProduct {
   product_name: string;
   code: string[];
   color: string[];
-  size: string[];
-  quantity: number;
+  sizes: ISizeQuantity[]; // Array of size and quantity objects
   originalPrice: number;
   offerPrice: number;
   title: string[]; // Array of strings
@@ -43,11 +47,10 @@ const CreateProductType: React.FC = () => {
           product_name: "",
           code: [""],
           color: [""],
-          size: [""],
-          quantity: 0,
+          sizes: [{ size: "", quantity: 0 }], // Initialize with an empty size and quantity
           originalPrice: 0,
           offerPrice: 0,
-          title: [""], // Initialize with an empty string in the array
+          title: [""],
           subtitle: [{ title: "", titledetail: "" }],
           description: "",
           images: [],
@@ -101,6 +104,37 @@ const CreateProductType: React.FC = () => {
       [field]: value,
     };
     newCategories[catIndex].product[prodIndex] = updatedProduct;
+    setProductCategories(newCategories);
+  };
+
+  // Handle change for sizes in a product
+  const handleSizeChange = (
+    catIndex: number,
+    prodIndex: number,
+    sizeIndex: number,
+    field: keyof ISizeQuantity,
+    value: string | number
+  ) => {
+    const newCategories = [...productCategories];
+    const sizes = newCategories[catIndex].product[prodIndex].sizes;
+    sizes[sizeIndex] = {
+      ...sizes[sizeIndex],
+      [field]: value,
+    };
+    setProductCategories(newCategories);
+  };
+
+  // Add a new size to a product
+  const addSize = (catIndex: number, prodIndex: number) => {
+    const newCategories = [...productCategories];
+    newCategories[catIndex].product[prodIndex].sizes.push({ size: "", quantity: 0 });
+    setProductCategories(newCategories);
+  };
+
+  // Remove a size from a product
+  const removeSize = (catIndex: number, prodIndex: number, sizeIndex: number) => {
+    const newCategories = [...productCategories];
+    newCategories[catIndex].product[prodIndex].sizes.splice(sizeIndex, 1);
     setProductCategories(newCategories);
   };
 
@@ -173,8 +207,7 @@ const CreateProductType: React.FC = () => {
             product_name: "",
             code: [""],
             color: [""],
-            size: [""],
-            quantity: 0,
+            sizes: [{ size: "", quantity: 0 }],
             originalPrice: 0,
             offerPrice: 0,
             title: [""],
@@ -202,8 +235,7 @@ const CreateProductType: React.FC = () => {
       product_name: "",
       code: [""],
       color: [""],
-      size: [""],
-      quantity: 0,
+      sizes: [{ size: "", quantity: 0 }],
       originalPrice: 0,
       offerPrice: 0,
       title: [""],
@@ -550,41 +582,63 @@ const CreateProductType: React.FC = () => {
                   />
                 </div>
 
-                {/* Sizes */}
+                {/* Sizes with Quantities */}
                 <div className="form-group">
-                  <label className="block text-lg font-medium">Sizes</label>
-                  <input
-                    type="text"
-                    className="input input-bordered w-full"
-                    placeholder="Enter sizes (comma separated)"
-                    value={product.size.join(", ")}
-                    onChange={(e) =>
-                      handleProductChange(
-                        catIndex,
-                        prodIndex,
-                        "size",
-                        e.target.value.split(",").map((size) => size.trim())
-                      )
-                    }
-                  />
-                </div>
-
-                {/* Quantity */}
-                <div className="form-group">
-                  <label className="block text-lg font-medium">Quantity</label>
-                  <input
-                    type="number"
-                    className="input input-bordered w-full"
-                    value={product.quantity}
-                    onChange={(e) =>
-                      handleProductChange(
-                        catIndex,
-                        prodIndex,
-                        "quantity",
-                        Number(e.target.value)
-                      )
-                    }
-                  />
+                  <label className="block text-lg font-medium">
+                    Sizes and Quantities
+                  </label>
+                  {product.sizes.map((sizeItem, sizeIndex) => (
+                    <div key={sizeIndex} className="flex items-center mb-2">
+                      <input
+                        type="text"
+                        className="input input-bordered w-1/2 mr-2"
+                        placeholder="Size"
+                        value={sizeItem.size}
+                        onChange={(e) =>
+                          handleSizeChange(
+                            catIndex,
+                            prodIndex,
+                            sizeIndex,
+                            "size",
+                            e.target.value
+                          )
+                        }
+                      />
+                      <input
+                        type="number"
+                        className="input input-bordered w-1/2 mr-2"
+                        placeholder="Quantity"
+                        value={sizeItem.quantity}
+                        onChange={(e) =>
+                          handleSizeChange(
+                            catIndex,
+                            prodIndex,
+                            sizeIndex,
+                            "quantity",
+                            Number(e.target.value)
+                          )
+                        }
+                      />
+                      <button
+                        type="button"
+                        className="text-red-500"
+                        onClick={() =>
+                          removeSize(catIndex, prodIndex, sizeIndex)
+                        }
+                        title="Remove Size"
+                      >
+                        <FiTrash2 size={20} />
+                      </button>
+                    </div>
+                  ))}
+                  {/* Add Size Button */}
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-secondary mt-2"
+                    onClick={() => addSize(catIndex, prodIndex)}
+                  >
+                    Add Size
+                  </button>
                 </div>
 
                 {/* Original Price */}

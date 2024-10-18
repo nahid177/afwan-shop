@@ -7,16 +7,20 @@ interface ISubtitle {
   titledetail: string;
 }
 
+interface ISizeQuantity {
+  size: string;
+  quantity: number;
+}
+
 interface IProduct extends Document {
   _id: Types.ObjectId;
   product_name: string;
   code: string[];
   color: string[];
-  size: string[];
-  quantity: number;
+  sizes: ISizeQuantity[]; // Updated to reflect the new sizes structure
   originalPrice: number;
   offerPrice: number;
-  title: string[]; // Array of strings
+  title: string[];
   subtitle: ISubtitle[];
   description: string;
   images: string[];
@@ -39,16 +43,20 @@ const SubtitleSchema = new Schema<ISubtitle>({
   titledetail: { type: String },
 });
 
+const SizeQuantitySchema = new Schema<ISizeQuantity>({
+  size: { type: String },
+  quantity: { type: Number },
+});
+
 const ProductSchema = new Schema<IProduct>(
   {
     product_name: { type: String, required: true },
     code: [{ type: String }],
     color: [{ type: String }],
-    size: [{ type: String }],
-    quantity: { type: Number },
+    sizes: [SizeQuantitySchema], // Updated to use the new schema
     originalPrice: { type: Number },
     offerPrice: { type: Number },
-    title: [{ type: String }], // This field is correctly defined
+    title: [{ type: String }],
     subtitle: [SubtitleSchema],
     description: { type: String },
     images: [{ type: String }],
