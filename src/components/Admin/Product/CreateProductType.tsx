@@ -24,7 +24,7 @@ interface IProduct {
   subtitle: ISubtitle[];
   description: string;
   images: string[]; // URLs of uploaded images
-  imageFiles: File[]; // Selected image files to be uploaded
+  imageFiles?: File[]; // Selected image files to be uploaded (now optional)
 }
 
 interface IProductCategory {
@@ -50,7 +50,7 @@ const CreateProductType: React.FC = () => {
           subtitle: [{ title: "", titledetail: "" }],
           description: "",
           images: [],
-          imageFiles: [],
+          imageFiles: [], // This can remain as an empty array in the initial state
         },
       ],
     },
@@ -58,21 +58,23 @@ const CreateProductType: React.FC = () => {
   const router = useRouter();
 
   // Custom deep copy function that preserves File instances
-  const deepCopyWithFiles = (obj: any) => {
+  function deepCopyWithFiles<T>(obj: T): T {
     if (obj instanceof File) {
-      return obj; // Return the File instance as is
+      return obj;
     } else if (Array.isArray(obj)) {
-      return obj.map((item) => deepCopyWithFiles(item));
+      // Since obj is an array, map over it and deep copy each item
+      return obj.map((item) => deepCopyWithFiles(item)) as unknown as T;
     } else if (obj !== null && typeof obj === "object") {
-      const copiedObj: any = {};
+      const copiedObj = {} as { [K in keyof T]: T[K] };
       for (const key in obj) {
-        copiedObj[key] = deepCopyWithFiles(obj[key]);
+        const keyTyped = key as keyof T;
+        copiedObj[keyTyped] = deepCopyWithFiles(obj[keyTyped]);
       }
       return copiedObj;
     } else {
       return obj;
     }
-  };
+  }
 
   // Handle change for product category
   const handleCategoryChange = (
@@ -90,7 +92,7 @@ const CreateProductType: React.FC = () => {
     catIndex: number,
     prodIndex: number,
     field: keyof IProduct,
-    value: IProduct[keyof IProduct] // Updated type
+    value: IProduct[keyof IProduct]
   ) => {
     const newCategories = [...productCategories];
     const updatedProduct = {
@@ -204,7 +206,7 @@ const CreateProductType: React.FC = () => {
       const res = await axios.post("/api/product-types", data);
       if (res.status === 201) {
         alert("Product Type created successfully!");
-        router.push("/admin/products");
+        router.push("/admin/product-types");
       } else {
         alert("Failed to create product type.");
       }
