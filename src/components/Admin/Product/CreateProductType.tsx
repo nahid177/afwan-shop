@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import Image from "next/image";
+import { FiTrash2 } from "react-icons/fi"; // Importing an icon for delete buttons
 
 // Define interfaces for product and category
 interface ISubtitle {
@@ -24,7 +25,7 @@ interface IProduct {
   subtitle: ISubtitle[];
   description: string;
   images: string[]; // URLs of uploaded images
-  imageFiles?: File[]; // Selected image files to be uploaded (now optional)
+  imageFiles?: File[]; // Selected image files to be uploaded (optional)
 }
 
 interface IProductCategory {
@@ -50,7 +51,7 @@ const CreateProductType: React.FC = () => {
           subtitle: [{ title: "", titledetail: "" }],
           description: "",
           images: [],
-          imageFiles: [], // This can remain as an empty array in the initial state
+          imageFiles: [],
         },
       ],
     },
@@ -127,6 +128,51 @@ const CreateProductType: React.FC = () => {
         ],
       },
     ]);
+  };
+
+  // Handle removing a category
+  const removeCategory = (catIndex: number) => {
+    const newCategories = [...productCategories];
+    newCategories.splice(catIndex, 1);
+    setProductCategories(newCategories);
+  };
+
+  // Handle adding a new product within a category
+  const addProduct = (catIndex: number) => {
+    const newCategories = [...productCategories];
+    newCategories[catIndex].product.push({
+      product_name: "",
+      code: [""],
+      color: [""],
+      size: [""],
+      quantity: 0,
+      originalPrice: 0,
+      offerPrice: 0,
+      title: [""],
+      subtitle: [{ title: "", titledetail: "" }],
+      description: "",
+      images: [],
+      imageFiles: [],
+    });
+    setProductCategories(newCategories);
+  };
+
+  // Handle removing a product from a category
+  const removeProduct = (catIndex: number, prodIndex: number) => {
+    const newCategories = [...productCategories];
+    newCategories[catIndex].product.splice(prodIndex, 1);
+    setProductCategories(newCategories);
+  };
+
+  // Handle removing an image from a product
+  const removeImage = (catIndex: number, prodIndex: number, imageIndex: number) => {
+    const newCategories = [...productCategories];
+    const product = newCategories[catIndex].product[prodIndex];
+    if (product.imageFiles) {
+      product.imageFiles.splice(imageIndex, 1);
+      newCategories[catIndex].product[prodIndex] = product;
+      setProductCategories(newCategories);
+    }
   };
 
   // Handle image selection
@@ -235,7 +281,17 @@ const CreateProductType: React.FC = () => {
 
         {/* Loop through each category */}
         {productCategories.map((category, catIndex) => (
-          <div key={catIndex} className="border p-4 rounded-lg">
+          <div key={catIndex} className="border p-4 rounded-lg relative">
+            {/* Remove Category Button */}
+            <button
+              type="button"
+              className="absolute top-2 right-2 text-red-500"
+              onClick={() => removeCategory(catIndex)}
+              title="Remove Category"
+            >
+              <FiTrash2 size={20} />
+            </button>
+
             <h2 className="text-xl font-semibold mb-2">
               Category {catIndex + 1}
             </h2>
@@ -260,20 +316,33 @@ const CreateProductType: React.FC = () => {
 
             {/* Loop through each product in the category */}
             {category.product.map((product, prodIndex) => (
-              <div key={prodIndex} className="border p-4 mt-4 rounded-lg">
+              <div
+                key={prodIndex}
+                className="border p-4 mt-4 rounded-lg relative"
+              >
+                {/* Remove Product Button */}
+                <button
+                  type="button"
+                  className="absolute top-2 right-2 text-red-500"
+                  onClick={() => removeProduct(catIndex, prodIndex)}
+                  title="Remove Product"
+                >
+                  <FiTrash2 size={20} />
+                </button>
+
                 <h3 className="text-lg font-semibold">
                   Product {prodIndex + 1}
                 </h3>
 
                 <div className="form-group">
                   <label
-                    htmlFor={`product_name_${prodIndex}`}
+                    htmlFor={`product_name_${catIndex}_${prodIndex}`}
                     className="block text-lg font-medium"
                   >
                     Product Name
                   </label>
                   <input
-                    id={`product_name_${prodIndex}`}
+                    id={`product_name_${catIndex}_${prodIndex}`}
                     type="text"
                     className="input input-bordered w-full"
                     value={product.product_name}
@@ -324,20 +393,35 @@ const CreateProductType: React.FC = () => {
                       handleImageChange(catIndex, prodIndex, e.target.files)
                     }
                   />
-                  {/* Display selected images */}
-                  <div className="flex space-x-2 mt-2">
+                  {/* Display selected images with remove option */}
+                  <div className="flex flex-wrap mt-2">
                     {product.imageFiles &&
                       product.imageFiles.map((file, index) => {
                         const objectUrl = URL.createObjectURL(file);
                         return (
-                          <Image
+                          <div
                             key={index}
-                            src={objectUrl}
-                            alt={`Selected Image ${index + 1}`}
-                            width={100}
-                            height={100}
-                            onLoad={() => URL.revokeObjectURL(objectUrl)}
-                          />
+                            className="relative mr-2 mb-2 w-24 h-24"
+                          >
+                            <Image
+                              src={objectUrl}
+                              alt={`Selected Image ${index + 1}`}
+                              layout="fill"
+                              objectFit="cover"
+                              onLoad={() => URL.revokeObjectURL(objectUrl)}
+                            />
+                            {/* Remove Image Button */}
+                            <button
+                              type="button"
+                              className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+                              onClick={() =>
+                                removeImage(catIndex, prodIndex, index)
+                              }
+                              title="Remove Image"
+                            >
+                              <FiTrash2 size={16} />
+                            </button>
+                          </div>
                         );
                       })}
                   </div>
@@ -471,24 +555,7 @@ const CreateProductType: React.FC = () => {
             <button
               type="button"
               className="btn btn-sm btn-secondary mt-4"
-              onClick={() => {
-                const newCategories = [...productCategories];
-                newCategories[catIndex].product.push({
-                  product_name: "",
-                  code: [""],
-                  color: [""],
-                  size: [""],
-                  quantity: 0,
-                  originalPrice: 0,
-                  offerPrice: 0,
-                  title: [""],
-                  subtitle: [{ title: "", titledetail: "" }],
-                  description: "",
-                  images: [],
-                  imageFiles: [],
-                });
-                setProductCategories(newCategories);
-              }}
+              onClick={() => addProduct(catIndex)}
             >
               Add Another Product
             </button>
