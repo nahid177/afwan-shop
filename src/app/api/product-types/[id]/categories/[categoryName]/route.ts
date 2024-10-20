@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
-import { ProductTypes } from '@/models/Product';
+import { ProductTypes } from '@/models/ProductTypes';
 import mongoose from 'mongoose';
 
 // Connect to the database
@@ -33,7 +33,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string; ca
 
     // Find the specific category in the product type
     const categoryIndex = productType.product_catagory.findIndex(
-      (category) => category.catagory_name === categoryName
+      (category: { catagory_name: string; }) => category.catagory_name === categoryName
     );
 
     if (categoryIndex >= 0) {
