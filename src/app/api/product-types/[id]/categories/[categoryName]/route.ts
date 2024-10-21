@@ -8,7 +8,7 @@ import mongoose from 'mongoose';
 // Connect to the database
 dbConnect();
 
-// Local Interface Definitions
+// Interface Definitions
 interface ISubtitle {
   title: string;
   titledetail: string;
@@ -32,12 +32,32 @@ interface INewProduct {
   images: string[];
 }
 
+interface IProduct {
+  _id: string;
+  product_name: string;
+  code: string[];
+  color: string[];
+  sizes: {
+    size: string;
+    quantity: number;
+  }[];
+  originalPrice: number;
+  offerPrice: number;
+  title: string[];
+  subtitle: {
+    title: string;
+    titledetail: string;
+  }[];
+  description: string;
+  images: string[];
+}
+
 interface IProductTypeLean {
   _id: string;
   types_name: string;
   product_catagory: {
     catagory_name: string;
-    product: any[]; // Can be more strictly typed if necessary
+    product: IProduct[]; // Replaced 'any[]' with 'IProduct[]'
   }[];
 }
 
@@ -111,7 +131,7 @@ export async function PATCH(
 
     // Find the specific category
     const categoryIndex = productType.product_catagory.findIndex(
-      (cat: { catagory_name: string; }) => cat.catagory_name.toLowerCase() === categoryName.toLowerCase()
+      (cat: { catagory_name: string }) => cat.catagory_name.toLowerCase() === categoryName.toLowerCase()
     );
 
     if (categoryIndex === -1) {
@@ -119,7 +139,7 @@ export async function PATCH(
     }
 
     // Sanitize products by removing any _id fields
-    const sanitizedProducts: INewProduct[] = product.map(({ _id, ...rest }) => rest);
+    const sanitizedProducts: INewProduct[] = product.map(({ _id: _unusedId, ...rest }) => rest);
 
     // Add sanitized products to the category
     productType.product_catagory[categoryIndex].product.push(...sanitizedProducts);

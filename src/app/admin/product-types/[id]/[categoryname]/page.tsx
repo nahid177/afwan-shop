@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, Fragment } from "react";
 import { useParams } from "next/navigation";
 import axios from "axios";
 import Image from "next/image";
@@ -10,7 +10,6 @@ import AddProductForm from "@/components/Admin/product-types-page/AddProductForm
 import AdminLayoutTypesName from "@/app/admin/product-types/AdminLayoutTypesName";
 import AdminLayout from "@/app/admin/AdminLayout";
 import { Dialog, Transition } from "@headlessui/react"; // Import Headless UI components
-import { Fragment } from "react";
 import { FaTimes, FaArrowLeft, FaArrowRight } from "react-icons/fa"; // Import icons for modal
 
 interface IProduct {
@@ -147,9 +146,7 @@ const CategoryPage: React.FC = () => {
     <AdminLayout>
       <AdminLayoutTypesName>
         <div className="max-w-7xl mx-auto p-6">
-          <h1 className="text-4xl font-bold mb-6 text-center">
-            Products in &quot;{categoryname}&quot; Category
-          </h1>
+          <h1 className="text-4xl font-bold mb-6 text-center">{decodeURIComponent(categoryname)}</h1>
 
           {/* Product List */}
           <div className="mb-8">
@@ -163,31 +160,32 @@ const CategoryPage: React.FC = () => {
                     className="border rounded-lg p-6 shadow-lg bg-white hover:shadow-xl transition-shadow duration-300"
                   >
                     <div className="flex flex-col items-center">
-                      {/* Product Images */}
-                      <div className="flex space-x-2 mb-4">
-                        {product.images.map((url, idx) => (
-                          <div
-                            key={idx}
-                            className="relative w-32 h-32 cursor-pointer"
-                            onClick={() => openModal(product.images, idx)}
-                          >
-                            <Image
-                              src={url}
-                              alt={`Product Image ${idx + 1}`}
-                              layout="fill"
-                              objectFit="cover"
-                              className="rounded-md"
-                              // Add fallback for broken images
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.onerror = null; // Prevent infinite loop
-                                target.src = "/fallback-image.png"; // Correct path
-                              }}
-                              loading="lazy" // Enable lazy loading
-                            />
-                          </div>
-                        ))}
-                      </div>
+                      {/* Product Image (Only the first image) */}
+                      {product.images.length > 0 ? (
+                        <div
+                          className="w-32 h-32 relative mb-4 cursor-pointer"
+                          onClick={() => openModal(product.images, 0)}
+                        >
+                          <Image
+                            src={product.images[0]}
+                            alt={`Product Image 1`}
+                            layout="fill"
+                            objectFit="cover"
+                            className="rounded-md"
+                            // Add fallback for broken images
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.onerror = null; // Prevent infinite loop
+                              target.src = "/fallback-image.png"; // Ensure this path is correct
+                            }}
+                            loading="lazy" // Enable lazy loading
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-32 h-32 flex items-center justify-center bg-gray-200 rounded-md mb-4">
+                          <span className="text-gray-500">No Image</span>
+                        </div>
+                      )}
 
                       {/* Product Details */}
                       <h2 className="text-2xl font-semibold mb-2 text-center truncate">
@@ -246,11 +244,7 @@ const CategoryPage: React.FC = () => {
 
         {/* Image Modal */}
         <Transition appear show={isModalOpen} as={Fragment}>
-          <Dialog
-            as="div"
-            className="fixed inset-0 z-50 overflow-y-auto"
-            onClose={closeModal}
-          >
+          <Dialog as="div" className="fixed inset-0 z-50 overflow-y-auto" onClose={closeModal}>
             <div className="min-h-screen px-4 text-center">
               <Transition.Child
                 as={Fragment}
@@ -261,17 +255,15 @@ const CategoryPage: React.FC = () => {
                 leaveFrom="opacity-100"
                 leaveTo="opacity-0"
               >
-                {/* Overlay as a div */}
+                {/* Overlay */}
                 <div className="fixed inset-0 bg-black bg-opacity-75" />
               </Transition.Child>
 
-              {/* This element is to center the modal contents */}
-              <span
-                className="inline-block h-screen align-middle"
-                aria-hidden="true"
-              >
+              {/* Center the modal contents */}
+              <span className="inline-block h-screen align-middle" aria-hidden="true">
                 &#8203;
               </span>
+
               <Transition.Child
                 as={Fragment}
                 enter="ease-out duration-300"
@@ -291,47 +283,59 @@ const CategoryPage: React.FC = () => {
                       <FaTimes size={24} />
                     </button>
                   </div>
-                  <div className="flex items-center justify-center relative">
+                  <div className="relative flex items-center justify-center">
                     {/* Previous Button */}
-                    <button
-                      onClick={prevImage}
-                      className="absolute left-4 text-white bg-gray-700 bg-opacity-50 hover:bg-opacity-75 rounded-full p-2 focus:outline-none"
-                      aria-label="Previous Image"
-                    >
-                      <FaArrowLeft size={20} />
-                    </button>
+                    {currentProductImages.length > 1 && (
+                      <button
+                        onClick={prevImage}
+                        className="absolute left-4 text-white bg-gray-700 bg-opacity-50 hover:bg-opacity-75 rounded-full p-2 focus:outline-none"
+                        aria-label="Previous Image"
+                      >
+                        <FaArrowLeft size={20} />
+                      </button>
+                    )}
 
                     {/* Current Image */}
-                    <div className="w-full h-96 relative">
-                      <Image
-                        src={currentProductImages[currentImageIndex]}
-                        alt={`Product Image ${currentImageIndex + 1}`}
-                        layout="fill"
-                        objectFit="contain"
-                        className="rounded-md"
-                        // Add fallback for broken images
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.onerror = null; // Prevent infinite loop
-                          target.src = "/fallback-image.png"; // Correct path
-                        }}
-                      />
-                    </div>
+                    {currentProductImages.length > 0 ? (
+                      <div className="w-full h-96 relative">
+                        <Image
+                          src={currentProductImages[currentImageIndex]}
+                          alt={`Product Image ${currentImageIndex + 1}`}
+                          layout="fill"
+                          objectFit="contain"
+                          className="rounded-md"
+                          // Add fallback for broken images
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.onerror = null; // Prevent infinite loop
+                            target.src = "/fallback-image.png"; // Ensure this path is correct
+                          }}
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full h-96 flex items-center justify-center bg-gray-200 rounded-md">
+                        <span className="text-gray-500">No Image Available</span>
+                      </div>
+                    )}
 
                     {/* Next Button */}
-                    <button
-                      onClick={nextImage}
-                      className="absolute right-4 text-white bg-gray-700 bg-opacity-50 hover:bg-opacity-75 rounded-full p-2 focus:outline-none"
-                      aria-label="Next Image"
-                    >
-                      <FaArrowRight size={20} />
-                    </button>
+                    {currentProductImages.length > 1 && (
+                      <button
+                        onClick={nextImage}
+                        className="absolute right-4 text-white bg-gray-700 bg-opacity-50 hover:bg-opacity-75 rounded-full p-2 focus:outline-none"
+                        aria-label="Next Image"
+                      >
+                        <FaArrowRight size={20} />
+                      </button>
+                    )}
                   </div>
-                  <div className="mt-4 text-center">
-                    <p>
-                      Image {currentImageIndex + 1} of {currentProductImages.length}
-                    </p>
-                  </div>
+                  {currentProductImages.length > 0 && (
+                    <div className="mt-4 text-center">
+                      <p>
+                        Image {currentImageIndex + 1} of {currentProductImages.length}
+                      </p>
+                    </div>
+                  )}
                 </div>
               </Transition.Child>
             </div>
