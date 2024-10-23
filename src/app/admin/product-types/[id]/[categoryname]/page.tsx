@@ -9,25 +9,30 @@ import Image from "next/image";
 import AddProductForm from "@/components/Admin/product-types-page/AddProductForm";
 import AdminLayoutTypesName from "@/app/admin/product-types/AdminLayoutTypesName";
 import AdminLayout from "@/app/admin/AdminLayout";
-import { Dialog, Transition } from "@headlessui/react"; // Import Headless UI components
-import { FaTimes, FaArrowLeft, FaArrowRight } from "react-icons/fa"; // Import icons for modal
+import { Dialog, Transition } from "@headlessui/react";
+import { FaTimes, FaArrowLeft, FaArrowRight } from "react-icons/fa";
+import EditProductForm from "@/components/Admin/product-types-page/EditProduct";
+
+interface ISubtitle {
+  title: string;
+  titledetail: string;
+}
+
+interface ISizeQuantity {
+  size: string;
+  quantity: number;
+}
 
 interface IProduct {
   _id: string;
   product_name: string;
   code: string[];
   color: string[];
-  sizes: {
-    size: string;
-    quantity: number;
-  }[];
+  sizes: ISizeQuantity[];
   originalPrice: number;
   offerPrice: number;
   title: string[];
-  subtitle: {
-    title: string;
-    titledetail: string;
-  }[];
+  subtitle: ISubtitle[];
   description: string;
   images: string[];
 }
@@ -39,16 +44,19 @@ const CategoryPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  // State for Modal
+  // State for Image Modal
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
   const [currentProductImages, setCurrentProductImages] = useState<string[]>([]);
+
+  // State for Edit Modal
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
+  const [productToEdit, setProductToEdit] = useState<IProduct | null>(null);
 
   // Fetch products on component mount
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        // Removed encodeURIComponent to prevent double encoding
         const response = await axios.get<IProduct[]>(
           `/api/product-types/${id}/categories/${categoryname}`
         );
@@ -69,6 +77,34 @@ const CategoryPage: React.FC = () => {
     setProducts((prev) => [...prev, newProduct]);
   };
 
+  // Function to handle updating a product in the state
+  const handleProductUpdated = (updatedProduct: IProduct) => {
+    setProducts((prevProducts) =>
+      prevProducts.map((product) =>
+        product._id === updatedProduct._id ? updatedProduct : product
+      )
+    );
+  };
+
+  // Function to handle deleting a product from the state
+  const handleDeleteProduct = async (productId: string) => {
+    if (!window.confirm("Are you sure you want to delete this product?")) {
+      return;
+    }
+
+    try {
+      await axios.delete(
+        `/api/product-types/${id}/categories/${categoryname}/products/${productId}`
+      );
+
+      // Remove the product from state
+      setProducts((prevProducts) => prevProducts.filter((product) => product._id !== productId));
+    } catch (err) {
+      console.error("Error deleting product:", err);
+      alert("Failed to delete product.");
+    }
+  };
+
   // Function to open modal with selected image
   const openModal = (images: string[], index: number) => {
     setCurrentProductImages(images);
@@ -76,7 +112,7 @@ const CategoryPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  // Function to close modal
+  // Function to close image modal
   const closeModal = useCallback(() => {
     setIsModalOpen(false);
     setCurrentImageIndex(0);
@@ -96,6 +132,18 @@ const CategoryPage: React.FC = () => {
       prevIndex === 0 ? currentProductImages.length - 1 : prevIndex - 1
     );
   }, [currentProductImages.length]);
+
+  // Function to open edit modal
+  const openEditModal = (product: IProduct) => {
+    setProductToEdit(product);
+    setIsEditModalOpen(true);
+  };
+
+  // Function to close edit modal
+  const closeEditModal = () => {
+    setProductToEdit(null);
+    setIsEditModalOpen(false);
+  };
 
   // Handle keyboard events for image navigation
   useEffect(() => {
@@ -172,13 +220,12 @@ const CategoryPage: React.FC = () => {
                             layout="fill"
                             objectFit="cover"
                             className="rounded-md"
-                            // Add fallback for broken images
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
-                              target.onerror = null; // Prevent infinite loop
-                              target.src = "/fallback-image.png"; // Ensure this path is correct
+                              target.onerror = null;
+                              target.src = "/fallback-image.png";
                             }}
-                            loading="lazy" // Enable lazy loading
+                            loading="lazy"
                           />
                         </div>
                       ) : (
@@ -226,6 +273,22 @@ const CategoryPage: React.FC = () => {
                             ))}
                           </ul>
                         </div>
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex space-x-4 mt-4">
+                        <button
+                          onClick={() => openEditModal(product)}
+                          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteProduct(product._id)}
+                          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+                        >
+                          Delete
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -304,11 +367,10 @@ const CategoryPage: React.FC = () => {
                           layout="fill"
                           objectFit="contain"
                           className="rounded-md"
-                          // Add fallback for broken images
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            target.onerror = null; // Prevent infinite loop
-                            target.src = "/fallback-image.png"; // Ensure this path is correct
+                            target.onerror = null;
+                            target.src = "/fallback-image.png";
                           }}
                         />
                       </div>
@@ -341,6 +403,17 @@ const CategoryPage: React.FC = () => {
             </div>
           </Dialog>
         </Transition>
+
+        {/* Edit Product Modal */}
+        {isEditModalOpen && productToEdit && (
+          <EditProductForm
+            productTypeId={id}
+            categoryName={categoryname}
+            product={productToEdit}
+            onProductUpdated={handleProductUpdated}
+            onClose={closeEditModal}
+          />
+        )}
       </AdminLayoutTypesName>
     </AdminLayout>
   );
