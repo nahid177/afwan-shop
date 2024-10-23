@@ -1,30 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import Image from 'next/image';
-
-interface ISubtitle {
-  title: string;
-  titledetail: string;
-}
-
-interface ISizeQuantity {
-  size: string;
-  quantity: number;
-}
-
-interface IProduct {
-  _id: string;
-  product_name: string;
-  code: string[];
-  color: string[];
-  sizes: ISizeQuantity[];
-  originalPrice: number;
-  offerPrice: number;
-  title: string[];
-  subtitle: ISubtitle[];
-  description: string;
-  images: string[];
-}
+import { IProduct, ISubtitle, ISizeQuantity, IColorQuantity } from '@/types'; // Import interfaces
 
 interface EditProductFormProps {
   productTypeId: string;
@@ -59,7 +36,7 @@ const EditProductForm: React.FC<EditProductFormProps> = ({
     }
   };
 
-  // Handle array fields like code, color, title
+  // Handle array fields like code, title
   const handleArrayChange = (name: keyof IProduct, values: string[]) => {
     setFormData((prev) => ({ ...prev, [name]: values }));
   };
@@ -67,6 +44,11 @@ const EditProductForm: React.FC<EditProductFormProps> = ({
   // Handle sizes
   const handleSizesChange = (sizes: ISizeQuantity[]) => {
     setFormData((prev) => ({ ...prev, sizes }));
+  };
+
+  // Handle colors
+  const handleColorsChange = (colors: IColorQuantity[]) => {
+    setFormData((prev) => ({ ...prev, colors }));
   };
 
   // Handle subtitles
@@ -184,6 +166,161 @@ const EditProductForm: React.FC<EditProductFormProps> = ({
     </div>
   );
 
+  // Helper functions to render sizes input
+  const renderSizesInput = () => (
+    <div className="mb-4">
+      <label className="block font-semibold mb-2">Sizes</label>
+      {formData.sizes.map((sizeObj, index) => (
+        <div key={index} className="flex mb-2 space-x-2">
+          <input
+            type="text"
+            placeholder="Size"
+            value={sizeObj.size}
+            onChange={(e) => {
+              const newSizes = [...formData.sizes];
+              newSizes[index].size = e.target.value;
+              handleSizesChange(newSizes);
+            }}
+            className="w-1/2 border rounded px-3 py-2"
+          />
+          <input
+            type="number"
+            placeholder="Quantity"
+            value={sizeObj.quantity}
+            onChange={(e) => {
+              const newSizes = [...formData.sizes];
+              newSizes[index].quantity = parseInt(e.target.value) || 0;
+              handleSizesChange(newSizes);
+            }}
+            className="w-1/2 border rounded px-3 py-2"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const newSizes = formData.sizes.filter((_, i) => i !== index);
+              handleSizesChange(newSizes);
+            }}
+            className="ml-2 px-2 py-1 bg-red-500 text-white rounded"
+          >
+            Remove
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() =>
+          handleSizesChange([...formData.sizes, { size: '', quantity: 0 }])
+        }
+        className="px-4 py-2 bg-green-500 text-white rounded"
+      >
+        Add Size
+      </button>
+    </div>
+  );
+
+  // Helper functions to render colors input
+  const renderColorsInput = () => (
+    <div className="mb-4">
+      <label className="block font-semibold mb-2">Colors</label>
+      {formData.colors.map((colorObj, index) => (
+        <div key={index} className="flex mb-2 space-x-2">
+          <input
+            type="text"
+            placeholder="Color"
+            value={colorObj.color}
+            onChange={(e) => {
+              const newColors = [...formData.colors];
+              newColors[index].color = e.target.value;
+              handleColorsChange(newColors);
+            }}
+            className="w-1/2 border rounded px-3 py-2"
+          />
+          <input
+            type="number"
+            placeholder="Quantity"
+            value={colorObj.quantity}
+            onChange={(e) => {
+              const newColors = [...formData.colors];
+              newColors[index].quantity = parseInt(e.target.value) || 0;
+              handleColorsChange(newColors);
+            }}
+            className="w-1/2 border rounded px-3 py-2"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const newColors = formData.colors.filter((_, i) => i !== index);
+              handleColorsChange(newColors);
+            }}
+            className="ml-2 px-2 py-1 bg-red-500 text-white rounded"
+          >
+            Remove
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() =>
+          handleColorsChange([...formData.colors, { color: '', quantity: 0 }])
+        }
+        className="px-4 py-2 bg-green-500 text-white rounded"
+      >
+        Add Color
+      </button>
+    </div>
+  );
+
+  // Helper functions to render subtitles input
+  const renderSubtitlesInput = () => (
+    <div className="mb-4">
+      <label className="block font-semibold mb-2">Subtitles</label>
+      {formData.subtitle.map((subObj, index) => (
+        <div key={index} className="mb-2">
+          <input
+            type="text"
+            placeholder="Title"
+            value={subObj.title}
+            onChange={(e) => {
+              const newSubtitles = [...formData.subtitle];
+              newSubtitles[index].title = e.target.value;
+              handleSubtitleChange(newSubtitles);
+            }}
+            className="w-full border rounded px-3 py-2 mb-2"
+          />
+          <textarea
+            placeholder="Title Detail"
+            value={subObj.titledetail}
+            onChange={(e) => {
+              const newSubtitles = [...formData.subtitle];
+              newSubtitles[index].titledetail = e.target.value;
+              handleSubtitleChange(newSubtitles);
+            }}
+            className="w-full border rounded px-3 py-2 mb-2"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const newSubtitles = formData.subtitle.filter((_, i) => i !== index);
+              handleSubtitleChange(newSubtitles);
+            }}
+            className="px-2 py-1 bg-red-500 text-white rounded"
+          >
+            Remove
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() =>
+          handleSubtitleChange([...formData.subtitle, { title: '', titledetail: '' }])
+        }
+        className="px-4 py-2 bg-green-500 text-white rounded"
+      >
+        Add Subtitle
+      </button>
+    </div>
+  );
+
   // Render images input with upload functionality
   const renderImagesInput = () => (
     <div className="mb-4">
@@ -247,116 +384,14 @@ const EditProductForm: React.FC<EditProductFormProps> = ({
     </div>
   );
 
-  // Helper functions to render sizes input
-  const renderSizesInput = () => (
-    <div className="mb-4">
-      <label className="block font-semibold mb-2">Sizes</label>
-      {formData.sizes.map((sizeObj, index) => (
-        <div key={index} className="flex mb-2 space-x-2">
-          <input
-            type="text"
-            placeholder="Size"
-            value={sizeObj.size}
-            onChange={(e) => {
-              const newSizes = [...formData.sizes];
-              newSizes[index].size = e.target.value;
-              handleSizesChange(newSizes);
-            }}
-            className="w-1/2 border rounded px-3 py-2"
-          />
-          <input
-            type="number"
-            placeholder="Quantity"
-            value={sizeObj.quantity}
-            onChange={(e) => {
-              const newSizes = [...formData.sizes];
-              newSizes[index].quantity = parseInt(e.target.value) || 0;
-              handleSizesChange(newSizes);
-            }}
-            className="w-1/2 border rounded px-3 py-2"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              const newSizes = formData.sizes.filter((_, i) => i !== index);
-              handleSizesChange(newSizes);
-            }}
-            className="ml-2 px-2 py-1 bg-red-500 text-white rounded"
-          >
-            Remove
-          </button>
-        </div>
-      ))}
-      <button
-        type="button"
-        onClick={() =>
-          handleSizesChange([...formData.sizes, { size: '', quantity: 0 }])
-        }
-        className="px-4 py-2 bg-green-500 text-white rounded"
-      >
-        Add Size
-      </button>
-    </div>
-  );
-
-  // Helper functions to render subtitles input
-  const renderSubtitlesInput = () => (
-    <div className="mb-4">
-      <label className="block font-semibold mb-2">Subtitles</label>
-      {formData.subtitle.map((subObj, index) => (
-        <div key={index} className="mb-2">
-          <input
-            type="text"
-            placeholder="Title"
-            value={subObj.title}
-            onChange={(e) => {
-              const newSubtitles = [...formData.subtitle];
-              newSubtitles[index].title = e.target.value;
-              handleSubtitleChange(newSubtitles);
-            }}
-            className="w-full border rounded px-3 py-2 mb-2"
-          />
-          <textarea
-            placeholder="Title Detail"
-            value={subObj.titledetail}
-            onChange={(e) => {
-              const newSubtitles = [...formData.subtitle];
-              newSubtitles[index].titledetail = e.target.value;
-              handleSubtitleChange(newSubtitles);
-            }}
-            className="w-full border rounded px-3 py-2 mb-2"
-          />
-          <button
-            type="button"
-            onClick={() => {
-              const newSubtitles = formData.subtitle.filter((_, i) => i !== index);
-              handleSubtitleChange(newSubtitles);
-            }}
-            className="px-2 py-1 bg-red-500 text-white rounded"
-          >
-            Remove
-          </button>
-        </div>
-      ))}
-      <button
-        type="button"
-        onClick={() =>
-          handleSubtitleChange([...formData.subtitle, { title: '', titledetail: '' }])
-        }
-        className="px-4 py-2 bg-green-500 text-white rounded"
-      >
-        Add Subtitle
-      </button>
-    </div>
-  );
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 overflow-auto">
-      <div className="bg-white rounded-lg p-6 w-full max-w-3xl">
+    <div className=" fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 overflow-auto">
+      <div className="bg-white rounded-lg p-6 w-full max-w-3xl mt-[1000px]">
         <h2 className="text-2xl font-semibold mb-4">Edit Product</h2>
         <form onSubmit={handleSubmit}>
-          {/* Product Name */}
-          <div className="mb-4">
+                 {/* Product Name */}
+                 <div className="mb-4
+                 ">
             <label className="block font-semibold mb-2">Product Name</label>
             <input
               type="text"
@@ -372,7 +407,7 @@ const EditProductForm: React.FC<EditProductFormProps> = ({
           {renderArrayInput('Codes', 'code', formData.code)}
 
           {/* Colors */}
-          {renderArrayInput('Colors', 'color', formData.color)}
+          {renderColorsInput()}
 
           {/* Sizes */}
           {renderSizesInput()}

@@ -1,41 +1,14 @@
-// src/app/admin/product-types/[id]/[categoryname]/page.tsx
-
 "use client";
 
-import React, { useEffect, useState, useCallback, Fragment } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import axios from "axios";
 import Image from "next/image";
 import AddProductForm from "@/components/Admin/product-types-page/AddProductForm";
 import AdminLayoutTypesName from "@/app/admin/product-types/AdminLayoutTypesName";
 import AdminLayout from "@/app/admin/AdminLayout";
-import { Dialog, Transition } from "@headlessui/react";
-import { FaTimes, FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import EditProductForm from "@/components/Admin/product-types-page/EditProduct";
-
-interface ISubtitle {
-  title: string;
-  titledetail: string;
-}
-
-interface ISizeQuantity {
-  size: string;
-  quantity: number;
-}
-
-interface IProduct {
-  _id: string;
-  product_name: string;
-  code: string[];
-  color: string[];
-  sizes: ISizeQuantity[];
-  originalPrice: number;
-  offerPrice: number;
-  title: string[];
-  subtitle: ISubtitle[];
-  description: string;
-  images: string[];
-}
+import { IProduct } from "@/types"; // Import interfaces
 
 const CategoryPage: React.FC = () => {
   const params = useParams();
@@ -43,11 +16,6 @@ const CategoryPage: React.FC = () => {
   const [products, setProducts] = useState<IProduct[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-
-  // State for Image Modal
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-  const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
-  const [currentProductImages, setCurrentProductImages] = useState<string[]>([]);
 
   // State for Edit Modal
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
@@ -81,13 +49,16 @@ const CategoryPage: React.FC = () => {
   const handleProductUpdated = (updatedProduct: IProduct) => {
     setProducts((prevProducts) =>
       prevProducts.map((product) =>
-        product._id === updatedProduct._id ? updatedProduct : product
+        product._id?.toString() === updatedProduct._id?.toString()
+          ? updatedProduct
+          : product
       )
     );
   };
 
   // Function to handle deleting a product from the state
-  const handleDeleteProduct = async (productId: string) => {
+  const handleDeleteProduct = async (productId: string | undefined) => {
+    if (!productId) return;
     if (!window.confirm("Are you sure you want to delete this product?")) {
       return;
     }
@@ -98,40 +69,14 @@ const CategoryPage: React.FC = () => {
       );
 
       // Remove the product from state
-      setProducts((prevProducts) => prevProducts.filter((product) => product._id !== productId));
+      setProducts((prevProducts) =>
+        prevProducts.filter((product) => product._id?.toString() !== productId)
+      );
     } catch (err) {
       console.error("Error deleting product:", err);
       alert("Failed to delete product.");
     }
   };
-
-  // Function to open modal with selected image
-  const openModal = (images: string[], index: number) => {
-    setCurrentProductImages(images);
-    setCurrentImageIndex(index);
-    setIsModalOpen(true);
-  };
-
-  // Function to close image modal
-  const closeModal = useCallback(() => {
-    setIsModalOpen(false);
-    setCurrentImageIndex(0);
-    setCurrentProductImages([]);
-  }, []);
-
-  // Function to go to the next image
-  const nextImage = useCallback(() => {
-    setCurrentImageIndex((prevIndex) =>
-      prevIndex === currentProductImages.length - 1 ? 0 : prevIndex + 1
-    );
-  }, [currentProductImages.length]);
-
-  // Function to go to the previous image
-  const prevImage = useCallback(() => {
-    setCurrentImageIndex((prevIndex) =>
-      prevIndex === 0 ? currentProductImages.length - 1 : prevIndex - 1
-    );
-  }, [currentProductImages.length]);
 
   // Function to open edit modal
   const openEditModal = (product: IProduct) => {
@@ -144,27 +89,6 @@ const CategoryPage: React.FC = () => {
     setProductToEdit(null);
     setIsEditModalOpen(false);
   };
-
-  // Handle keyboard events for image navigation
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (!isModalOpen) return;
-
-      if (event.key === "ArrowRight") {
-        nextImage();
-      } else if (event.key === "ArrowLeft") {
-        prevImage();
-      } else if (event.key === "Escape") {
-        closeModal();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isModalOpen, nextImage, prevImage, closeModal]);
 
   if (loading) {
     return (
@@ -194,26 +118,27 @@ const CategoryPage: React.FC = () => {
     <AdminLayout>
       <AdminLayoutTypesName>
         <div className="max-w-7xl mx-auto p-6">
-          <h1 className="text-4xl font-bold mb-6 text-center">{decodeURIComponent(categoryname)}</h1>
+          <h1 className="text-4xl font-bold mb-6 text-center">
+            {decodeURIComponent(categoryname)}
+          </h1>
 
           {/* Product List */}
           <div className="mb-8">
             {products.length === 0 ? (
-              <p className="text-gray-500">No products available in this category.</p>
+              <p className="text-gray-500">
+                No products available in this category.
+              </p>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {products.map((product) => (
                   <div
-                    key={product._id}
+                    key={product._id ? product._id.toString() : product.product_name}
                     className="border rounded-lg p-6 shadow-lg bg-white hover:shadow-xl transition-shadow duration-300"
                   >
                     <div className="flex flex-col items-center">
                       {/* Product Image (Only the first image) */}
                       {product.images.length > 0 ? (
-                        <div
-                          className="w-32 h-32 relative mb-4 cursor-pointer"
-                          onClick={() => openModal(product.images, 0)}
-                        >
+                        <div className="w-32 h-32 relative mb-4">
                           <Image
                             src={product.images[0]}
                             alt={`Product Image 1`}
@@ -238,21 +163,27 @@ const CategoryPage: React.FC = () => {
                       <h2 className="text-2xl font-semibold mb-2 text-center truncate">
                         {product.product_name}
                       </h2>
-                      <p className="text-gray-600 mb-4 text-center">{product.description}</p>
+                      <p className="text-gray-600 mb-4 text-center">
+                        {product.description}
+                      </p>
                       <div className="w-full">
                         <div className="mb-2">
-                          <span className="font-semibold">Original Price:</span> $
-                          {product.originalPrice.toFixed(2)}
+                          <span className="font-semibold">Original Price:</span>{" "}
+                          ${product.originalPrice.toFixed(2)}
                         </div>
                         <div className="mb-2">
-                          <span className="font-semibold">Offer Price:</span> $
-                          {product.offerPrice.toFixed(2)}
+                          <span className="font-semibold">Offer Price:</span>{" "}
+                          ${product.offerPrice.toFixed(2)}
                         </div>
                         <div className="mb-2">
-                          <span className="font-semibold">Codes:</span> {product.code.join(", ")}
+                          <span className="font-semibold">Codes:</span>{" "}
+                          {product.code.join(", ")}
                         </div>
                         <div className="mb-2">
-                          <span className="font-semibold">Colors:</span> {product.color.join(", ")}
+                          <span className="font-semibold">Colors:</span>{" "}
+                          {product.colors
+                            .map((c) => `${c.color} (${c.quantity})`)
+                            .join(", ")}
                         </div>
                         <div className="mb-2">
                           <span className="font-semibold">Sizes:</span>{" "}
@@ -261,7 +192,8 @@ const CategoryPage: React.FC = () => {
                             .join(", ")}
                         </div>
                         <div className="mb-2">
-                          <span className="font-semibold">Titles:</span> {product.title.join(", ")}
+                          <span className="font-semibold">Titles:</span>{" "}
+                          {product.title.join(", ")}
                         </div>
                         <div className="mb-2">
                           <span className="font-semibold">Subtitles:</span>
@@ -284,7 +216,7 @@ const CategoryPage: React.FC = () => {
                           Edit
                         </button>
                         <button
-                          onClick={() => handleDeleteProduct(product._id)}
+                          onClick={() => handleDeleteProduct(product._id?.toString())}
                           className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
                         >
                           Delete
@@ -305,108 +237,10 @@ const CategoryPage: React.FC = () => {
           />
         </div>
 
-        {/* Image Modal */}
-        <Transition appear show={isModalOpen} as={Fragment}>
-          <Dialog as="div" className="fixed inset-0 z-50 overflow-y-auto" onClose={closeModal}>
-            <div className="min-h-screen px-4 text-center">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0"
-                enterTo="opacity-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100"
-                leaveTo="opacity-0"
-              >
-                {/* Overlay */}
-                <div className="fixed inset-0 bg-black bg-opacity-75" />
-              </Transition.Child>
-
-              {/* Center the modal contents */}
-              <span className="inline-block h-screen align-middle" aria-hidden="true">
-                &#8203;
-              </span>
-
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <div className="inline-block w-full max-w-4xl p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-lg">
-                  <div className="flex justify-end">
-                    <button
-                      onClick={closeModal}
-                      className="text-gray-500 hover:text-gray-700 focus:outline-none"
-                      aria-label="Close Modal"
-                    >
-                      <FaTimes size={24} />
-                    </button>
-                  </div>
-                  <div className="relative flex items-center justify-center">
-                    {/* Previous Button */}
-                    {currentProductImages.length > 1 && (
-                      <button
-                        onClick={prevImage}
-                        className="absolute left-4 text-white bg-gray-700 bg-opacity-50 hover:bg-opacity-75 rounded-full p-2 focus:outline-none"
-                        aria-label="Previous Image"
-                      >
-                        <FaArrowLeft size={20} />
-                      </button>
-                    )}
-
-                    {/* Current Image */}
-                    {currentProductImages.length > 0 ? (
-                      <div className="w-full h-96 relative">
-                        <Image
-                          src={currentProductImages[currentImageIndex]}
-                          alt={`Product Image ${currentImageIndex + 1}`}
-                          layout="fill"
-                          objectFit="contain"
-                          className="rounded-md"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.onerror = null;
-                            target.src = "/fallback-image.png";
-                          }}
-                        />
-                      </div>
-                    ) : (
-                      <div className="w-full h-96 flex items-center justify-center bg-gray-200 rounded-md">
-                        <span className="text-gray-500">No Image Available</span>
-                      </div>
-                    )}
-
-                    {/* Next Button */}
-                    {currentProductImages.length > 1 && (
-                      <button
-                        onClick={nextImage}
-                        className="absolute right-4 text-white bg-gray-700 bg-opacity-50 hover:bg-opacity-75 rounded-full p-2 focus:outline-none"
-                        aria-label="Next Image"
-                      >
-                        <FaArrowRight size={20} />
-                      </button>
-                    )}
-                  </div>
-                  {currentProductImages.length > 0 && (
-                    <div className="mt-4 text-center">
-                      <p>
-                        Image {currentImageIndex + 1} of {currentProductImages.length}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </Transition.Child>
-            </div>
-          </Dialog>
-        </Transition>
-
         {/* Edit Product Modal */}
         {isEditModalOpen && productToEdit && (
           <EditProductForm
+      
             productTypeId={id}
             categoryName={categoryname}
             product={productToEdit}

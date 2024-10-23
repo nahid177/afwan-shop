@@ -3,57 +3,23 @@
 "use client";
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import AdminLayout from '../../AdminLayout'; // Adjust the import path as necessary
+import AdminLayout from '../../AdminLayout';
 import ProductCard from '@/components/Admin/product-types-page/ProductCard';
 import AdminLayoutTypesName from '../AdminLayoutTypesName';
-import AddCategoryModal from '@/components/Admin/product-types-page/AddCategoryModal'; // Import the modal component
-import { FaPlus } from 'react-icons/fa'; // Import the plus icon
-
-interface ISubtitle {
-  title: string;
-  titledetail: string;
-}
-
-interface ISizeQuantity {
-  size: string;
-  quantity: number;
-}
-
-interface IProduct {
-  _id: string;
-  product_name: string;
-  code: string[];
-  color: string[];
-  sizes: ISizeQuantity[];
-  originalPrice: number;
-  offerPrice: number;
-  title: string[];
-  subtitle: ISubtitle[];
-  description: string;
-  images: string[];
-}
-
-interface IProductCategory {
-  catagory_name: string;
-  product: IProduct[];
-}
-
-interface IProductType {
-  _id: string;
-  types_name: string;
-  product_catagory: IProductCategory[];
-}
+import AddCategoryModal from '@/components/Admin/product-types-page/AddCategoryModal';
+import { FaPlus } from 'react-icons/fa';
+import { IProductType, IProductCategory } from '@/types'; // Import interfaces from types.ts
 
 const ProductTypePage = ({ params }: { params: { id: string } }) => {
   const [productType, setProductType] = useState<IProductType | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [isModalOpen, setIsModalOpen] = useState<boolean>(false); // State to control modal visibility
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const { id } = params;
 
   useEffect(() => {
     const fetchProductType = async () => {
       try {
-        const response = await axios.get(`/api/product-types/${id}`);
+        const response = await axios.get<IProductType>(`/api/product-types/${id}`);
         setProductType(response.data);
       } catch (error) {
         console.error('Error fetching product type:', error);
@@ -105,6 +71,7 @@ const ProductTypePage = ({ params }: { params: { id: string } }) => {
         <div className="container mx-auto p-6">
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-3xl font-bold">{productType.types_name}</h1>
+
             <button
               onClick={() => setIsModalOpen(true)}
               className="flex items-center px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
@@ -115,11 +82,17 @@ const ProductTypePage = ({ params }: { params: { id: string } }) => {
 
           {/* Display products under each category */}
           {productType.product_catagory.map((category) => (
-            <div key={category.catagory_name} className="mb-8">
+            <div
+              key={category.catagory_name}
+              className="mb-8"
+            >
               <h2 className="text-2xl font-semibold mb-4">{category.catagory_name}</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 {category.product.map((product) => (
-                  <ProductCard key={product._id} product={product} />
+                  <ProductCard
+                    key={product._id ? product._id.toString() : product.product_name}
+                    product={product}
+                  />
                 ))}
               </div>
             </div>
@@ -132,7 +105,7 @@ const ProductTypePage = ({ params }: { params: { id: string } }) => {
         <AddCategoryModal
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          productTypeId={productType._id}
+          productTypeId={productType._id ? productType._id.toString() : ''}
           onCategoryAdded={handleCategoryAdded}
         />
       )}

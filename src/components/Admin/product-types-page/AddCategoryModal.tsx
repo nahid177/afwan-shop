@@ -1,38 +1,10 @@
-// /src/components/Admin/product-types-page/AddCategoryModal.tsx
+// src/components/Admin/product-types-page/AddCategoryModal.tsx
 
 import React, { useState } from 'react';
 import axios from 'axios';
 import Image from 'next/image';
 import { FiTrash2 } from 'react-icons/fi';
-
-interface ISizeQuantity {
-  size: string;
-  quantity: number;
-}
-
-interface ISubtitle {
-  title: string;
-  titledetail: string;
-}
-
-interface IProduct {
-  product_name: string;
-  code: string[];
-  color: string[];
-  sizes: ISizeQuantity[];
-  originalPrice: number;
-  offerPrice: number;
-  title: string[];
-  subtitle: ISubtitle[];
-  description: string;
-  images: string[];
-  imageFiles?: File[];
-}
-
-interface IProductCategory {
-  catagory_name: string; // Match backend field name
-  product: IProduct[];
-}
+import { IProduct, ISizeQuantity, ISubtitle, IColorQuantity, IProductCategory } from '@/types';
 
 interface AddCategoryModalProps {
   isOpen: boolean;
@@ -47,12 +19,12 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
   productTypeId,
   onCategoryAdded,
 }) => {
-  const [catagoryName, setCatagoryName] = useState(''); // Changed to match backend
+  const [catagoryName, setCatagoryName] = useState('');
   const [products, setProducts] = useState<IProduct[]>([
     {
       product_name: '',
       code: [''],
-      color: [''],
+      colors: [{ color: '', quantity: 0 }],
       sizes: [{ size: '', quantity: 0 }],
       originalPrice: 0,
       offerPrice: 0,
@@ -98,6 +70,26 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
     setProducts(newProducts);
   };
 
+  // Handle color changes
+  const handleColorChange = <K extends keyof IColorQuantity>(
+    productIndex: number,
+    colorIndex: number,
+    field: K,
+    value: IColorQuantity[K]
+  ) => {
+    const newProducts = [...products];
+    const colors = [...newProducts[productIndex].colors];
+    colors[colorIndex] = {
+      ...colors[colorIndex],
+      [field]: value,
+    };
+    newProducts[productIndex] = {
+      ...newProducts[productIndex],
+      colors,
+    };
+    setProducts(newProducts);
+  };
+
   // Add new product field
   const addProductField = () => {
     setProducts([
@@ -105,7 +97,7 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
       {
         product_name: '',
         code: [''],
-        color: [''],
+        colors: [{ color: '', quantity: 0 }],
         sizes: [{ size: '', quantity: 0 }],
         originalPrice: 0,
         offerPrice: 0,
@@ -129,11 +121,19 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
     setProducts(newProducts);
   };
 
+  // Add new color field
+  const addColorField = (productIndex: number) => {
+    const newProducts = [...products];
+    const colors = [...newProducts[productIndex].colors, { color: '', quantity: 0 }];
+    newProducts[productIndex] = {
+      ...newProducts[productIndex],
+      colors,
+    };
+    setProducts(newProducts);
+  };
+
   // Handle image selection
-  const handleImageChange = (
-    productIndex: number,
-    files: FileList | null
-  ) => {
+  const handleImageChange = (productIndex: number, files: FileList | null) => {
     if (!files) return;
 
     const newProducts = [...products];
@@ -189,13 +189,13 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
 
   const handleSubmit = async () => {
     try {
-      if (catagoryName.trim() === '') { // Changed to match backend
+      if (catagoryName.trim() === '') {
         alert('Category name is required.');
         return;
       }
 
       const newCategory: IProductCategory = {
-        catagory_name: catagoryName, // Match backend field name
+        catagory_name: catagoryName,
         product: products,
       };
 
@@ -234,7 +234,7 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
 
       // Prepare data for submission
       const data = {
-        product_catagory: [categoryCopy], // Match backend field name
+        product_catagory: [categoryCopy],
       };
 
       const res = await axios.patch(`/api/product-types/${productTypeId}`, data);
@@ -253,7 +253,6 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
 
   if (!isOpen) return null;
 
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
@@ -270,7 +269,7 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
             type="text"
             className="w-full border px-3 py-2 rounded"
             value={catagoryName}
-            onChange={(e) => setCatagoryName(e.target.value)} // Changed to match backend
+            onChange={(e) => setCatagoryName(e.target.value)}
           />
         </div>
 
@@ -350,24 +349,6 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
                         index,
                         'code',
                         e.target.value.split(',').map((code) => code.trim())
-                      )
-                    }
-                  />
-                </div>
-                {/* Colors */}
-                <div className="sm:col-span-2">
-                  <label className="block font-semibold mb-1">
-                    Colors (comma separated)
-                  </label>
-                  <input
-                    type="text"
-                    className="w-full border px-3 py-2 rounded"
-                    value={product.color.join(', ')}
-                    onChange={(e) =>
-                      handleProductChange(
-                        index,
-                        'color',
-                        e.target.value.split(',').map((color) => color.trim())
                       )
                     }
                   />
@@ -456,10 +437,7 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
                       product.imageFiles.map((file, idx) => {
                         const objectUrl = URL.createObjectURL(file);
                         return (
-                          <div
-                            key={idx}
-                            className="relative mr-2 mb-2 w-24 h-24"
-                          >
+                          <div key={idx} className="relative mr-2 mb-2 w-24 h-24">
                             <Image
                               src={objectUrl}
                               alt={`Selected Image ${idx + 1}`}
@@ -524,12 +502,47 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
                   + Add Another Size
                 </button>
               </div>
+
+              {/* Colors */}
+              <div className="mb-2">
+                <label className="block font-semibold mb-1">Colors & Quantities</label>
+                {product.colors.map((colorItem, colorIndex) => (
+                  <div key={colorIndex} className="flex space-x-2 mb-2">
+                    <input
+                      type="text"
+                      placeholder="Color"
+                      className="w-1/2 border px-3 py-2 rounded"
+                      value={colorItem.color}
+                      onChange={(e) =>
+                        handleColorChange(index, colorIndex, 'color', e.target.value)
+                      }
+                    />
+                    <input
+                      type="number"
+                      placeholder="Quantity"
+                      className="w-1/2 border px-3 py-2 rounded"
+                      value={colorItem.quantity}
+                      onChange={(e) =>
+                        handleColorChange(
+                          index,
+                          colorIndex,
+                          'quantity',
+                          parseInt(e.target.value, 10)
+                        )
+                      }
+                    />
+                  </div>
+                ))}
+                <button
+                  onClick={() => addColorField(index)}
+                  className="text-blue-600 hover:underline"
+                >
+                  + Add Another Color
+                </button>
+              </div>
             </div>
           ))}
-          <button
-            onClick={addProductField}
-            className="text-blue-600 hover:underline"
-          >
+          <button onClick={addProductField} className="text-blue-600 hover:underline">
             + Add Another Product
           </button>
         </div>

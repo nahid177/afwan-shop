@@ -2,30 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-
-interface ISubtitle {
-  title: string;
-  titledetail: string;
-}
-
-interface ISizeQuantity {
-  size: string;
-  quantity: number;
-}
-
-interface IProduct {
-  _id: string;
-  product_name: string;
-  code: string[];
-  color: string[];
-  sizes: ISizeQuantity[];
-  originalPrice: number;
-  offerPrice: number;
-  title: string[];
-  subtitle: ISubtitle[];
-  description: string;
-  images: string[];
-}
+import { IProduct } from '@/types'; // Import IProduct from types.ts
 
 interface ProductCardProps {
   product: IProduct;
@@ -51,7 +28,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const showNextImage = useCallback(
     (e?: React.MouseEvent | KeyboardEvent) => {
       if (e) e.stopPropagation(); // Prevent modal from closing when clicking buttons or pressing keys
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % product.images.length);
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % (product.images.length || 1));
     },
     [product.images.length]
   );
@@ -61,7 +38,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     (e?: React.MouseEvent | KeyboardEvent) => {
       if (e) e.stopPropagation();
       setCurrentImageIndex(
-        (prevIndex) => (prevIndex - 1 + product.images.length) % product.images.length
+        (prevIndex) => (prevIndex - 1 + (product.images.length || 1)) % (product.images.length || 1)
       );
     },
     [product.images.length]
@@ -142,24 +119,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           </p>
         )}
 
-        {/* Colors */}
-        {product.color && product.color.length > 0 && (
-          <p className="text-gray-700 mb-2">
-            <strong>Colors:</strong> {product.color.join(', ')}
-          </p>
+        {/* Colors with Quantities */}
+        {product.colors && product.colors.length > 0 && (
+          <div className="mb-2">
+            <strong>Colors:</strong>{' '}
+            {product.colors
+              .map((c) => `${c.color} (${c.quantity})`)
+              .join(', ')}
+          </div>
         )}
 
         {/* Sizes with Quantities */}
         {product.sizes && product.sizes.length > 0 && (
           <div className="mb-2">
-            <strong>Sizes & Quantities:</strong>
-            <ul>
-              {product.sizes.map((sizeItem, index) => (
-                <li key={index}>
-                  {sizeItem.size}: {sizeItem.quantity}
-                </li>
-              ))}
-            </ul>
+            <strong>Sizes:</strong>{' '}
+            {product.sizes
+              .map((s) => `${s.size} (${s.quantity})`)
+              .join(', ')}
           </div>
         )}
 
@@ -194,7 +170,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </button>
 
             {/* Previous Button */}
-            {product.images.length > 1 && (
+            {product.images && product.images.length > 1 && (
               <button
                 className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white text-4xl font-bold focus:outline-none"
                 onClick={showPrevImage}
@@ -216,7 +192,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </div>
 
             {/* Next Button */}
-            {product.images.length > 1 && (
+            {product.images && product.images.length > 1 && (
               <button
                 className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white text-4xl font-bold focus:outline-none"
                 onClick={showNextImage}

@@ -1,10 +1,10 @@
-// /models/ProductTypes.ts
+// src/models/ProductTypes.ts
 
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
-interface ISubtitle {
-  title: string;
-  titledetail: string;
+interface IColorQuantity {
+  color: string;
+  quantity: number;
 }
 
 interface ISizeQuantity {
@@ -12,12 +12,16 @@ interface ISizeQuantity {
   quantity: number;
 }
 
+interface ISubtitle {
+  title: string;
+  titledetail: string;
+}
+
 interface IProduct extends Document {
-  _id: Types.ObjectId;
   product_name: string;
   code: string[];
-  color: string[];
-  sizes: ISizeQuantity[]; // Updated to reflect the new sizes structure
+  colors: IColorQuantity[];
+  sizes: ISizeQuantity[];
   originalPrice: number;
   offerPrice: number;
   title: string[];
@@ -28,7 +32,7 @@ interface IProduct extends Document {
   updatedAt?: Date;
 }
 
-interface IProductCategory extends Document {
+interface IProductCategory {
   catagory_name: string;
   product: IProduct[];
 }
@@ -38,31 +42,35 @@ interface IProductType extends Document {
   product_catagory: IProductCategory[];
 }
 
-const SubtitleSchema = new Schema<ISubtitle>({
-  title: { type: String },
-  titledetail: { type: String },
+const ColorQuantitySchema = new Schema<IColorQuantity>({
+  color: { type: String, required: true },
+  quantity: { type: Number, required: true },
 });
 
 const SizeQuantitySchema = new Schema<ISizeQuantity>({
-  size: { type: String },
-  quantity: { type: Number },
+  size: { type: String, required: true },
+  quantity: { type: Number, required: true },
 });
 
-const ProductSchema = new Schema<IProduct>(
-  {
-    product_name: { type: String, required: true },
-    code: [{ type: String }],
-    color: [{ type: String }],
-    sizes: [SizeQuantitySchema], // Updated to use the new schema
-    originalPrice: { type: Number },
-    offerPrice: { type: Number },
-    title: [{ type: String }],
-    subtitle: [SubtitleSchema],
-    description: { type: String },
-    images: [{ type: String }],
-  },
-  { timestamps: true }
-);
+const SubtitleSchema = new Schema<ISubtitle>({
+  title: { type: String, required: true },
+  titledetail: { type: String, required: true },
+});
+
+const ProductSchema = new Schema<IProduct>({
+  product_name: { type: String, required: true },
+  code: [{ type: String, required: true }],
+  colors: [ColorQuantitySchema], // Correctly define colors field
+  sizes: [SizeQuantitySchema],
+  originalPrice: { type: Number, required: true },
+  offerPrice: { type: Number, required: true },
+  title: [{ type: String, required: true }],
+  subtitle: [SubtitleSchema],
+  description: { type: String, required: true },
+  images: [{ type: String }],
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+});
 
 const ProductCategorySchema = new Schema<IProductCategory>({
   catagory_name: { type: String, required: true },

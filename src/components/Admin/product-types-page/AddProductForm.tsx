@@ -1,10 +1,8 @@
-// src/components/Admin/product-types-page/AddProductForm.tsx
-
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { IProduct } from '@/types'; // Import the interface
+import { IProduct, ISizeQuantity, ISubtitle, IColorQuantity } from '@/types'; // Import interfaces
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import { FaPlus, FaTimes } from 'react-icons/fa';
@@ -14,29 +12,6 @@ interface AddProductFormProps {
   productTypeId: string;
   categoryName: string;
   onProductAdded: (newProduct: IProduct) => void;
-}
-
-interface INewProduct {
-  product_name: string;
-  code: string[];
-  color: string[];
-  sizes: ISizeQuantity[];
-  originalPrice: number;
-  offerPrice: number;
-  title: string[];
-  subtitle: ISubtitle[];
-  description: string;
-  images: string[];
-}
-
-interface ISubtitle {
-  title: string;
-  titledetail: string;
-}
-
-interface ISizeQuantity {
-  size: string;
-  quantity: number;
 }
 
 interface SelectedImage {
@@ -53,26 +28,27 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
   const [formData, setFormData] = useState<{
     product_name: string;
     code: string;
-    color: string;
-    sizes: string; // Comma-separated sizes
     originalPrice: number;
     offerPrice: number;
     title: string;
-    subtitle_title: string;
-    subtitle_titledetail: string;
     description: string;
   }>({
-    product_name: "",
-    code: "",
-    color: "",
-    sizes: "",
+    product_name: '',
+    code: '',
     originalPrice: 0,
     offerPrice: 0,
-    title: "",
-    subtitle_title: "",
-    subtitle_titledetail: "",
-    description: "",
+    title: '',
+    description: '',
   });
+  const [sizes, setSizes] = useState<ISizeQuantity[]>([
+    { size: '', quantity: 0 },
+  ]);
+  const [colors, setColors] = useState<IColorQuantity[]>([
+    { color: '', quantity: 0 },
+  ]);
+  const [subtitles, setSubtitles] = useState<ISubtitle[]>([
+    { title: '', titledetail: '' },
+  ]);
   const [selectedImages, setSelectedImages] = useState<SelectedImage[]>([]);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -87,6 +63,63 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handle sizes input
+  const handleSizeChange = (
+    index: number,
+    field: keyof ISizeQuantity,
+    value: string | number
+  ) => {
+    const newSizes = [...sizes];
+    newSizes[index] = { ...newSizes[index], [field]: value };
+    setSizes(newSizes);
+  };
+
+  const addSizeField = () => {
+    setSizes([...sizes, { size: '', quantity: 0 }]);
+  };
+
+  const removeSizeField = (index: number) => {
+    setSizes((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Handle colors input
+  const handleColorChange = (
+    index: number,
+    field: keyof IColorQuantity,
+    value: string | number
+  ) => {
+    const newColors = [...colors];
+    newColors[index] = { ...newColors[index], [field]: value };
+    setColors(newColors);
+  };
+
+  const addColorField = () => {
+    setColors([...colors, { color: '', quantity: 0 }]);
+  };
+
+  const removeColorField = (index: number) => {
+    setColors((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  // Handle subtitles input
+  const handleSubtitleChange = (
+    index: number,
+    field: keyof ISubtitle,
+    value: string
+  ) => {
+    const newSubtitles = [...subtitles];
+    newSubtitles[index] = { ...newSubtitles[index], [field]: value };
+    setSubtitles(newSubtitles);
+  };
+
+  const addSubtitleField = () => {
+    setSubtitles([...subtitles, { title: '', titledetail: '' }]);
+  };
+
+  const removeSubtitleField = (index: number) => {
+    setSubtitles((prev) => prev.filter((_, i) => i !== index));
+  };
+
   // Handle image selection
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -95,7 +128,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
       const totalImages = selectedImages.length + fileArray.length;
 
       if (totalImages > 5) {
-        alert("You can upload a maximum of 5 images.");
+        alert('You can upload a maximum of 5 images.');
         return;
       }
 
@@ -135,58 +168,57 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
       if (
         !formData.product_name ||
         !formData.code ||
-        !formData.color ||
-        !formData.sizes ||
+        sizes.length === 0 ||
+        colors.length === 0 ||
         formData.originalPrice <= 0 ||
         formData.offerPrice <= 0 ||
         !formData.title ||
-        !formData.subtitle_title ||
-        !formData.subtitle_titledetail ||
+        subtitles.length === 0 ||
         !formData.description ||
         selectedImages.length === 0
       ) {
-        setSubmitError("Please fill in all required fields and upload at least one image.");
+        setSubmitError(
+          'Please fill in all required fields and upload at least one image.'
+        );
         setSubmitting(false);
         return;
       }
 
+      // Filter out empty sizes and colors
+      const filteredSizes = sizes.filter(
+        (size) => size.size.trim() !== '' && size.quantity > 0
+      );
+
+      const filteredColors = colors.filter(
+        (color) => color.color.trim() !== '' && color.quantity > 0
+      );
+
       // Upload images
       const formDataImages = new FormData();
       selectedImages.forEach((image) => {
-        formDataImages.append("files", image.file);
+        formDataImages.append('files', image.file);
       });
 
       const uploadResponse = await axios.post<{ urls: string[] }>(
-        "/api/upload",
+        '/api/upload',
         formDataImages,
         {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: { 'Content-Type': 'multipart/form-data' },
         }
       );
 
       const imageUrls = uploadResponse.data.urls;
 
       // Prepare new product data
-      const newProduct: INewProduct = {
+      const newProduct: IProduct = {
         product_name: formData.product_name,
-        code: formData.code.split(",").map((code) => code.trim()),
-        color: formData.color.split(",").map((color) => color.trim()),
-        sizes: formData.sizes.split(",").map((sizeStr) => {
-          const [size, quantityStr] = sizeStr.split(":").map((s) => s.trim());
-          return {
-            size,
-            quantity: parseInt(quantityStr, 10) || 0,
-          };
-        }),
+        code: formData.code.split(',').map((code) => code.trim()),
+        colors: filteredColors,
+        sizes: filteredSizes,
         originalPrice: formData.originalPrice,
         offerPrice: formData.offerPrice,
-        title: formData.title.split(",").map((t) => t.trim()),
-        subtitle: [
-          {
-            title: formData.subtitle_title,
-            titledetail: formData.subtitle_titledetail,
-          },
-        ],
+        title: formData.title.split(',').map((t) => t.trim()),
+        subtitle: subtitles,
         description: formData.description,
         images: imageUrls,
       };
@@ -205,22 +237,21 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
 
       // Reset the form
       setFormData({
-        product_name: "",
-        code: "",
-        color: "",
-        sizes: "",
+        product_name: '',
+        code: '',
         originalPrice: 0,
         offerPrice: 0,
-        title: "",
-        subtitle_title: "",
-        subtitle_titledetail: "",
-        description: "",
+        title: '',
+        description: '',
       });
+      setSizes([{ size: '', quantity: 0 }]);
+      setColors([{ color: '', quantity: 0 }]);
+      setSubtitles([{ title: '', titledetail: '' }]);
       setSelectedImages([]);
       setIsModalOpen(false);
     } catch (err) {
-      console.error("Error adding product:", err);
-      setSubmitError("Failed to add product. Please try again.");
+      console.error('Error adding product:', err);
+      setSubmitError('Failed to add product. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -236,7 +267,11 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
       </button>
 
       <Transition appear show={isModalOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={() => setIsModalOpen(false)}>
+        <Dialog
+          as="div"
+          className="relative z-10"
+          onClose={() => setIsModalOpen(false)}
+        >
           {/* Overlay */}
           <Transition.Child
             as={Fragment}
@@ -310,38 +345,6 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
                         />
                       </div>
 
-                      {/* Color */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Color (comma separated)
-                        </label>
-                        <input
-                          type="text"
-                          name="color"
-                          value={formData.color}
-                          onChange={handleChange}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                          required
-                          placeholder="e.g., Red, Blue"
-                        />
-                      </div>
-
-                      {/* Sizes */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Sizes (comma separated, format: Size:Quantity)
-                        </label>
-                        <input
-                          type="text"
-                          name="sizes"
-                          value={formData.sizes}
-                          onChange={handleChange}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                          required
-                          placeholder="e.g., S:10, M:20, L:15"
-                        />
-                      </div>
-
                       {/* Original Price */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700">
@@ -392,37 +395,6 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
                         />
                       </div>
 
-                      {/* Subtitle Title */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Subtitle Title
-                        </label>
-                        <input
-                          type="text"
-                          name="subtitle_title"
-                          value={formData.subtitle_title}
-                          onChange={handleChange}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                          required
-                          placeholder="e.g., Features"
-                        />
-                      </div>
-
-                      {/* Subtitle Detail */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">
-                          Subtitle Detail
-                        </label>
-                        <textarea
-                          name="subtitle_titledetail"
-                          value={formData.subtitle_titledetail}
-                          onChange={handleChange}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                          required
-                          placeholder="e.g., Durable material, Modern design"
-                        ></textarea>
-                      </div>
-
                       {/* Description */}
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700">
@@ -437,44 +409,188 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
                           placeholder="Detailed description of the product."
                         ></textarea>
                       </div>
+                    </div>
 
-                      {/* Images */}
-                      <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700">
-                          Product Images (Max 5)
-                        </label>
-                        <input
-                          type="file"
-                          name="images"
-                          onChange={handleImageChange}
-                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                          accept="image/*"
-                          multiple
-                        />
-                        {selectedImages.length > 0 && (
-                          <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                            {selectedImages.map((image, index) => (
-                              <div key={index} className="relative">
-                                <Image
-                                  src={image.preview}
-                                  alt={`Selected Image ${index + 1}`}
-                                  width={100}
-                                  height={100}
-                                  className="object-cover rounded-md"
-                                />
-                                <button
-                                  type="button"
-                                  onClick={() => removeImage(index)}
-                                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 focus:outline-none"
-                                  aria-label={`Remove Image ${index + 1}`}
-                                >
-                                  <FaTimes size={12} />
-                                </button>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                    {/* Sizes */}
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Sizes & Quantities
+                      </label>
+                      {sizes.map((sizeItem, index) => (
+                        <div key={index} className="flex space-x-2 mb-2">
+                          <input
+                            type="text"
+                            placeholder="Size"
+                            className="w-1/2 border px-3 py-2 rounded"
+                            value={sizeItem.size}
+                            onChange={(e) =>
+                              handleSizeChange(index, 'size', e.target.value)
+                            }
+                          />
+                          <input
+                            type="number"
+                            placeholder="Quantity"
+                            className="w-1/2 border px-3 py-2 rounded"
+                            value={sizeItem.quantity}
+                            onChange={(e) =>
+                              handleSizeChange(
+                                index,
+                                'quantity',
+                                parseInt(e.target.value)
+                              )
+                            }
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeSizeField(index)}
+                            className="text-red-600 hover:underline"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={addSizeField}
+                        className="text-blue-600 hover:underline"
+                      >
+                        + Add Another Size
+                      </button>
+                    </div>
+
+                    {/* Colors */}
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Colors & Quantities
+                      </label>
+                      {colors.map((colorItem, index) => (
+                        <div key={index} className="flex space-x-2 mb-2">
+                          <input
+                            type="text"
+                            placeholder="Color"
+                            className="w-1/2 border px-3 py-2 rounded"
+                            value={colorItem.color}
+                            onChange={(e) =>
+                              handleColorChange(index, 'color', e.target.value)
+                            }
+                          />
+                          <input
+                            type="number"
+                            placeholder="Quantity"
+                            className="w-1/2 border px-3 py-2 rounded"
+                            value={colorItem.quantity}
+                            onChange={(e) =>
+                              handleColorChange(
+                                index,
+                                'quantity',
+                                parseInt(e.target.value)
+                              )
+                            }
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removeColorField(index)}
+                            className="text-red-600 hover:underline"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={addColorField}
+                        className="text-blue-600 hover:underline"
+                      >
+                        + Add Another Color
+                      </button>
+                    </div>
+
+                    {/* Subtitles */}
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Subtitles
+                      </label>
+                      {subtitles.map((subtitleItem, index) => (
+                        <div
+                          key={index}
+                          className="mb-4 border p-2 rounded relative"
+                        >
+                          <button
+                            type="button"
+                            onClick={() => removeSubtitleField(index)}
+                            className="absolute top-1 right-1 text-red-600 hover:text-red-800"
+                            aria-label="Remove Subtitle"
+                          >
+                            <FaTimes size={16} />
+                          </button>
+                          <input
+                            type="text"
+                            placeholder="Subtitle Title"
+                            className="w-full border px-3 py-2 rounded mb-2"
+                            value={subtitleItem.title}
+                            onChange={(e) =>
+                              handleSubtitleChange(index, 'title', e.target.value)
+                            }
+                          />
+                          <textarea
+                            placeholder="Subtitle Detail"
+                            className="w-full border px-3 py-2 rounded"
+                            value={subtitleItem.titledetail}
+                            onChange={(e) =>
+                              handleSubtitleChange(
+                                index,
+                                'titledetail',
+                                e.target.value
+                              )
+                            }
+                          />
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={addSubtitleField}
+                        className="text-blue-600 hover:underline"
+                      >
+                        + Add Another Subtitle
+                      </button>
+                    </div>
+
+                    {/* Images */}
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700">
+                        Product Images (Max 5)
+                      </label>
+                      <input
+                        type="file"
+                        name="images"
+                        onChange={handleImageChange}
+                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                        accept="image/*"
+                        multiple
+                      />
+                      {selectedImages.length > 0 && (
+                        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
+                          {selectedImages.map((image, index) => (
+                            <div key={index} className="relative">
+                              <Image
+                                src={image.preview}
+                                alt={`Selected Image ${index + 1}`}
+                                width={100}
+                                height={100}
+                                className="object-cover rounded-md"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeImage(index)}
+                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 focus:outline-none"
+                                aria-label={`Remove Image ${index + 1}`}
+                              >
+                                <FaTimes size={12} />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
 
                     {/* Display Submit Error */}

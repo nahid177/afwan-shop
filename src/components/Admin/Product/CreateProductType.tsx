@@ -5,7 +5,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import Image from "next/image";
-import { FiTrash2 } from "react-icons/fi"; // Importing an icon for delete buttons
+import { FiTrash2 } from "react-icons/fi";
 
 // Define interfaces for product and category
 interface ISubtitle {
@@ -18,14 +18,19 @@ interface ISizeQuantity {
   quantity: number;
 }
 
+interface IColorQuantity {
+  color: string;
+  quantity: number;
+}
+
 interface IProduct {
   product_name: string;
   code: string[];
-  color: string[];
-  sizes: ISizeQuantity[]; // Array of size and quantity objects
+  colors: IColorQuantity[]; // Updated to include color quantities
+  sizes: ISizeQuantity[];
   originalPrice: number;
   offerPrice: number;
-  title: string[]; // Array of strings
+  title: string[];
   subtitle: ISubtitle[];
   description: string;
   images: string[]; // URLs of uploaded images
@@ -46,7 +51,7 @@ const CreateProductType: React.FC = () => {
         {
           product_name: "",
           code: [""],
-          color: [""],
+          colors: [{ color: "", quantity: 0 }], // Initialize with an empty color and quantity
           sizes: [{ size: "", quantity: 0 }], // Initialize with an empty size and quantity
           originalPrice: 0,
           offerPrice: 0,
@@ -66,7 +71,6 @@ const CreateProductType: React.FC = () => {
     if (obj instanceof File) {
       return obj;
     } else if (Array.isArray(obj)) {
-      // Since obj is an array, map over it and deep copy each item
       return obj.map((item) => deepCopyWithFiles(item)) as unknown as T;
     } else if (obj !== null && typeof obj === "object") {
       const copiedObj = {} as { [K in keyof T]: T[K] };
@@ -138,6 +142,37 @@ const CreateProductType: React.FC = () => {
     setProductCategories(newCategories);
   };
 
+  // Handle change for colors in a product
+  const handleColorChange = (
+    catIndex: number,
+    prodIndex: number,
+    colorIndex: number,
+    field: keyof IColorQuantity,
+    value: string | number
+  ) => {
+    const newCategories = [...productCategories];
+    const colors = newCategories[catIndex].product[prodIndex].colors;
+    colors[colorIndex] = {
+      ...colors[colorIndex],
+      [field]: value,
+    };
+    setProductCategories(newCategories);
+  };
+
+  // Add a new color to a product
+  const addColor = (catIndex: number, prodIndex: number) => {
+    const newCategories = [...productCategories];
+    newCategories[catIndex].product[prodIndex].colors.push({ color: "", quantity: 0 });
+    setProductCategories(newCategories);
+  };
+
+  // Remove a color from a product
+  const removeColor = (catIndex: number, prodIndex: number, colorIndex: number) => {
+    const newCategories = [...productCategories];
+    newCategories[catIndex].product[prodIndex].colors.splice(colorIndex, 1);
+    setProductCategories(newCategories);
+  };
+
   // Handle change for subtitles in a product
   const handleSubtitleChange = (
     catIndex: number,
@@ -206,7 +241,7 @@ const CreateProductType: React.FC = () => {
           {
             product_name: "",
             code: [""],
-            color: [""],
+            colors: [{ color: "", quantity: 0 }],
             sizes: [{ size: "", quantity: 0 }],
             originalPrice: 0,
             offerPrice: 0,
@@ -234,7 +269,7 @@ const CreateProductType: React.FC = () => {
     newCategories[catIndex].product.push({
       product_name: "",
       code: [""],
-      color: [""],
+      colors: [{ color: "", quantity: 0 }],
       sizes: [{ size: "", quantity: 0 }],
       originalPrice: 0,
       offerPrice: 0,
@@ -304,6 +339,11 @@ const CreateProductType: React.FC = () => {
       // Loop through each category and product to upload images
       for (const category of categoriesCopy) {
         for (const product of category.product) {
+           // Filter out empty colors
+           product.colors = product.colors.filter(
+            (colorItem) =>
+              colorItem.color.trim() !== '' && colorItem.quantity > 0
+          );
           if (product.imageFiles && product.imageFiles.length > 0) {
             const formData = new FormData();
             product.imageFiles.forEach((file: File) => {
@@ -563,23 +603,63 @@ const CreateProductType: React.FC = () => {
                   </p>
                 </div>
 
-                {/* Colors */}
+                {/* Colors with Quantities */}
                 <div className="form-group">
-                  <label className="block text-lg font-medium">Colors</label>
-                  <input
-                    type="text"
-                    className="input input-bordered w-full"
-                    placeholder="Enter colors (comma separated)"
-                    value={product.color.join(", ")}
-                    onChange={(e) =>
-                      handleProductChange(
-                        catIndex,
-                        prodIndex,
-                        "color",
-                        e.target.value.split(",").map((color) => color.trim())
-                      )
-                    }
-                  />
+                  <label className="block text-lg font-medium">
+                    Colors and Quantities
+                  </label>
+                  {product.colors.map((colorItem, colorIndex) => (
+                    <div key={colorIndex} className="flex items-center mb-2">
+                      <input
+                        type="text"
+                        className="input input-bordered w-1/2 mr-2"
+                        placeholder="Color"
+                        value={colorItem.color}
+                        onChange={(e) =>
+                          handleColorChange(
+                            catIndex,
+                            prodIndex,
+                            colorIndex,
+                            "color",
+                            e.target.value
+                          )
+                        }
+                      />
+                      <input
+                        type="number"
+                        className="input input-bordered w-1/2 mr-2"
+                        placeholder="Quantity"
+                        value={colorItem.quantity}
+                        onChange={(e) =>
+                          handleColorChange(
+                            catIndex,
+                            prodIndex,
+                            colorIndex,
+                            "quantity",
+                            Number(e.target.value)
+                          )
+                        }
+                      />
+                      <button
+                        type="button"
+                        className="text-red-500"
+                        onClick={() =>
+                          removeColor(catIndex, prodIndex, colorIndex)
+                        }
+                        title="Remove Color"
+                      >
+                        <FiTrash2 size={20} />
+                      </button>
+                    </div>
+                  ))}
+                  {/* Add Color Button */}
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-secondary mt-2"
+                    onClick={() => addColor(catIndex, prodIndex)}
+                  >
+                    Add Color
+                  </button>
                 </div>
 
                 {/* Sizes with Quantities */}
