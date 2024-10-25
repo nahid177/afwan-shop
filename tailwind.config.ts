@@ -3,7 +3,8 @@ import daisyui from "daisyui";
 import flowbitePlugin from "flowbite/plugin";
 
 const config: Config = {
-  darkMode: 'class', // Enable class-based dark mode
+  darkMode: ['class', '[data-theme="dark"]'], // Enable dark mode based on data-theme attribute
+
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",

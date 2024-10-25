@@ -1,8 +1,11 @@
+// src/app/layout.tsx
+
 import React from "react";
 import localFont from "next/font/local";
 import "./globals.css";
-import TopNavbar from "@/components/NavBar/shared/TopNavbar";
 import { ThemeProvider } from "@/mode/ThemeContext";
+import TopNavbar from "@/components/NavBar/shared/TopNavbar";
+import ButtomNavbar from "@/components/NavBar/shared/ButtomNavbar";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -21,15 +24,22 @@ export const metadata = {
   description: "Welcome to my shop",
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <ThemeProvider>
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <ThemeProvider>
           <TopNavbar />
+          <ButtomNavbar />
           <main>{children}</main>
-        </body>
-      </ThemeProvider>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
