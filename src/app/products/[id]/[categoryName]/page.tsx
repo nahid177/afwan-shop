@@ -4,6 +4,8 @@ import axios from "axios";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { FaEye } from "react-icons/fa"; // Import icon for "See Details"
+import { useTheme } from "@/mode/ThemeContext"; // Import the theme context
 
 interface Subtitle {
   title: string;
@@ -32,20 +34,27 @@ interface Product {
 }
 
 const CategoryProductsPage: React.FC = () => {
+  const { theme } = useTheme(); // Use the theme from the context
   const params = useParams();
   const id = params.id as string;
   const categoryName = params.categoryName as string;
 
   const [products, setProducts] = useState<Product[] | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [typeName, setTypeName] = useState<string>("");
 
   useEffect(() => {
     const fetchCategoryProducts = async () => {
       try {
-        const response = await axios.get(
+        // Fetch products
+        const productResponse = await axios.get(
           `/api/product-types/${id}/categories/${categoryName}`
         );
-        setProducts(response.data);
+        setProducts(productResponse.data);
+
+        // Fetch type name using the id to display in breadcrumb
+        const typeResponse = await axios.get(`/api/product-types/${id}`);
+        setTypeName(typeResponse.data.types_name);
       } catch (error) {
         console.error("Error fetching category products:", error);
       } finally {
@@ -73,41 +82,68 @@ const CategoryProductsPage: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <h1 className="text-3xl font-bold mb-6">
-        Products in &quot;{categoryName.replace(/-/g, " ")}&quot;
-      </h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+    <div className={`w-full  mx-auto px-4 py-6 ${theme === 'light' ? 'bg-white text-black' : 'bg-gray-900 text-white'}`}>
+      {/* Breadcrumb */}
+      <div className={`mb-4 text-gray-600 ${theme === 'light' ? '' : 'text-gray-400'}`}>
+        <Link href="/">
+          <span className="hover:underline">Home</span>
+        </Link>
+        {" / "}
+        <Link href={`/products/${id}`}>
+          <span className="hover:underline">{typeName}</span>
+        </Link>
+        {" / "}
+        <span className="font-bold">{decodeURIComponent(categoryName.replace(/-/g, " "))}</span>
+      </div>
+
+      {/* Product Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
         {products.map((product) => (
           <div
             key={product._id}
-            className="border p-4 rounded-lg shadow hover:shadow-lg transition-shadow"
+            className={`border p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow ${theme === 'light' ? 'bg-white text-black' : 'bg-gray-800 text-white'}`}
           >
-            <Image
-              src={product.images[0] || "/placeholder.png"}
-              alt={product.product_name}
-              width={300}
-              height={200}
-              className="w-full h-48 object-cover mb-4 rounded"
-            />
+            {/* Product Image */}
+            <div className="mb-4">
+              <Image
+                src={product.images[0] || "/placeholder.png"}
+                alt={product.product_name}
+                width={300}
+                height={300}
+                className="w-full h-48 object-cover rounded transition-transform hover:scale-105"
+              />
+            </div>
+
+            {/* Product Name */}
             <h3 className="text-lg font-medium mb-2">{product.product_name}</h3>
-            <p className="text-gray-600 mb-2">
-              {product.description.substring(0, 80)}...
-            </p>
-            <div className="flex justify-between items-center mb-4">
-              <span className="text-blue-500 font-semibold">
-                TK. {product.offerPrice.toFixed(2)}
-              </span>
-              {product.originalPrice > product.offerPrice && (
-                <span className="line-through text-gray-500">
-                  TK. {product.originalPrice.toFixed(2)}
+
+            {/* Product Price */}
+            <div className="text-center mb-4">
+              {product.offerPrice && (
+                <span className="text-red-500 text-xl font-bold">
+                  {product.offerPrice.toFixed(2)}৳
                 </span>
               )}
+              {product.originalPrice && product.originalPrice < product.offerPrice && (
+                <div>
+                  <span className="text-gray-500 line-through">
+                    {product.originalPrice.toFixed(2)}৳
+                  </span>
+                </div>
+              )}
             </div>
+
+            {/* Add to Cart Button */}
+            <button className="btn-gradient-blue w-full py-2 text-center rounded hover:scale-105 transition-transform mb-4">
+              Add to Cart
+            </button>
+
+            {/* See Details Button with Icon */}
             <Link href={`/products/details/${product._id}`}>
-              <span className="block text-center bg-blue-500 text-white py-2 rounded hover:bg-blue-600 cursor-pointer">
-                View Details
-              </span>
+              <button className={`flex items-center justify-center w-full py-2 bg-gray-200 hover:bg-gray-300 rounded transition-all ${theme === 'light' ? '' : 'bg-gray-700 text-white'}`}>
+                <FaEye className="mr-2" />
+                <span>See Details</span>
+              </button>
             </Link>
           </div>
         ))}
