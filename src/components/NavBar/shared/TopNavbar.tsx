@@ -462,6 +462,11 @@ const TopNavbar: React.FC = () => {
             : "bg-gray-800 text-gray-100"
         } lg:hidden flex justify-around items-center py-2 shadow-md`}
       >
+        {/* Menu Icon */}
+        <button className="btn btn-ghost" onClick={toggleMenuDrawer}>
+          <FiMenu className="h-6 w-6" />
+        </button>
+
         {/* Home Button */}
         <Link href="/">
           <button className="btn btn-ghost">
@@ -489,15 +494,6 @@ const TopNavbar: React.FC = () => {
         {/* Search Icon */}
         <button className="btn btn-ghost" onClick={toggleSearch}>
           <FiSearch className="h-6 w-6" />
-        </button>
-
-        {/* Theme Toggle */}
-        <button className="btn btn-ghost" onClick={toggleTheme}>
-          {theme === "light" ? (
-            <FiSun className="h-6 w-6 text-yellow-500" />
-          ) : (
-            <FiMoon className="h-6 w-6 text-white" />
-          )}
         </button>
       </div>
 
