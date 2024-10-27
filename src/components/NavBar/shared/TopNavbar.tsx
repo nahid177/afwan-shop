@@ -17,6 +17,7 @@ import {
 import Link from "next/link";
 import { useTheme } from "@/mode/ThemeContext";
 import { usePathname } from "next/navigation";
+import axios from "axios";
 
 interface CartItem {
   id: number;
@@ -32,6 +33,17 @@ interface WishlistItem {
   price: number;
   originalPrice: number;
   imageUrl: string;
+}
+
+interface ProductCategory {
+  _id: string;
+  catagory_name: string;
+}
+
+interface ProductType {
+  _id: string;
+  types_name: string;
+  product_catagory: ProductCategory[];
 }
 
 const initialCartItems: CartItem[] = [
@@ -66,16 +78,38 @@ const TopNavbar: React.FC = () => {
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
-  const [drawerOpen, setDrawerOpen] = useState<boolean>(false);
+
+  // Separate state variables for each drawer
+  const [menuDrawerOpen, setMenuDrawerOpen] = useState<boolean>(false); // For mobile and tablet menu drawer
+  const [cartDrawerOpen, setCartDrawerOpen] = useState<boolean>(false); // For cart drawer
   const [wishlistOpen, setWishlistOpen] = useState<boolean>(false);
+
   const [wishlistItems, setWishlistItems] =
     useState<WishlistItem[]>(initialWishlistItems);
   const [cartItems, setCartItems] = useState<CartItem[]>(initialCartItems);
+  const [productTypes, setProductTypes] = useState<ProductType[]>([]);
 
   const searchInputRef = useRef<HTMLInputElement | null>(null);
-  const drawerRef = useRef<HTMLDivElement | null>(null);
+
+  // Separate refs for each drawer
+  const menuDrawerRef = useRef<HTMLDivElement | null>(null); // For mobile and tablet menu drawer
+  const cartDrawerRef = useRef<HTMLDivElement | null>(null); // For cart drawer
   const wishlistRef = useRef<HTMLDivElement | null>(null);
   const searchBarRef = useRef<HTMLDivElement | null>(null);
+
+  // Fetch product types on component mount
+  useEffect(() => {
+    const fetchProductTypes = async () => {
+      try {
+        const response = await axios.get("/api/product-types");
+        setProductTypes(response.data);
+      } catch (error) {
+        console.error("Error fetching product types:", error);
+      }
+    };
+
+    fetchProductTypes();
+  }, []);
 
   // Search toggle functionality
   const toggleSearch = () => {
@@ -83,8 +117,10 @@ const TopNavbar: React.FC = () => {
     if (!searchOpen && searchInputRef.current) {
       searchInputRef.current.focus();
     }
-    setDrawerOpen(false);
+    // Close other drawers
+    setMenuDrawerOpen(false);
     setWishlistOpen(false);
+    setCartDrawerOpen(false);
   };
 
   // Handle search input
@@ -92,33 +128,57 @@ const TopNavbar: React.FC = () => {
     setSearchQuery(query);
   };
 
-  // Cart drawer toggle
-  const toggleDrawer = () => {
-    setDrawerOpen(!drawerOpen);
+  // Toggle functions for each drawer
+  const toggleMenuDrawer = () => {
+    setMenuDrawerOpen(!menuDrawerOpen);
     setWishlistOpen(false);
     setSearchOpen(false);
+    setCartDrawerOpen(false);
   };
 
-  // Wishlist drawer toggle
+  const toggleCartDrawer = () => {
+    setCartDrawerOpen(!cartDrawerOpen);
+    setWishlistOpen(false);
+    setSearchOpen(false);
+    setMenuDrawerOpen(false);
+  };
+
   const toggleWishlist = () => {
     setWishlistOpen(!wishlistOpen);
-    setDrawerOpen(false);
+    setMenuDrawerOpen(false);
     setSearchOpen(false);
+    setCartDrawerOpen(false);
   };
 
-  // Close drawer or search bar when clicking outside
+  // Close drawers and modals when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
-        (drawerRef.current &&
-          !drawerRef.current.contains(event.target as Node)) &&
-        (wishlistRef.current &&
-          !wishlistRef.current.contains(event.target as Node)) &&
-        (searchBarRef.current &&
-          !searchBarRef.current.contains(event.target as Node))
+        menuDrawerRef.current &&
+        !menuDrawerRef.current.contains(event.target as Node) &&
+        menuDrawerOpen
       ) {
-        setDrawerOpen(false);
+        setMenuDrawerOpen(false);
+      }
+      if (
+        cartDrawerRef.current &&
+        !cartDrawerRef.current.contains(event.target as Node) &&
+        cartDrawerOpen
+      ) {
+        setCartDrawerOpen(false);
+      }
+      if (
+        wishlistRef.current &&
+        !wishlistRef.current.contains(event.target as Node) &&
+        wishlistOpen
+      ) {
         setWishlistOpen(false);
+      }
+      if (
+        searchBarRef.current &&
+        !searchBarRef.current.contains(event.target as Node) &&
+        searchOpen
+      ) {
         setSearchOpen(false);
       }
     };
@@ -127,7 +187,7 @@ const TopNavbar: React.FC = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [drawerOpen, wishlistOpen, searchOpen]);
+  }, [menuDrawerOpen, cartDrawerOpen, wishlistOpen, searchOpen]);
 
   // Calculate totals for cart
   const totalAmount = cartItems.reduce(
@@ -152,16 +212,16 @@ const TopNavbar: React.FC = () => {
 
   return (
     <>
-      {/* Mobile Navbar */}
+      {/* Mobile and Tablet Navbar */}
       <div
         className={`navbar ${
           theme === "light"
-            ? "bg-white text-black"
-            : "bg-gray-900 text-white"
-        } py-4 md:hidden flex justify-between px-4 items-center`}
+            ? "bg-gray-50 text-gray-900"
+            : "bg-gray-800 text-gray-100"
+        } py-4 lg:hidden flex justify-between px-4 items-center`}
       >
         {/* Menu Icon */}
-        <button className="btn btn-ghost">
+        <button className="btn btn-ghost" onClick={toggleMenuDrawer}>
           <FiMenu className="h-6 w-6" />
         </button>
 
@@ -183,13 +243,66 @@ const TopNavbar: React.FC = () => {
         </div>
       </div>
 
-      {/* Search Bar Drawer for Mobile View */}
+      {/* Drawer for Mobile and Tablet View */}
+      <div
+        ref={menuDrawerRef}
+        className={`fixed top-0 left-0 h-full w-[80%] sm:w-[60%] md:w-[50%] lg:w-[30%] ${
+          theme === "light"
+            ? "bg-white text-gray-900"
+            : "bg-gray-800 text-gray-100"
+        } shadow-lg transform ${
+          menuDrawerOpen ? "translate-x-0" : "-translate-x-full"
+        } transition-transform duration-300 ease-in-out z-50`}
+      >
+        {/* Drawer content here */}
+        <div className="p-4">
+          <button
+            onClick={toggleMenuDrawer}
+            className="text-lg mb-4 flex items-center"
+          >
+            <FiMenu className="mr-2" />
+            Close
+          </button>
+          <ul className="menu space-y-2">
+            {/* Sidebar content here */}
+            {productTypes.map((type) => (
+              <li key={type._id} className="group">
+                <Link
+                  href={`/products/${type._id}`}
+                  onClick={() => setMenuDrawerOpen(false)}
+                >
+                  <span>{type.types_name}</span>
+                </Link>
+                {/* Dropdown Menu */}
+                {type.product_catagory.length > 0 && (
+                  <ul className="ml-4 mt-2 space-y-1">
+                    {type.product_catagory.map((category) => (
+                      <li key={category._id}>
+                        <Link
+                          href={`/products/${type._id}/${encodeURIComponent(
+                            category.catagory_name
+                          )}`}
+                          onClick={() => setMenuDrawerOpen(false)}
+                        >
+                          <span>{category.catagory_name}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      {/* Search Bar Drawer for Mobile and Tablet View */}
       {searchOpen && (
         <div
-          className={`fixed top-0 left-0 w-full h-[70px] shadow-lg transform md:hidden ${
+          className={`fixed top-0 left-0 w-full h-[70px] shadow-lg transform lg:hidden ${
             theme === "light"
-              ? "bg-white text-black"
-              : "bg-gray-900 text-white"
+              ? "bg-white text-gray-900"
+              : "bg-gray-800 text-gray-100"
           } z-50`}
         >
           <div className="flex items-center justify-between p-4">
@@ -212,9 +325,9 @@ const TopNavbar: React.FC = () => {
       <div
         className={`navbar px-4 md:px-10 lg:px-20 ${
           theme === "light"
-            ? "bg-white text-black"
-            : "bg-gray-900 text-white"
-        } py-4 hidden md:flex`}
+            ? "bg-gray-50 text-gray-900"
+            : "bg-gray-800 text-gray-100"
+        } py-4 hidden lg:flex`}
       >
         {/* Navbar Start */}
         <div className="navbar-start">
@@ -230,18 +343,18 @@ const TopNavbar: React.FC = () => {
               tabIndex={0}
               className={`menu menu-sm dropdown-content rounded-box z-[1] mt-3 w-52 p-2 shadow ${
                 theme === "light"
-                  ? "bg-white text-black"
-                  : "bg-gray-900 text-white"
+                  ? "bg-white text-gray-900"
+                  : "bg-gray-800 text-gray-100"
               }`}
             >
               <li>
-                <Link href="#">Homepage</Link>
+                <Link href="/">Homepage</Link>
               </li>
               <li>
-                <Link href="#">Portfolio</Link>
+                <Link href="/portfolio">Portfolio</Link>
               </li>
               <li>
-                <Link href="#">About</Link>
+                <Link href="/about">About</Link>
               </li>
             </ul>
           </div>
@@ -280,8 +393,8 @@ const TopNavbar: React.FC = () => {
                   placeholder="Search..."
                   className={`input input-bordered rounded-full w-full md:w-64 ${
                     theme === "light"
-                      ? "bg-white text-black"
-                      : "bg-gray-900 text-white"
+                      ? "bg-white text-gray-900"
+                      : "bg-gray-800 text-gray-100"
                   }`}
                 />
               </div>
@@ -314,7 +427,7 @@ const TopNavbar: React.FC = () => {
           </button>
 
           {/* Cart Icon */}
-          <button className="btn btn-ghost btn-circle" onClick={toggleDrawer}>
+          <button className="btn btn-ghost btn-circle" onClick={toggleCartDrawer}>
             <div className="indicator">
               <FiShoppingCart
                 className={`h-5 w-5 md:h-6 md:w-6 ${
@@ -345,9 +458,9 @@ const TopNavbar: React.FC = () => {
       <div
         className={`fixed bottom-0 left-0 right-0 z-50 ${
           theme === "light"
-            ? "bg-white text-black"
-            : "bg-gray-900 text-white"
-        } md:hidden flex justify-around items-center py-2 shadow-md`}
+            ? "bg-gray-50 text-gray-900"
+            : "bg-gray-800 text-gray-100"
+        } lg:hidden flex justify-around items-center py-2 shadow-md`}
       >
         {/* Home Button */}
         <Link href="/">
@@ -362,7 +475,7 @@ const TopNavbar: React.FC = () => {
         </button>
 
         {/* Cart Icon */}
-        <button className="btn btn-ghost" onClick={toggleDrawer}>
+        <button className="btn btn-ghost" onClick={toggleCartDrawer}>
           <div className="indicator">
             <FiShoppingCart className="h-6 w-6" />
             {totalQuantity > 0 && (
@@ -390,16 +503,16 @@ const TopNavbar: React.FC = () => {
 
       {/* Cart Drawer */}
       <div
-        ref={drawerRef}
-        className={`fixed top-0 right-0 h-full w-[90%] sm:w-[50%] md:w-[40%] lg:w-[30%] shadow-2xl rounded-l-lg transform ${
-          drawerOpen ? "translate-x-0" : "translate-x-full"
+        ref={cartDrawerRef}
+        className={`fixed top-0 right-0 h-full w-[90%] sm:w-[60%] md:w-[50%] lg:w-[30%] shadow-2xl rounded-l-lg transform ${
+          cartDrawerOpen ? "translate-x-0" : "translate-x-full"
         } transition-transform duration-300 ease-in-out z-50 flex flex-col ${
-          theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
+          theme === "light" ? "bg-white text-gray-900" : "bg-gray-800 text-gray-100"
         }`}
       >
         <div className="flex justify-between items-center border-b dark:border-gray-700 p-4">
           <h2 className="text-lg mx-auto font-bold">Shopping Cart</h2>
-          <button onClick={toggleDrawer} className="ml-auto text-lg">
+          <button onClick={toggleCartDrawer} className="ml-auto text-lg">
             Close
           </button>
         </div>
@@ -465,10 +578,10 @@ const TopNavbar: React.FC = () => {
       {/* Wishlist Drawer */}
       <div
         ref={wishlistRef}
-        className={`fixed top-0 right-0 h-full w-[90%] sm:w-[50%] md:w-[40%] lg:w-[30%] shadow-2xl rounded-l-lg transform ${
+        className={`fixed top-0 right-0 h-full w-[90%] sm:w-[60%] md:w-[50%] lg:w-[30%] shadow-2xl rounded-l-lg transform ${
           wishlistOpen ? "translate-x-0" : "translate-x-full"
         } transition-transform duration-300 ease-in-out z-50 flex flex-col ${
-          theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
+          theme === "light" ? "bg-white text-gray-900" : "bg-gray-800 text-gray-100"
         }`}
       >
         <div className="flex justify-between items-center p-4">
