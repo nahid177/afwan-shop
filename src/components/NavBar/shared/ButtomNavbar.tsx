@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { FiMenu } from "react-icons/fi";
 import axios from "axios";
+import { usePathname } from "next/navigation";
 
 interface ProductCategory {
   _id: string;
@@ -20,6 +21,7 @@ interface ProductType {
 const ButtomNavbar: React.FC = () => {
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const [menuOpen, setMenuOpen] = useState(false);
+  const pathname = usePathname(); // Get the current path
 
   // Fetch product types on component mount
   useEffect(() => {
@@ -39,6 +41,12 @@ const ButtomNavbar: React.FC = () => {
   const toggleMenu = () => {
     setMenuOpen(!menuOpen);
   };
+
+  // Check if the current page is an admin page
+  const isAdminPage = pathname.startsWith("/admin");
+
+  // Return nothing if it's an admin page
+  if (isAdminPage) return null;
 
   return (
     <nav className="w-full bg-white text-black dark:bg-gray-900 dark:text-white shadow-md">
