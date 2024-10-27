@@ -5,16 +5,31 @@ import { useParams } from "next/navigation";
 import Image from "next/image";
 import { useTheme } from "@/mode/ThemeContext"; // Import the theme context
 
+interface ColorQuantity {
+  color: string;
+  quantity: number;
+}
+
+interface SizeQuantity {
+  size: string;
+  quantity: number;
+}
+
+interface Subtitle {
+  title: string;
+  titledetail: string;
+}
+
 interface Product {
   _id: string;
   product_name: string;
   code: string[];
-  color: string[];
-  sizes: { size: string; quantity: number }[];
+  colors: ColorQuantity[];
+  sizes: SizeQuantity[];
   originalPrice: number;
   offerPrice: number;
   title: string[];
-  subtitle: { title: string; titledetail: string }[];
+  subtitle: Subtitle[];
   description: string;
   images: string[];
 }
@@ -93,9 +108,32 @@ const ProductDetailsPage: React.FC = () => {
             Tk. {product.offerPrice}{" "}
             <span className="line-through text-gray-500">Tk. {product.originalPrice}</span>
           </p>
+
+        
+
+          {/* Colors */}
           <p className="mb-4">
-            Color: {product.color?.join(", ") || "N/A"} | Sizes: {product.sizes?.map(size => size.size).join(", ") || "N/A"}
+            <strong>Available Colors: </strong>
+            {product.colors?.length > 0 ? (
+              <span>{product.colors.map(colorItem => colorItem.color).join(", ")}</span>
+            ) : (
+              <span>N/A</span>
+            )}
           </p>
+
+          {/* Sizes */}
+          <p className="mb-4">
+            <strong>Available Sizes: </strong>
+            {product.sizes?.length > 0
+              ? product.sizes.map((sizeItem, index) => (
+                  <span key={index} className="mr-2 text-sm px-2 py-1 border rounded-lg">
+                    {sizeItem.size} ({sizeItem.quantity} left)
+                  </span>
+                ))
+              : "N/A"}
+          </p>
+
+          {/* Actions */}
           <div className="flex gap-4 mb-4">
             <button className="btn-gradient-blue px-4 py-2 rounded-lg">Add to Cart</button>
             <button className="bg-black text-white px-4 py-2 rounded-lg">Buy Now</button>
@@ -104,6 +142,31 @@ const ProductDetailsPage: React.FC = () => {
           {/* Description */}
           <h3 className="text-lg font-semibold mb-2">Description</h3>
           <p className="mb-4">{product.description}</p>
+            {/* Titles */}
+            {product.title?.length > 0 && (
+            <div className="mb-4">
+              <strong>Titles:</strong>
+              <ul className="list-disc ml-4">
+                {product.title.map((item, index) => (
+                  <li key={index}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Subtitles */}
+          {product.subtitle?.length > 0 && (
+            <div className="mb-4">
+              <strong>Subtitles:</strong>
+              <ul className="list-disc ml-4">
+                {product.subtitle.map((subItem, index) => (
+                  <li key={index}>
+                    <strong>{subItem.title}</strong>: {subItem.titledetail}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
       </div>
     </div>
