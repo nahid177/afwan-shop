@@ -4,7 +4,15 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hide scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
 
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
 body {
   background-color: var(--background); /* Background changes based on the theme */
   color: var(--foreground); /* Foreground color changes based on the theme */
