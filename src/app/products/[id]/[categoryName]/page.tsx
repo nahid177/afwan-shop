@@ -110,7 +110,7 @@ const CategoryProductsPage: React.FC = () => {
                  alt={product.product_name}
                  width={300}
                  height={300}
-                 className="w-full h-24 md:h-48 lg:h-48 object-cover rounded transition-transform hover:scale-105"
+                 className="w-full h-32 md:h-60 lg:h-72 object-cover rounded transition-transform hover:scale-105"
                />
              </div>
 
