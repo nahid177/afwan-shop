@@ -17,6 +17,7 @@ interface Product {
 
 interface ProductCategory {
   _id: string;
+  catagory_name: string; // Added this line
   product: Product[];
 }
 
@@ -130,9 +131,17 @@ const ProductTypePage: React.FC = () => {
   }
 
   return (
-    <div className={`w-full mx-auto px-4 py-6 ${theme === 'light' ? 'bg-white text-black' : 'bg-gray-900 text-white'}`}>
+    <div
+      className={`w-full mx-auto px-4 py-6 ${
+        theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
+      }`}
+    >
       {/* Breadcrumb */}
-      <div className={`mb-4 text-gray-600 ${theme === 'light' ? '' : 'text-gray-400'}`}>
+      <div
+        className={`mb-4 text-gray-600 ${
+          theme === "light" ? "" : "text-gray-400"
+        }`}
+      >
         <Link href="/">
           <span className="hover:underline">Home</span>
         </Link>
@@ -152,7 +161,11 @@ const ProductTypePage: React.FC = () => {
             {category.product.map((product) => (
               <div
                 key={product._id}
-                className={`min-w-[250px] md:min-w-[300px] lg:min-w-[300px] border lg:p-4 md:p-3 p-2 rounded-lg shadow-md hover:shadow-lg transition-shadow ${theme === 'light' ? 'bg-white text-black' : 'bg-gray-800 text-white'}`}
+                className={`min-w-[250px] md:min-w-[300px] lg:min-w-[300px] border lg:p-4 md:p-3 p-2 rounded-lg shadow-md hover:shadow-lg transition-shadow ${
+                  theme === "light"
+                    ? "bg-white text-black"
+                    : "bg-gray-800 text-white"
+                }`}
               >
                 {/* Product Image */}
                 <div className="mb-2">
@@ -166,7 +179,9 @@ const ProductTypePage: React.FC = () => {
                 </div>
 
                 {/* Product Name */}
-                <h3 className="text-xs md:text-base lg:text-xl font-medium mb-2 text-center">{product.product_name}</h3>
+                <h3 className="text-xs md:text-base lg:text-xl font-medium mb-2 text-center">
+                  {product.product_name}
+                </h3>
 
                 {/* Product Price */}
                 <div className="lg:mb-6 md:mb-6 mb-1 flex gap-3 justify-center">
@@ -175,11 +190,12 @@ const ProductTypePage: React.FC = () => {
                       {product.offerPrice.toFixed(2)}৳
                     </span>
                   )}
-                  {product.originalPrice && product.originalPrice < product.offerPrice && (
-                    <span className="text-gray-500 line-through text-xs md:text-base lg:text-xl">
-                      {product.originalPrice.toFixed(2)}৳
-                    </span>
-                  )}
+                  {product.originalPrice &&
+                    product.originalPrice < product.offerPrice && (
+                      <span className="text-gray-500 line-through text-xs md:text-base lg:text-xl">
+                        {product.originalPrice.toFixed(2)}৳
+                      </span>
+                    )}
                 </div>
 
                 {/* Add to Cart Button */}
@@ -188,8 +204,14 @@ const ProductTypePage: React.FC = () => {
                 </button>
 
                 {/* See Details Button with Icon */}
-                <Link href={`/products/details/${product._id}`}>
-                  <button className={`flex items-center justify-center w-full text-xs md:text-base lg:text-xl lg:py-3 md:py-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-lg transition-all ${theme === 'light' ? '' : 'bg-gray-700 text-white'}`}>
+                <Link
+                  href={`/products/details/${id}/${category.catagory_name}/${product._id}`}
+                >
+                  <button
+                    className={`flex items-center justify-center w-full text-xs md:text-base lg:text-xl lg:py-3 md:py-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-lg transition-all ${
+                      theme === "light" ? "" : "bg-gray-700 text-white"
+                    }`}
+                  >
                     <FaEye className="mr-2" />
                     <span>See Details</span>
                   </button>
