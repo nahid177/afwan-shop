@@ -4,6 +4,7 @@ import React from "react";
 import localFont from "next/font/local";
 import "./globals.css";
 import { ThemeProvider } from "@/mode/ThemeContext";
+import { CartProvider } from "@/context/CartContext"; // Import the CartProvider
 import TopNavbar from "@/components/NavBar/shared/TopNavbar";
 import ButtomNavbar from "@/components/NavBar/shared/ButtomNavbar";
 
@@ -35,9 +36,12 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <ThemeProvider>
-          <TopNavbar />
-          <ButtomNavbar />
-          <main>{children}</main>
+          <CartProvider>
+            {/* Wrap your application with CartProvider */}
+            <TopNavbar />
+            <ButtomNavbar />
+            <main>{children}</main>
+          </CartProvider>
         </ThemeProvider>
       </body>
     </html>

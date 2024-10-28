@@ -1,9 +1,9 @@
 // src/components/NavBar/shared/TopNavbar.tsx
 
 "use client";
+
 import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
-import { CiBookmarkCheck } from "react-icons/ci";
 import {
   FiShoppingCart,
   FiSearch,
@@ -14,25 +14,22 @@ import {
   FiTrash2,
   FiHome,
 } from "react-icons/fi";
+import { CiBookmarkCheck } from "react-icons/ci";
 import Link from "next/link";
 import { useTheme } from "@/mode/ThemeContext";
 import { usePathname } from "next/navigation";
 import axios from "axios";
-
-interface CartItem {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-  imageUrl: string;
-}
+import { useCart } from "@/context/CartContext";
+import Toast from "@/components/Toast/Toast";
 
 interface WishlistItem {
-  id: number;
+  id: string;
   name: string;
   price: number;
   originalPrice: number;
   imageUrl: string;
+  size?: string;
+  color?: string;
 }
 
 interface ProductCategory {
@@ -46,56 +43,33 @@ interface ProductType {
   product_catagory: ProductCategory[];
 }
 
-const initialCartItems: CartItem[] = [
-  {
-    id: 1,
-    name: "Wireless Headphones",
-    price: 120,
-    quantity: 1,
-    imageUrl: "",
-  },
-  {
-    id: 2,
-    name: "Smart Watch",
-    price: 220,
-    quantity: 2,
-    imageUrl: "",
-  },
-];
-
-const initialWishlistItems: WishlistItem[] = [
-  {
-    id: 1,
-    name: "Designer Edition Calligraphy T-Shirt",
-    price: 450,
-    originalPrice: 550,
-    imageUrl: "",
-  },
-];
-
 const TopNavbar: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
 
-  // Separate state variables for each drawer
-  const [menuDrawerOpen, setMenuDrawerOpen] = useState<boolean>(false); // For mobile and tablet menu drawer
-  const [cartDrawerOpen, setCartDrawerOpen] = useState<boolean>(false); // For cart drawer
+  // State variables for each drawer
+  const [menuDrawerOpen, setMenuDrawerOpen] = useState<boolean>(false);
+  const [cartDrawerOpen, setCartDrawerOpen] = useState<boolean>(false);
   const [wishlistOpen, setWishlistOpen] = useState<boolean>(false);
 
-  const [wishlistItems, setWishlistItems] =
-    useState<WishlistItem[]>(initialWishlistItems);
-  const [cartItems, setCartItems] = useState<CartItem[]>(initialCartItems);
+  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
+  const { cartItems, totalQuantity, totalAmount, addToCart, removeFromCart } = useCart();
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
 
   const searchInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Separate refs for each drawer
-  const menuDrawerRef = useRef<HTMLDivElement | null>(null); // For mobile and tablet menu drawer
-  const cartDrawerRef = useRef<HTMLDivElement | null>(null); // For cart drawer
+  // Refs for drawers
+  const menuDrawerRef = useRef<HTMLDivElement | null>(null);
+  const cartDrawerRef = useRef<HTMLDivElement | null>(null);
   const wishlistRef = useRef<HTMLDivElement | null>(null);
   const searchBarRef = useRef<HTMLDivElement | null>(null);
+
+  // Toast state
+  const [toastVisible, setToastVisible] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string>("");
+  const [toastType, setToastType] = useState<"success" | "error" | "warning">("success");
 
   // Fetch product types on component mount
   useEffect(() => {
@@ -126,6 +100,7 @@ const TopNavbar: React.FC = () => {
   // Handle search input
   const handleSearch = (query: string) => {
     setSearchQuery(query);
+    // Implement search functionality as needed
   };
 
   // Toggle functions for each drawer
@@ -150,7 +125,7 @@ const TopNavbar: React.FC = () => {
     setCartDrawerOpen(false);
   };
 
-  // Close drawers and modals when clicking outside
+  // Close drawers when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -189,20 +164,30 @@ const TopNavbar: React.FC = () => {
     };
   }, [menuDrawerOpen, cartDrawerOpen, wishlistOpen, searchOpen]);
 
-  // Calculate totals for cart
-  const totalAmount = cartItems.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  );
-  const totalQuantity = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-
-  // Remove item from wishlist or cart
-  const removeFromWishlist = (id: number) => {
+  // Remove item from wishlist
+  const removeFromWishlist = (id: string) => {
     setWishlistItems(wishlistItems.filter((item) => item.id !== id));
+    // Show toast notification
+    setToastMessage("Item removed from wishlist.");
+    setToastType("warning");
+    setToastVisible(true);
   };
 
-  const removeFromCart = (id: number) => {
-    setCartItems(cartItems.filter((item) => item.id !== id));
+  // Add item from wishlist to cart
+  const addWishlistItemToCart = (item: WishlistItem) => {
+    addToCart({
+      id: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: 1,
+      imageUrl: item.imageUrl,
+      size: item.size,
+      color: item.color,
+    });
+    // Show toast notification
+    setToastMessage("Item added to cart.");
+    setToastType("success");
+    setToastVisible(true);
   };
 
   const isAdminPage = pathname.startsWith("/admin");
@@ -212,12 +197,21 @@ const TopNavbar: React.FC = () => {
 
   return (
     <>
+      {/* Toast Notification */}
+      {toastVisible && (
+        <div className="fixed top-4 right-4 z-50">
+          <Toast
+            type={toastType}
+            message={toastMessage}
+            onClose={() => setToastVisible(false)}
+          />
+        </div>
+      )}
+
       {/* Mobile and Tablet Navbar */}
       <div
         className={`navbar ${
-          theme === "light"
-            ? "bg-gray-50 text-gray-900"
-            : "bg-gray-800 text-gray-100"
+          theme === "light" ? "bg-gray-50 text-gray-900" : "bg-gray-800 text-gray-100"
         } py-4 lg:hidden flex justify-between px-4 items-center`}
       >
         {/* Menu Icon */}
@@ -247,9 +241,7 @@ const TopNavbar: React.FC = () => {
       <div
         ref={menuDrawerRef}
         className={`fixed top-0 left-0 h-full w-[80%] sm:w-[60%] md:w-[50%] lg:w-[30%] ${
-          theme === "light"
-            ? "bg-white text-gray-900"
-            : "bg-gray-800 text-gray-100"
+          theme === "light" ? "bg-white text-gray-900" : "bg-gray-800 text-gray-100"
         } shadow-lg transform ${
           menuDrawerOpen ? "translate-x-0" : "-translate-x-full"
         } transition-transform duration-300 ease-in-out z-50`}
@@ -300,9 +292,7 @@ const TopNavbar: React.FC = () => {
       {searchOpen && (
         <div
           className={`fixed top-0 left-0 w-full h-[70px] shadow-lg transform lg:hidden ${
-            theme === "light"
-              ? "bg-white text-gray-900"
-              : "bg-gray-800 text-gray-100"
+            theme === "light" ? "bg-white text-gray-900" : "bg-gray-800 text-gray-100"
           } z-50`}
         >
           <div className="flex items-center justify-between p-4">
@@ -324,9 +314,7 @@ const TopNavbar: React.FC = () => {
       {/* Desktop Navbar */}
       <div
         className={`navbar px-4 md:px-10 lg:px-20 ${
-          theme === "light"
-            ? "bg-gray-50 text-gray-900"
-            : "bg-gray-800 text-gray-100"
+          theme === "light" ? "bg-gray-50 text-gray-900" : "bg-gray-800 text-gray-100"
         } py-4 hidden lg:flex`}
       >
         {/* Navbar Start */}
@@ -342,9 +330,7 @@ const TopNavbar: React.FC = () => {
             <ul
               tabIndex={0}
               className={`menu menu-sm dropdown-content rounded-box z-[1] mt-3 w-52 p-2 shadow ${
-                theme === "light"
-                  ? "bg-white text-gray-900"
-                  : "bg-gray-800 text-gray-100"
+                theme === "light" ? "bg-white text-gray-900" : "bg-gray-800 text-gray-100"
               }`}
             >
               <li>
@@ -392,9 +378,7 @@ const TopNavbar: React.FC = () => {
                   onChange={(e) => handleSearch(e.target.value)}
                   placeholder="Search..."
                   className={`input input-bordered rounded-full w-full md:w-64 ${
-                    theme === "light"
-                      ? "bg-white text-gray-900"
-                      : "bg-gray-800 text-gray-100"
+                    theme === "light" ? "bg-white text-gray-900" : "bg-gray-800 text-gray-100"
                   }`}
                 />
               </div>
@@ -427,7 +411,10 @@ const TopNavbar: React.FC = () => {
           </button>
 
           {/* Cart Icon */}
-          <button className="btn btn-ghost btn-circle" onClick={toggleCartDrawer}>
+          <button
+            className="btn btn-ghost btn-circle"
+            onClick={toggleCartDrawer}
+          >
             <div className="indicator">
               <FiShoppingCart
                 className={`h-5 w-5 md:h-6 md:w-6 ${
@@ -457,9 +444,7 @@ const TopNavbar: React.FC = () => {
       {/* Mobile/Tablet Bottom Navbar */}
       <div
         className={`fixed bottom-0 left-0 right-0 z-50 ${
-          theme === "light"
-            ? "bg-gray-50 text-gray-900"
-            : "bg-gray-800 text-gray-100"
+          theme === "light" ? "bg-gray-50 text-gray-900" : "bg-gray-800 text-gray-100"
         } lg:hidden flex justify-around items-center py-2 shadow-md`}
       >
         {/* Menu Icon */}
@@ -538,17 +523,32 @@ const TopNavbar: React.FC = () => {
                   )}
                   <div className="flex-1 ml-4">
                     <div className="text-md">{item.name}</div>
+                    {item.size && (
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        Size: {item.size}
+                      </div>
+                    )}
+                    {item.color && (
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        Color: {item.color}
+                      </div>
+                    )}
                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                      x{item.quantity}
+                      Quantity: x{item.quantity}
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
                     <span className="text-md font-bold">
-                      ${item.price * item.quantity}
+                      Tk. {item.price * item.quantity}
                     </span>
                     <FiTrash2
                       className="text-red-500 cursor-pointer"
-                      onClick={() => removeFromCart(item.id)}
+                      onClick={() => {
+                        removeFromCart(item.id);
+                        setToastMessage("Item removed from cart.");
+                        setToastType("warning");
+                        setToastVisible(true);
+                      }}
                     />
                   </div>
                 </li>
@@ -561,7 +561,7 @@ const TopNavbar: React.FC = () => {
           <div className="p-5 border-t dark:border-gray-700">
             <div className="flex justify-between mb-4">
               <span className="text-md font-semibold">Total</span>
-              <span className="text-md font-semibold">${totalAmount}</span>
+              <span className="text-md font-semibold">Tk. {totalAmount}</span>
             </div>
             <button className="btn btn-gradient-blue w-full rounded-full py-3 text-md">
               Place Order
@@ -616,11 +616,14 @@ const TopNavbar: React.FC = () => {
                     <div className="text-md">{item.name}</div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
                       <span className="line-through">
-                        TK. {item.originalPrice}
+                        Tk. {item.originalPrice}
                       </span>{" "}
-                      TK. {item.price}
+                      Tk. {item.price}
                     </div>
-                    <button className="btn btn-gradient-blue w-full rounded-full mt-2">
+                    <button
+                      onClick={() => addWishlistItemToCart(item)}
+                      className="btn btn-gradient-blue w-full rounded-full mt-2"
+                    >
                       Add To Cart
                     </button>
                   </div>
