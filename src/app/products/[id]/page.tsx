@@ -12,6 +12,7 @@ import { useTheme } from "@/mode/ThemeContext"; // Use the theme context
 import { useCart } from "@/context/CartContext"; // Import the cart context
 import Toast from "@/components/Toast/Toast"; // Import Toast component
 
+// Define interfaces for type safety
 interface Product {
   _id: string;
   product_name: string;
@@ -24,18 +25,21 @@ interface Product {
 
 interface ProductCategory {
   _id: string;
-  catagory_name: string;
+  catagory_name: string; // Reverted to original name
   product: Product[];
 }
 
 interface ProductType {
   _id: string;
   types_name: string;
-  product_catagory: ProductCategory[];
+  product_catagory: ProductCategory[]; // Reverted to original name
 }
 
 const ProductTypePage: React.FC = () => {
-  const { id } = useParams();
+  const params = useParams();
+  const idParam = params.id;
+  const typeId = Array.isArray(idParam) ? idParam[0] : idParam; // Ensure typeId is string
+
   const [productType, setProductType] = useState<ProductType | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const { theme } = useTheme(); // Accessing theme for dynamic styling
@@ -53,17 +57,21 @@ const ProductTypePage: React.FC = () => {
   useEffect(() => {
     const fetchProductType = async () => {
       try {
-        const response = await axios.get(`/api/product-types/${id}`);
+        const response = await axios.get(`/api/product-types/${typeId}`);
+        console.log("Fetched Product Type:", response.data); // Debugging
         setProductType(response.data);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Error fetching product type:", error);
+        setToastMessage("Failed to load product types.");
+        setToastType("error");
+        setToastVisible(true);
       } finally {
         setLoading(false);
       }
     };
 
     fetchProductType();
-  }, [id]);
+  }, [typeId]);
 
   // Function to start auto-scrolling
   const startAutoScroll = () => {
@@ -119,7 +127,9 @@ const ProductTypePage: React.FC = () => {
 
   // Start auto-scrolling when the component mounts or when `productType` changes
   useEffect(() => {
-    startAutoScroll(); // Start auto-scroll initially
+    if (productType) {
+      startAutoScroll(); // Start auto-scroll initially
+    }
 
     // Cleanup intervals when the component unmounts
     return () => {
@@ -192,31 +202,41 @@ const ProductTypePage: React.FC = () => {
       </div>
 
       {/* Product Categories */}
-      {productType.product_catagory.map((category, index) => (
-        <div key={category._id} className="mb-8">
-          {/* Category Name */}
-          <h2 className="text-xl font-semibold mb-4">
-            {category.catagory_name}
-          </h2>
+      {productType.product_catagory && productType.product_catagory.length > 0 ? (
+        productType.product_catagory.map((category, index) => (
+          <div key={category._id} className="mb-8">
+            {/* Category Name */}
+            <h2 className="text-xl font-semibold mb-4">
+              {category.catagory_name}
+            </h2>
 
-          {/* Horizontal Scrollable Product Row */}
-          <div
-            className="flex overflow-x-auto space-x-4 no-scrollbar"
-            ref={(el) => {
-              scrollRefs.current[index] = el;
-            }}
-          >
-            {category.product.map((product) => (
-              <ProductCard
-                key={product._id}
-                product={product}
-                onAddToCart={handleAddToCart}
-                theme={theme}
-              />
-            ))}
+            {/* Horizontal Scrollable Product Row */}
+            <div
+              className="flex overflow-x-auto space-x-4 no-scrollbar"
+              ref={(el) => {
+                scrollRefs.current[index] = el;
+              }}
+            >
+              {category.product.length > 0 ? (
+                category.product.map((product) => (
+                  <ProductCard
+                    key={product._id}
+                    product={product}
+                    onAddToCart={handleAddToCart}
+                    theme={theme}
+                    categoryName={category.catagory_name}
+                    typeId={typeId} // Pass typeId as string
+                  />
+                ))
+              ) : (
+                <p className="text-gray-500">No products found in this category.</p>
+              )}
+            </div>
           </div>
-        </div>
-      ))}
+        ))
+      ) : (
+        <p className="text-gray-500">No product categories available.</p>
+      )}
     </div>
   );
 };
@@ -226,9 +246,11 @@ interface ProductCardProps {
   product: Product;
   onAddToCart: (product: Product, color: string, size: string) => void;
   theme: string;
+  categoryName: string; // Reverted name
+  typeId: string; // Reverted name
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, categoryName, typeId }) => {
   const [selectedColor, setSelectedColor] = useState<string>(product.colors[0]?.color || "");
   const [selectedSize, setSelectedSize] = useState<string>(product.sizes[0]?.size || "");
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -249,6 +271,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme }
           width={300}
           height={300}
           className="w-full h-48 object-cover rounded transition-transform hover:scale-105"
+          loading="lazy" // Optional: improves performance
         />
       </div>
 
@@ -282,12 +305,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme }
 
       {/* See Details Button with Icon */}
       <Link
-        href={`/products/details/${product._id}`}
+        href={`/products/details/${typeId}/${categoryName}/${product._id}`}
       >
         <button
-          className={`flex items-center justify-center w-full text-base py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-all ${
+          className={`flex items-center justify-center w-full text-xs md:text-base lg:text-xl lg:py-3 md:py-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-lg transition-all ${
             theme === "light" ? "" : "bg-gray-700 text-white"
           }`}
+          aria-label={`See details of ${product.product_name}`}
         >
           <FaEye className="mr-2" />
           <span>See Details</span>
@@ -317,6 +341,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme }
                         ? "bg-blue-500 text-white"
                         : "bg-transparent text-gray-700 dark:text-gray-300"
                     }`}
+                    aria-pressed={selectedColor === colorItem.color}
                   >
                     {colorItem.color}
                   </button>
@@ -337,6 +362,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme }
                         ? "bg-green-500 text-white"
                         : "bg-transparent text-gray-700 dark:text-gray-300"
                     }`}
+                    aria-pressed={selectedSize === sizeItem.size}
                   >
                     {sizeItem.size}
                   </button>
@@ -358,6 +384,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme }
                   setIsModalOpen(false);
                 }}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                disabled={!selectedColor || !selectedSize}
               >
                 Add to Cart
               </button>

@@ -9,7 +9,6 @@ import Image from "next/image";
 import { useTheme } from "@/mode/ThemeContext"; // Import the theme context
 import { useCart } from "@/context/CartContext"; // Import the cart context
 import Toast from "@/components/Toast/Toast"; // Import Toast component
-import Link from "next/link"; // For breadcrumb links
 
 interface ColorQuantity {
   color: string;
