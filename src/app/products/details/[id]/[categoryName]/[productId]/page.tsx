@@ -203,9 +203,9 @@ const ProductDetailsPage: React.FC = () => {
         <div className="lg:w-1/3">
           <h2 className="text-2xl font-bold mb-4">{product.product_name}</h2>
           <p className="text-xl font-semibold text-red-500 mb-2">
-            Tk. {product.offerPrice}{" "}
+           {product.offerPrice}৳{" "}
             <span className="line-through text-gray-500">
-              Tk. {product.originalPrice}
+              {product.originalPrice}৳
             </span>
           </p>
 

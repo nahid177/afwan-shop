@@ -210,13 +210,13 @@ const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
       <div className="lg:mb-6 md:mb-6 mb-1 flex gap-3 justify-center">
         {product.offerPrice && (
           <span className="text-red-500 text-xs md:text-base lg:text-xl font-bold">
-            {product.offerPrice.toFixed(2)}৳
+            {product.offerPrice.toFixed(0)}৳
           </span>
         )}
         {product.originalPrice &&
-          product.originalPrice > product.offerPrice && (
+          product.originalPrice < product.offerPrice && (
             <span className="text-gray-500 line-through text-xs md:text-base lg:text-xl">
-              {product.originalPrice.toFixed(2)}৳
+            {product.originalPrice.toFixed(0)}৳
             </span>
           )}
       </div>
