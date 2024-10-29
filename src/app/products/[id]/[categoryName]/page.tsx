@@ -56,13 +56,11 @@ const CategoryProductsPage: React.FC = () => {
   useEffect(() => {
     const fetchCategoryProducts = async () => {
       try {
-        // Encode categoryName to handle special characters and spaces
         const productResponse = await axios.get(
           `/api/product-types/${id}/categories/${categoryName}`
         );
         setProducts(productResponse.data);
 
-        // Fetch type name using the id to display in breadcrumb
         const typeResponse = await axios.get(`/api/product-types/${id}`);
         setTypeName(typeResponse.data.types_name);
       } catch (error) {
@@ -91,19 +89,18 @@ const CategoryProductsPage: React.FC = () => {
     );
   }
 
-  // Function to handle adding a product to the cart with selected size and color
-  const handleAddToCart = (product: Product, selectedColor: string, selectedSize: string) => {
+  // Function to handle adding a product to the cart with selected size, color, and quantity
+  const handleAddToCart = (product: Product, selectedColor: string, selectedSize: string, quantity: number) => {
     const cartItem = {
       id: product._id,
       name: product.product_name,
       price: product.offerPrice || product.originalPrice,
-      quantity: 1,
+      quantity,
       imageUrl: product.images[0] || "/placeholder.png",
       color: selectedColor,
       size: selectedSize,
     };
     addToCart(cartItem);
-    // Show toast notification
     setToastMessage("Product added to cart!");
     setToastType("success");
     setToastVisible(true);
@@ -111,11 +108,10 @@ const CategoryProductsPage: React.FC = () => {
 
   return (
     <div
-      className={`w-full  mx-auto px-4 py-6 ${
+      className={`w-full mx-auto px-4 py-6 ${
         theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
       }`}
     >
-      {/* Toast Notification */}
       {toastVisible && (
         <div className="fixed top-4 right-4 z-50">
           <Toast
@@ -127,11 +123,7 @@ const CategoryProductsPage: React.FC = () => {
       )}
 
       {/* Breadcrumb */}
-      <div
-        className={`mb-4 text-gray-600 ${
-          theme === "light" ? "" : "text-gray-400"
-        }`}
-      >
+      <div className={`mb-4 text-gray-600 ${theme === "light" ? "" : "text-gray-400"}`}>
         <Link href="/">
           <span className="hover:underline">Home</span>
         </Link>
@@ -162,10 +154,10 @@ const CategoryProductsPage: React.FC = () => {
   );
 };
 
-// CategoryProductCard Component with Color and Size Selection
+// CategoryProductCard Component with Color, Size, and Quantity Selection
 interface CategoryProductCardProps {
   product: Product;
-  onAddToCart: (product: Product, color: string, size: string) => void;
+  onAddToCart: (product: Product, color: string, size: string, quantity: number) => void;
   theme: string;
   categoryName: string;
   productTypeId: string;
@@ -180,33 +172,39 @@ const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
 }) => {
   const [selectedColor, setSelectedColor] = useState<string>(product.colors[0]?.color || "");
   const [selectedSize, setSelectedSize] = useState<string>(product.sizes[0]?.size || "");
+  const [quantity, setQuantity] = useState<number>(1);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
+  // Functions to increment and decrement quantity
+  const incrementQuantity = () => {
+    const maxQuantity = product.sizes.find((s) => s.size === selectedSize)?.quantity || 1;
+    setQuantity((prevQuantity) => Math.min(prevQuantity + 1, maxQuantity));
+  };
+
+  const decrementQuantity = () => {
+    setQuantity((prevQuantity) => Math.max(prevQuantity - 1, 1));
+  };
 
   return (
     <div
       className={`border lg:p-4 md:p-3 p-2 rounded-lg shadow-md hover:shadow-lg transition-shadow ${
-        theme === "light"
-          ? "bg-white text-black"
-          : "bg-gray-800 text-white"
+        theme === "light" ? "bg-white text-black" : "bg-gray-800 text-white"
       } relative`}
     >
-      {/* Product Image */}
       <div className="mb-1">
         <Image
           src={product.images[0] || "/placeholder.png"}
           alt={product.product_name}
           width={300}
           height={300}
-          className="w-full h-32 md:h-60 lg:h-72 object-cover rounded transition-transform hover:scale-105"
+          className="w-full h-28 md:h-60 lg:h-72 object-cover rounded transition-transform hover:scale-105"
         />
       </div>
 
-      {/* Product Name */}
-      <h3 className="text-xs md:text-base lg:text-xl  font-medium mb-2 text-center">
+      <h3 className="text-xs md:text-base lg:text-xl font-medium mb-2 text-center">
         {product.product_name}
       </h3>
 
-      {/* Product Price */}
       <div className="lg:mb-6 md:mb-6 mb-1 flex gap-3 justify-center">
         {product.offerPrice && (
           <span className="text-red-500 text-xs md:text-base lg:text-xl font-bold">
@@ -216,20 +214,19 @@ const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
         {product.originalPrice &&
           product.originalPrice < product.offerPrice && (
             <span className="text-gray-500 line-through text-xs md:text-base lg:text-xl">
-            {product.originalPrice.toFixed(0)}৳
+              {product.originalPrice.toFixed(0)}৳
             </span>
           )}
       </div>
-      <div className="px-4 ">
-        {/* Add to Cart Button */}
+
+      <div className="px-4">
         <button
           onClick={() => setIsModalOpen(true)}
-          className="btn-gradient-blue text-xs md:text-base lg:text-xl w-full py-2 text-center rounded-lg hover:scale-105 transition-transform mb-4 "
+          className="btn-gradient-blue text-xs md:text-base lg:text-xl w-full py-2 text-center rounded-lg hover:scale-105 transition-transform mb-4"
         >
           Add to Cart
         </button>
 
-        {/* See Details Button with Icon */}
         <Link
           href={`/products/details/${productTypeId}/${encodeURIComponent(
             categoryName
@@ -246,7 +243,6 @@ const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
         </Link>
       </div>
 
-      {/* Modal for Color and Size Selection */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div
@@ -256,7 +252,6 @@ const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
           >
             <h2 className="text-xl font-semibold mb-4">Select Options</h2>
 
-            {/* Color Selection */}
             <div className="mb-4">
               <label className="block mb-2 font-medium">Color:</label>
               <div className="flex flex-wrap gap-2">
@@ -276,7 +271,6 @@ const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
               </div>
             </div>
 
-            {/* Size Selection */}
             <div className="mb-4">
               <label className="block mb-2 font-medium">Size:</label>
               <div className="flex flex-wrap gap-2">
@@ -296,7 +290,53 @@ const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
               </div>
             </div>
 
-            {/* Action Buttons */}
+            <div className="mb-4">
+              <label className={`block mb-2 font-medium ${theme === 'light' ? 'text-gray-800' : 'text-gray-200'}`}>
+                Quantity:
+              </label>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={decrementQuantity}
+                  className={`px-3 py-1 rounded-lg ${theme === 'light' ? 'bg-gray-300 hover:bg-gray-400' : 'bg-gray-700 hover:bg-gray-600'} transition-colors`}
+                  disabled={quantity <= 1}
+                  aria-label="Decrease quantity"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    if (!isNaN(val) && val >= 1) {
+                      const currentSize = product.sizes.find((s) => s.size === selectedSize);
+                      const maxQuantity = currentSize ? currentSize.quantity : 1;
+                      setQuantity(val > maxQuantity ? maxQuantity : val);
+                    }
+                  }}
+                  className={`w-16 text-center border rounded-lg px-2 py-1 ${theme === 'light' ? 'border-gray-400 bg-white text-gray-800' : 'border-gray-600 bg-gray-800 text-gray-200'}`}
+                  min={1}
+                  max={product.sizes.find((s) => s.size === selectedSize)?.quantity || 1}
+                  aria-label="Product quantity"
+                />
+                <button
+                  onClick={incrementQuantity}
+                  className="px-3 py-1 bg-gray-300 rounded-lg hover:bg-gray-400"
+                  disabled={
+                    quantity >= (product.sizes.find((s) => s.size === selectedSize)?.quantity || 1)
+                  }
+                  aria-label="Increase quantity"
+                >
+                  +
+                </button>
+              </div>
+              {selectedSize && (
+                <p className={`text-sm mt-1 ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>
+                  Max available: {product.sizes.find((s) => s.size === selectedSize)?.quantity || 1}
+                </p>
+              )}
+            </div>
+
             <div className="flex justify-end gap-4">
               <button
                 onClick={() => setIsModalOpen(false)}
@@ -306,10 +346,11 @@ const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
               </button>
               <button
                 onClick={() => {
-                  onAddToCart(product, selectedColor, selectedSize);
+                  onAddToCart(product, selectedColor, selectedSize, quantity);
                   setIsModalOpen(false);
                 }}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                disabled={!selectedColor || !selectedSize || quantity < 1}
               >
                 Add to Cart
               </button>

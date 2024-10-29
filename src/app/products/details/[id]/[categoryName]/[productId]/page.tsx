@@ -62,9 +62,10 @@ const ProductDetailsPage: React.FC = () => {
 
   const { addToCart } = useCart();
 
-  // States for selected color and size
+  // States for selected color, size, and quantity
   const [selectedColor, setSelectedColor] = useState<string>("");
   const [selectedSize, setSelectedSize] = useState<string>("");
+  const [quantity, setQuantity] = useState<number>(1);
 
   // State to control the visibility of the modal
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
@@ -72,9 +73,9 @@ const ProductDetailsPage: React.FC = () => {
   useEffect(() => {
     const fetchProductDetails = async () => {
       try {
-        const encodedCategoryName = encodeURIComponent(categoryName);
+        // Removed manual encoding to prevent double encoding
         const productResponse = await axios.get(
-          `/api/product-types/${id}/categories/${encodedCategoryName}/products/${productId}`
+          `/api/product-types/${id}/categories/${categoryName}/products/${productId}`
         );
         setProduct(productResponse.data);
         // Set default selected color and size
@@ -130,13 +131,13 @@ const ProductDetailsPage: React.FC = () => {
     );
   }
 
-  // Function to handle adding a product to the cart with selected size and color
+  // Function to handle adding a product to the cart with selected size, color, and quantity
   const handleAddToCart = () => {
     const cartItem = {
       id: product._id,
       name: product.product_name,
       price: product.offerPrice || product.originalPrice,
-      quantity: 1,
+      quantity: quantity,
       imageUrl: product.images[0] || "/placeholder.png",
       color: selectedColor,
       size: selectedSize,
@@ -150,11 +151,27 @@ const ProductDetailsPage: React.FC = () => {
     setIsModalOpen(false);
   };
 
+  // Function to handle quantity increment
+  const incrementQuantity = () => {
+    if (product.sizes.length > 0) {
+      const currentSize = product.sizes.find((s) => s.size === selectedSize);
+      if (currentSize && quantity < currentSize.quantity) {
+        setQuantity(quantity + 1);
+      }
+    }
+  };
+
+  // Function to handle quantity decrement
+  const decrementQuantity = () => {
+    if (quantity > 1) {
+      setQuantity(quantity - 1);
+    }
+  };
+
   return (
     <div
-      className={`w-full mx-auto px-4 py-6 ${
-        theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
-      }`}
+      className={`w-full mx-auto px-4 py-6 ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
+        }`}
     >
       {/* Toast Notification */}
       {toastVisible && (
@@ -187,11 +204,10 @@ const ProductDetailsPage: React.FC = () => {
                   alt={`Product image ${index + 1}`}
                   width={100}
                   height={100}
-                  className={`object-cover rounded-lg ${
-                    index === selectedImageIndex
-                      ? "border-2 border-blue-500"
-                      : "border"
-                  }`}
+                  className={`object-cover rounded-lg ${index === selectedImageIndex
+                    ? "border-2 border-blue-500"
+                    : "border"
+                    }`}
                   onClick={() => setSelectedImageIndex(index)}
                 />
               </div>
@@ -203,7 +219,7 @@ const ProductDetailsPage: React.FC = () => {
         <div className="lg:w-1/3">
           <h2 className="text-2xl font-bold mb-4">{product.product_name}</h2>
           <p className="text-xl font-semibold text-red-500 mb-2">
-           {product.offerPrice}৳{" "}
+            {product.offerPrice}৳{" "}
             <span className="line-through text-gray-500">
               {product.originalPrice}৳
             </span>
@@ -226,13 +242,13 @@ const ProductDetailsPage: React.FC = () => {
             <strong>Available Sizes: </strong>
             {product.sizes?.length > 0
               ? product.sizes.map((sizeItem, index) => (
-                  <span
-                    key={index}
-                    className="mr-2 text-sm px-2 py-1 border rounded-lg"
-                  >
-                    {sizeItem.size} ({sizeItem.quantity} left)
-                  </span>
-                ))
+                <span
+                  key={index}
+                  className="mr-2 text-sm px-2 py-1 border rounded-lg"
+                >
+                  {sizeItem.size} ({sizeItem.quantity} left)
+                </span>
+              ))
               : "N/A"}
           </p>
 
@@ -281,13 +297,12 @@ const ProductDetailsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Modal for Color and Size Selection */}
+      {/* Modal for Color, Size, and Quantity Selection */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div
-            className={`bg-white dark:bg-gray-800 rounded-lg p-6 w-11/12 md:w-1/2 lg:w-1/3 ${
-              theme === "light" ? "text-black" : "text-white"
-            }`}
+            className={`bg-white dark:bg-gray-800 rounded-lg p-6 w-11/12 md:w-1/2 lg:w-1/3 ${theme === "light" ? "text-black" : "text-white"
+              }`}
           >
             <h2 className="text-xl font-semibold mb-4">Select Options</h2>
 
@@ -298,12 +313,16 @@ const ProductDetailsPage: React.FC = () => {
                 {product.colors.map((colorItem, index) => (
                   <button
                     key={index}
-                    onClick={() => setSelectedColor(colorItem.color)}
-                    className={`px-3 py-1 rounded-full border ${
-                      selectedColor === colorItem.color
-                        ? "bg-blue-500 text-white"
-                        : "bg-transparent text-gray-700 dark:text-gray-300"
-                    }`}
+                    onClick={() => {
+                      setSelectedColor(colorItem.color);
+                      // Reset quantity to 1 when color changes
+                      setQuantity(1);
+                    }}
+                    className={`px-3 py-1 rounded-full border ${selectedColor === colorItem.color
+                      ? "bg-blue-500 text-white"
+                      : "bg-transparent text-gray-700 dark:text-gray-300"
+                      }`}
+                    aria-pressed={selectedColor === colorItem.color}
                   >
                     {colorItem.color}
                   </button>
@@ -318,17 +337,80 @@ const ProductDetailsPage: React.FC = () => {
                 {product.sizes.map((sizeItem, index) => (
                   <button
                     key={index}
-                    onClick={() => setSelectedSize(sizeItem.size)}
-                    className={`px-3 py-1 rounded-full border ${
-                      selectedSize === sizeItem.size
-                        ? "bg-green-500 text-white"
-                        : "bg-transparent text-gray-700 dark:text-gray-300"
-                    }`}
+                    onClick={() => {
+                      setSelectedSize(sizeItem.size);
+                      // Reset quantity to 1 when size changes
+                      setQuantity(1);
+                    }}
+                    className={`px-3 py-1 rounded-full border ${selectedSize === sizeItem.size
+                      ? "bg-green-500 text-white"
+                      : "bg-transparent text-gray-700 dark:text-gray-300"
+                      }`}
+                    aria-pressed={selectedSize === sizeItem.size}
                   >
                     {sizeItem.size}
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Quantity Selection */}
+            <div className="mb-4">
+              <label className={`block mb-2 font-medium ${theme === 'light' ? 'text-gray-800' : 'text-gray-200'
+                }`}
+                >Quantity:</label>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={decrementQuantity}
+                  className={`px-3 py-1 rounded-lg hover:bg-gray-400 disabled:opacity-50 transition-colors ${theme === 'light' ? 'bg-gray-300 hover:bg-gray-400' : 'bg-gray-700 hover:bg-gray-600'
+                    }`}
+                  disabled={quantity <= 1}
+                  aria-label="Decrease quantity"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    if (!isNaN(val) && val >= 1) {
+                      const currentSize = product.sizes.find((s) => s.size === selectedSize);
+                      const maxQuantity = currentSize ? currentSize.quantity : 1;
+                      setQuantity(val > maxQuantity ? maxQuantity : val);
+                    }
+                  }}
+                  className={`w-16 text-center border rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors ${theme === 'light'
+                    ? 'border-gray-400 bg-white text-gray-800'
+                    : 'border-gray-600 bg-gray-800 text-gray-200'
+                    }`}
+                  min={1}
+                  max={
+                    product.sizes.find((s) => s.size === selectedSize)?.quantity || 1
+                  }
+                  aria-label="Product quantity"
+                />
+                <button
+                  onClick={incrementQuantity}
+                  className="px-3 py-1 bg-gray-300 rounded-lg hover:bg-gray-400 disabled:opacity-50"
+                  disabled={
+                    !selectedSize ||
+                    quantity >=
+                    (product.sizes.find((s) => s.size === selectedSize)?.quantity ||
+                      1)
+                  }
+                  aria-label="Increase quantity"
+                >
+                  +
+                </button>
+              </div>
+              {selectedSize && (
+                <p className={`text-sm mt-1 ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'
+                  }`}>
+                  {`Max available: ${product.sizes.find((s) => s.size === selectedSize)?.quantity || 1
+                    }`}
+                </p>
+              )}
             </div>
 
             {/* Action Buttons */}
@@ -342,7 +424,7 @@ const ProductDetailsPage: React.FC = () => {
               <button
                 onClick={handleAddToCart}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                disabled={!selectedColor || !selectedSize}
+                disabled={!selectedColor || !selectedSize || quantity < 1}
               >
                 Add to Cart
               </button>

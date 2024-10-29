@@ -20,7 +20,7 @@ interface Product {
   originalPrice: number;
   images: string[];
   colors: { color: string }[];
-  sizes: { size: string }[];
+  sizes: { size: string; quantity: number }[];
 }
 
 interface ProductCategory {
@@ -58,7 +58,6 @@ const ProductTypePage: React.FC = () => {
     const fetchProductType = async () => {
       try {
         const response = await axios.get(`/api/product-types/${typeId}`);
-        console.log("Fetched Product Type:", response.data); // Debugging
         setProductType(response.data);
       } catch (error: unknown) {
         console.error("Error fetching product type:", error);
@@ -73,48 +72,40 @@ const ProductTypePage: React.FC = () => {
     fetchProductType();
   }, [typeId]);
 
-  // Function to start auto-scrolling
   const startAutoScroll = () => {
     scrollRefs.current.forEach((ref, index) => {
       if (ref) {
         const scrollInterval = setInterval(() => {
-          // Check if the scroll has reached the end
           if (ref.scrollLeft + ref.offsetWidth >= ref.scrollWidth) {
-            ref.scrollLeft = 0; // Reset the scroll to the beginning
+            ref.scrollLeft = 0;
           } else {
-            ref.scrollLeft += 1; // Adjust the scroll speed here
+            ref.scrollLeft += 1;
           }
-        }, 10 + index * 15); // Adjust the interval time to control smoothness/speed of scrolling
-
-        scrollIntervals.current.push(scrollInterval); // Store the interval
+        }, 10 + index * 15);
+        scrollIntervals.current.push(scrollInterval);
       }
     });
   };
 
-  // Function to stop auto-scrolling
   const stopAutoScroll = () => {
     scrollIntervals.current.forEach((interval) => clearInterval(interval));
-    scrollIntervals.current = []; // Clear stored intervals
+    scrollIntervals.current = [];
   };
 
-  // Add event listeners to stop auto-scroll when user interacts with touch or mouse
   useEffect(() => {
     const handleUserInteraction = () => {
-      stopAutoScroll(); // Stop scrolling when user interacts
+      stopAutoScroll();
     };
 
-    // Capture the current value of scrollRefs in a variable
     const currentScrollRefs = scrollRefs.current;
 
-    // Attach event listeners to each scrollable row
     currentScrollRefs.forEach((ref) => {
       if (ref) {
-        ref.addEventListener("touchstart", handleUserInteraction); // Stop on touch
-        ref.addEventListener("mousedown", handleUserInteraction); // Stop on mouse click
+        ref.addEventListener("touchstart", handleUserInteraction);
+        ref.addEventListener("mousedown", handleUserInteraction);
       }
     });
 
-    // Cleanup event listeners on unmount
     return () => {
       currentScrollRefs.forEach((ref) => {
         if (ref) {
@@ -125,13 +116,11 @@ const ProductTypePage: React.FC = () => {
     };
   }, [productType]);
 
-  // Start auto-scrolling when the component mounts or when `productType` changes
   useEffect(() => {
     if (productType) {
-      startAutoScroll(); // Start auto-scroll initially
+      startAutoScroll();
     }
 
-    // Cleanup intervals when the component unmounts
     return () => {
       stopAutoScroll();
     };
@@ -153,47 +142,31 @@ const ProductTypePage: React.FC = () => {
     );
   }
 
-  // Function to handle adding a product to the cart with selected size and color
-  const handleAddToCart = (product: Product, selectedColor: string, selectedSize: string) => {
+  const handleAddToCart = (product: Product, selectedColor: string, selectedSize: string, quantity: number) => {
     const cartItem = {
       id: product._id,
       name: product.product_name,
       price: product.offerPrice || product.originalPrice,
-      quantity: 1,
+      quantity,
       imageUrl: product.images[0] || "/placeholder.png",
       color: selectedColor,
       size: selectedSize,
     };
     addToCart(cartItem);
-    // Show toast notification
     setToastMessage("Product added to cart!");
     setToastType("success");
     setToastVisible(true);
   };
 
   return (
-    <div
-      className={`w-full mx-auto px-4 py-6 ${
-        theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
-      }`}
-    >
-      {/* Toast Notification */}
+    <div className={`w-full mx-auto px-4 py-6 ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"}`}>
       {toastVisible && (
         <div className="fixed top-4 right-4 z-50">
-          <Toast
-            type={toastType}
-            message={toastMessage}
-            onClose={() => setToastVisible(false)}
-          />
+          <Toast type={toastType} message={toastMessage} onClose={() => setToastVisible(false)} />
         </div>
       )}
 
-      {/* Breadcrumb */}
-      <div
-        className={`mb-4 text-gray-600 ${
-          theme === "light" ? "" : "text-gray-400"
-        }`}
-      >
+      <div className={`mb-4 text-gray-600 ${theme === "light" ? "" : "text-gray-400"}`}>
         <Link href="/">
           <span className="hover:underline">Home</span>
         </Link>
@@ -201,16 +174,10 @@ const ProductTypePage: React.FC = () => {
         <span className="font-bold">{productType.types_name}</span>
       </div>
 
-      {/* Product Categories */}
       {productType.product_catagory && productType.product_catagory.length > 0 ? (
         productType.product_catagory.map((category, index) => (
           <div key={category._id} className="mb-8">
-            {/* Category Name */}
-            <h2 className="text-xl font-semibold mb-4">
-              {category.catagory_name}
-            </h2>
-
-            {/* Horizontal Scrollable Product Row */}
+            <h2 className="text-xl font-semibold mb-4">{category.catagory_name}</h2>
             <div
               className="flex overflow-x-auto space-x-4 no-scrollbar"
               ref={(el) => {
@@ -225,7 +192,7 @@ const ProductTypePage: React.FC = () => {
                     onAddToCart={handleAddToCart}
                     theme={theme}
                     categoryName={category.catagory_name}
-                    typeId={typeId} // Pass typeId as string
+                    typeId={typeId}
                   />
                 ))
               ) : (
@@ -241,29 +208,36 @@ const ProductTypePage: React.FC = () => {
   );
 };
 
-// ProductCard Component with Color and Size Selection
+// ProductCard Component with Color, Size, and Quantity Selection
 interface ProductCardProps {
   product: Product;
-  onAddToCart: (product: Product, color: string, size: string) => void;
+  onAddToCart: (product: Product, color: string, size: string, quantity: number) => void;
   theme: string;
-  categoryName: string; // Reverted name
-  typeId: string; // Reverted name
+  categoryName: string;
+  typeId: string;
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, categoryName, typeId }) => {
   const [selectedColor, setSelectedColor] = useState<string>(product.colors[0]?.color || "");
   const [selectedSize, setSelectedSize] = useState<string>(product.sizes[0]?.size || "");
+  const [quantity, setQuantity] = useState<number>(1);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
+  const incrementQuantity = () => {
+    const maxQuantity = product.sizes.find((s) => s.size === selectedSize)?.quantity || 1;
+    setQuantity((prevQuantity) => Math.min(prevQuantity + 1, maxQuantity));
+  };
+
+  const decrementQuantity = () => {
+    setQuantity((prevQuantity) => Math.max(prevQuantity - 1, 1));
+  };
 
   return (
     <div
       className={`min-w-[200px] md:min-w-[250px] lg:min-w-[300px] border p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow ${
-        theme === "light"
-          ? "bg-white text-black"
-          : "bg-gray-800 text-white"
+        theme === "light" ? "bg-white text-black" : "bg-gray-800 text-white"
       } relative`}
     >
-      {/* Product Image */}
       <div className="mb-2">
         <Image
           src={product.images[0] || "/placeholder.png"}
@@ -271,31 +245,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, 
           width={300}
           height={300}
           className="w-full h-48 object-cover rounded transition-transform hover:scale-105"
-          loading="lazy" // Optional: improves performance
+          loading="lazy"
         />
       </div>
 
-      {/* Product Name */}
-      <h3 className="text-base font-medium mb-2 text-center">
-        {product.product_name}
-      </h3>
+      <h3 className="text-base font-medium mb-2 text-center">{product.product_name}</h3>
 
-      {/* Product Price */}
       <div className="mb-4 flex gap-3 justify-center">
-        {product.offerPrice && (
-          <span className="text-red-500 text-lg font-bold">
-           {product.offerPrice.toFixed(0)}৳
-          </span>
+        {product.offerPrice && <span className="text-red-500 text-lg font-bold">{product.offerPrice.toFixed(0)}৳</span>}
+        {product.originalPrice && product.originalPrice < product.offerPrice && (
+          <span className="text-gray-500 line-through text-lg">{product.originalPrice.toFixed(0)}৳</span>
         )}
-        {product.originalPrice &&
-          product.originalPrice < product.offerPrice && (
-            <span className="text-gray-500 line-through text-lg">
-              {product.originalPrice.toFixed(0)}৳
-            </span>
-          )}
       </div>
 
-      {/* Add to Cart Button */}
       <button
         onClick={() => setIsModalOpen(true)}
         className="btn-gradient-blue text-base w-full py-2 text-center rounded-lg hover:scale-105 transition-transform mb-4"
@@ -303,10 +265,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, 
         Add to Cart
       </button>
 
-      {/* See Details Button with Icon */}
-      <Link
-        href={`/products/details/${typeId}/${categoryName}/${product._id}`}
-      >
+      <Link href={`/products/details/${typeId}/${categoryName}/${product._id}`}>
         <button
           className={`flex items-center justify-center w-full text-xs md:text-base lg:text-xl lg:py-3 md:py-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-lg transition-all ${
             theme === "light" ? "" : "bg-gray-700 text-white"
@@ -318,7 +277,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, 
         </button>
       </Link>
 
-      {/* Modal for Color and Size Selection */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div
@@ -328,7 +286,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, 
           >
             <h2 className="text-xl font-semibold mb-4">Select Options</h2>
 
-            {/* Color Selection */}
             <div className="mb-4">
               <label className="block mb-2 font-medium">Color:</label>
               <div className="flex flex-wrap gap-2">
@@ -337,9 +294,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, 
                     key={index}
                     onClick={() => setSelectedColor(colorItem.color)}
                     className={`px-3 py-1 rounded-full border ${
-                      selectedColor === colorItem.color
-                        ? "bg-blue-500 text-white"
-                        : "bg-transparent text-gray-700 dark:text-gray-300"
+                      selectedColor === colorItem.color ? "bg-blue-500 text-white" : "bg-transparent text-gray-700 dark:text-gray-300"
                     }`}
                     aria-pressed={selectedColor === colorItem.color}
                   >
@@ -349,7 +304,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, 
               </div>
             </div>
 
-            {/* Size Selection */}
             <div className="mb-4">
               <label className="block mb-2 font-medium">Size:</label>
               <div className="flex flex-wrap gap-2">
@@ -358,9 +312,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, 
                     key={index}
                     onClick={() => setSelectedSize(sizeItem.size)}
                     className={`px-3 py-1 rounded-full border ${
-                      selectedSize === sizeItem.size
-                        ? "bg-green-500 text-white"
-                        : "bg-transparent text-gray-700 dark:text-gray-300"
+                      selectedSize === sizeItem.size ? "bg-green-500 text-white" : "bg-transparent text-gray-700 dark:text-gray-300"
                     }`}
                     aria-pressed={selectedSize === sizeItem.size}
                   >
@@ -370,21 +322,60 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, 
               </div>
             </div>
 
-            {/* Action Buttons */}
+            <div className="mb-4">
+              <label className={`block mb-2 font-medium ${theme === 'light' ? 'text-gray-800' : 'text-gray-200'}`}>Quantity:</label>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={decrementQuantity}
+                  className={`px-3 py-1 rounded-lg ${theme === 'light' ? 'bg-gray-300 hover:bg-gray-400' : 'bg-gray-700 hover:bg-gray-600'} transition-colors`}
+                  disabled={quantity <= 1}
+                  aria-label="Decrease quantity"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value, 10);
+                    if (!isNaN(val) && val >= 1) {
+                      const currentSize = product.sizes.find((s) => s.size === selectedSize);
+                      const maxQuantity = currentSize ? currentSize.quantity : 1;
+                      setQuantity(val > maxQuantity ? maxQuantity : val);
+                    }
+                  }}
+                  className={`w-16 text-center border rounded-lg px-2 py-1 ${theme === 'light' ? 'border-gray-400 bg-white text-gray-800' : 'border-gray-600 bg-gray-800 text-gray-200'}`}
+                  min={1}
+                  max={product.sizes.find((s) => s.size === selectedSize)?.quantity || 1}
+                  aria-label="Product quantity"
+                />
+                <button
+                  onClick={incrementQuantity}
+                  className="px-3 py-1 bg-gray-300 rounded-lg hover:bg-gray-400"
+                  disabled={quantity >= (product.sizes.find((s) => s.size === selectedSize)?.quantity || 1)}
+                  aria-label="Increase quantity"
+                >
+                  +
+                </button>
+              </div>
+              {selectedSize && (
+                <p className={`text-sm mt-1 ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>
+                  Max available: {product.sizes.find((s) => s.size === selectedSize)?.quantity || 1}
+                </p>
+              )}
+            </div>
+
             <div className="flex justify-end gap-4">
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
-              >
+              <button onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">
                 Cancel
               </button>
               <button
                 onClick={() => {
-                  onAddToCart(product, selectedColor, selectedSize);
+                  onAddToCart(product, selectedColor, selectedSize, quantity);
                   setIsModalOpen(false);
                 }}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                disabled={!selectedColor || !selectedSize}
+                disabled={!selectedColor || !selectedSize || quantity < 1}
               >
                 Add to Cart
               </button>
