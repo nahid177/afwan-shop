@@ -525,10 +525,12 @@ const TopNavbar: React.FC = () => {
               <span className="text-md font-semibold">Total</span>
               <span className="text-md font-semibold">Tk. {totalAmount}</span>
             </div>
-            <button className="btn btn-gradient-blue w-full rounded-full py-3 text-md">
-              Place Order
-              <span className="ml-2 badge badge-secondary">{totalQuantity}</span>
-            </button>
+            <Link href="/place-order">
+              <button className="btn btn-gradient-blue w-full rounded-full py-3 text-md">
+                Place Order
+                <span className="ml-2 badge badge-secondary">{totalQuantity}</span>
+              </button>
+            </Link>
           </div>
         )}
       </div>
