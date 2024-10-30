@@ -21,6 +21,7 @@ interface CartContextProps {
   totalAmount: number;
   addToCart: (item: CartItem) => void;
   removeFromCart: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
   clearCart: () => void;
 }
 
@@ -39,7 +40,6 @@ interface CartProviderProps {
 }
 
 export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
-  // Define a stable initial value outside of the hook
   const INITIAL_CART_ITEMS: CartItem[] = [];
 
   const [cartItems, setCartItems, isInitialized] = useLocalStorage<CartItem[]>(
@@ -81,6 +81,19 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
     // Optionally, you can add a toast here for removal feedback
   };
 
+  const updateQuantity = (id: string, quantity: number) => {
+    setCartItems((prevItems) => {
+      if (quantity <= 0) {
+        // Remove the item if quantity is zero or less
+        return prevItems.filter((item) => item.id !== id);
+      } else {
+        return prevItems.map((item) =>
+          item.id === id ? { ...item, quantity } : item
+        );
+      }
+    });
+  };
+
   const clearCart = () => {
     setCartItems([]);
     // Optionally, you can add a toast here for clearing the cart
@@ -102,6 +115,7 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children }) => {
         totalAmount,
         addToCart,
         removeFromCart,
+        updateQuantity,
         clearCart,
       }}
     >

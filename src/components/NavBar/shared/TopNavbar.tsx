@@ -14,23 +14,12 @@ import {
   FiTrash2,
   FiHome,
 } from "react-icons/fi";
-import { CiBookmarkCheck } from "react-icons/ci";
 import Link from "next/link";
 import { useTheme } from "@/mode/ThemeContext";
 import { usePathname } from "next/navigation";
 import axios from "axios";
 import { useCart } from "@/context/CartContext";
 import Toast from "@/components/Toast/Toast";
-
-interface WishlistItem {
-  id: string;
-  name: string;
-  price: number;
-  originalPrice: number;
-  imageUrl: string;
-  size?: string;
-  color?: string;
-}
 
 interface ProductCategory {
   _id: string;
@@ -49,13 +38,11 @@ const TopNavbar: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [searchOpen, setSearchOpen] = useState<boolean>(false);
 
-  // State variables for each drawer
+  // State variables for drawers
   const [menuDrawerOpen, setMenuDrawerOpen] = useState<boolean>(false);
   const [cartDrawerOpen, setCartDrawerOpen] = useState<boolean>(false);
-  const [wishlistOpen, setWishlistOpen] = useState<boolean>(false);
 
-  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
-  const { cartItems, totalQuantity, totalAmount, addToCart, removeFromCart } = useCart();
+  const { cartItems, totalQuantity, totalAmount, removeFromCart, updateQuantity } = useCart();
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
 
   const searchInputRef = useRef<HTMLInputElement | null>(null);
@@ -63,7 +50,6 @@ const TopNavbar: React.FC = () => {
   // Refs for drawers
   const menuDrawerRef = useRef<HTMLDivElement | null>(null);
   const cartDrawerRef = useRef<HTMLDivElement | null>(null);
-  const wishlistRef = useRef<HTMLDivElement | null>(null);
   const searchBarRef = useRef<HTMLDivElement | null>(null);
 
   // Toast state
@@ -93,7 +79,6 @@ const TopNavbar: React.FC = () => {
     }
     // Close other drawers
     setMenuDrawerOpen(false);
-    setWishlistOpen(false);
     setCartDrawerOpen(false);
   };
 
@@ -106,23 +91,14 @@ const TopNavbar: React.FC = () => {
   // Toggle functions for each drawer
   const toggleMenuDrawer = () => {
     setMenuDrawerOpen(!menuDrawerOpen);
-    setWishlistOpen(false);
-    setSearchOpen(false);
     setCartDrawerOpen(false);
+    setSearchOpen(false);
   };
 
   const toggleCartDrawer = () => {
     setCartDrawerOpen(!cartDrawerOpen);
-    setWishlistOpen(false);
-    setSearchOpen(false);
-    setMenuDrawerOpen(false);
-  };
-
-  const toggleWishlist = () => {
-    setWishlistOpen(!wishlistOpen);
     setMenuDrawerOpen(false);
     setSearchOpen(false);
-    setCartDrawerOpen(false);
   };
 
   // Close drawers when clicking outside
@@ -143,13 +119,6 @@ const TopNavbar: React.FC = () => {
         setCartDrawerOpen(false);
       }
       if (
-        wishlistRef.current &&
-        !wishlistRef.current.contains(event.target as Node) &&
-        wishlistOpen
-      ) {
-        setWishlistOpen(false);
-      }
-      if (
         searchBarRef.current &&
         !searchBarRef.current.contains(event.target as Node) &&
         searchOpen
@@ -162,33 +131,7 @@ const TopNavbar: React.FC = () => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [menuDrawerOpen, cartDrawerOpen, wishlistOpen, searchOpen]);
-
-  // Remove item from wishlist
-  const removeFromWishlist = (id: string) => {
-    setWishlistItems(wishlistItems.filter((item) => item.id !== id));
-    // Show toast notification
-    setToastMessage("Item removed from wishlist.");
-    setToastType("warning");
-    setToastVisible(true);
-  };
-
-  // Add item from wishlist to cart
-  const addWishlistItemToCart = (item: WishlistItem) => {
-    addToCart({
-      id: item.id,
-      name: item.name,
-      price: item.price,
-      quantity: 1,
-      imageUrl: item.imageUrl,
-      size: item.size,
-      color: item.color,
-    });
-    // Show toast notification
-    setToastMessage("Item added to cart.");
-    setToastType("success");
-    setToastVisible(true);
-  };
+  }, [menuDrawerOpen, cartDrawerOpen, searchOpen]);
 
   const isAdminPage = pathname.startsWith("/admin");
 
@@ -397,19 +340,6 @@ const TopNavbar: React.FC = () => {
             </div>
           </button>
 
-          {/* Wishlist Icon */}
-          <button
-            className="btn btn-ghost btn-circle"
-            onClick={toggleWishlist}
-          >
-            <CiBookmarkCheck
-              className={`h-5 w-5 md:h-6 md:w-6 ${
-                theme === "light" ? "text-gray-800" : "text-gray-300"
-              }`}
-              style={{ strokeWidth: 0.9 }}
-            />
-          </button>
-
           {/* Cart Icon */}
           <button
             className="btn btn-ghost btn-circle"
@@ -458,11 +388,6 @@ const TopNavbar: React.FC = () => {
             <FiHome className="h-6 w-6" />
           </button>
         </Link>
-
-        {/* Wishlist Icon */}
-        <button className="btn btn-ghost" onClick={toggleWishlist}>
-          <CiBookmarkCheck className="h-6 w-6" />
-        </button>
 
         {/* Cart Icon */}
         <button className="btn btn-ghost" onClick={toggleCartDrawer}>
@@ -533,8 +458,44 @@ const TopNavbar: React.FC = () => {
                         Color: {item.color}
                       </div>
                     )}
-                    <div className="text-xs text-gray-500 dark:text-gray-400">
-                      Quantity: x{item.quantity}
+                    {/* Quantity Selector */}
+                    <div className="mt-2">
+                      <label className="text-xs text-gray-500 dark:text-gray-400">
+                        Quantity:
+                      </label>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          className={`px-2 py-1 bg-gray-200 rounded ${
+                            item.quantity <= 1 ? "cursor-not-allowed opacity-50" : ""
+                          }`}
+                          onClick={() => {
+                            if (item.quantity > 1) {
+                              updateQuantity(item.id, item.quantity - 1);
+                              setToastMessage(`Decreased quantity of ${item.name}.`);
+                              setToastType("success");
+                              setToastVisible(true);
+                            }
+                          }}
+                          disabled={item.quantity <= 1}
+                          aria-label={`Decrease quantity of ${item.name}`}
+                        >
+                          -
+                        </button>
+                        <span className="text-md font-medium">{item.quantity}</span>
+                        <button
+                          className="px-2 py-1 bg-gray-200 rounded"
+                          onClick={() => {
+                            // Assuming there's no max, or the max is enforced elsewhere
+                            updateQuantity(item.id, item.quantity + 1);
+                            setToastMessage(`Increased quantity of ${item.name}.`);
+                            setToastType("success");
+                            setToastVisible(true);
+                          }}
+                          aria-label={`Increase quantity of ${item.name}`}
+                        >
+                          +
+                        </button>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
@@ -549,6 +510,7 @@ const TopNavbar: React.FC = () => {
                         setToastType("warning");
                         setToastVisible(true);
                       }}
+                      aria-label={`Remove ${item.name} from cart`}
                     />
                   </div>
                 </li>
@@ -569,75 +531,6 @@ const TopNavbar: React.FC = () => {
             </button>
           </div>
         )}
-      </div>
-
-      {/* Wishlist Drawer */}
-      <div
-        ref={wishlistRef}
-        className={`fixed top-0 right-0 h-full w-[90%] sm:w-[60%] md:w-[50%] lg:w-[30%] shadow-2xl rounded-l-lg transform ${
-          wishlistOpen ? "translate-x-0" : "translate-x-full"
-        } transition-transform duration-300 ease-in-out z-50 flex flex-col ${
-          theme === "light" ? "bg-white text-gray-900" : "bg-gray-800 text-gray-100"
-        }`}
-      >
-        <div className="flex justify-between items-center p-4">
-          <h2 className="text-lg font-bold mx-auto">Wish List Items</h2>
-          <button onClick={toggleWishlist} className="ml-auto text-lg">
-            Close
-          </button>
-        </div>
-
-        <div className="flex-1 p-4 overflow-auto">
-          {wishlistItems.length === 0 ? (
-            <div className="flex flex-col items-center justify-center text-gray-600 dark:text-gray-400">
-              <p className="text-lg font-medium">
-                Your wishlist is currently empty.
-              </p>
-            </div>
-          ) : (
-            <ul className="space-y-4">
-              {wishlistItems.map((item) => (
-                <li
-                  key={item.id}
-                  className="flex justify-between items-center border-b pb-4"
-                >
-                  {item.imageUrl ? (
-                    <Image
-                      src={item.imageUrl}
-                      alt={item.name}
-                      width={50}
-                      height={50}
-                      className="rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 bg-gray-300 rounded-lg"></div>
-                  )}
-                  <div className="flex-1 ml-4">
-                    <div className="text-md">{item.name}</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">
-                      <span className="line-through">
-                        Tk. {item.originalPrice}
-                      </span>{" "}
-                      Tk. {item.price}
-                    </div>
-                    <button
-                      onClick={() => addWishlistItemToCart(item)}
-                      className="btn btn-gradient-blue w-full rounded-full mt-2"
-                    >
-                      Add To Cart
-                    </button>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <FiTrash2
-                      className="text-red-500 cursor-pointer"
-                      onClick={() => removeFromWishlist(item.id)}
-                    />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
       </div>
     </>
   );
