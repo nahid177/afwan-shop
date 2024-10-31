@@ -2,7 +2,7 @@
 
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
   Button,
@@ -21,7 +21,7 @@ import {
   FormControlLabel,
   TextField,
 } from '@mui/material';
-import { Edit, Delete } from '@mui/icons-material';
+import { Edit, Delete, Print } from '@mui/icons-material';
 import {
   DataGrid,
   GridColDef,
@@ -42,7 +42,6 @@ interface CustomerReview {
   updatedAt?: string;
 }
 
-// Define an interface for the server response
 interface ServerCustomerReview {
   _id: string;
   user: string;
@@ -65,6 +64,8 @@ const AdminReviewsPage: React.FC = () => {
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [reviewToDelete, setReviewToDelete] = useState<string | null>(null);
+
+  const printableContentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchReviews();
@@ -94,6 +95,18 @@ const AdminReviewsPage: React.FC = () => {
       setError('Failed to fetch reviews.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePrint = () => {
+    if (printableContentRef.current) {
+      const printContents = printableContentRef.current.innerHTML;
+      const originalContents = document.body.innerHTML;
+
+      document.body.innerHTML = printContents;
+      window.print();
+      document.body.innerHTML = originalContents;
+      window.location.reload();
     }
   };
 
@@ -150,8 +163,8 @@ const AdminReviewsPage: React.FC = () => {
         <Image
           src={params.value}
           alt="Review Image"
-          width={100} // Adjust width as needed
-          height={100} // Adjust height as needed
+          width={100}
+          height={100}
           style={{ objectFit: 'cover' }}
         />
       ),
@@ -204,6 +217,16 @@ const AdminReviewsPage: React.FC = () => {
         Manage Customer Reviews
       </Typography>
 
+      <Button
+        variant="contained"
+        color="primary"
+        startIcon={<Print />}
+        onClick={handlePrint}
+        sx={{ mb: 2 }}
+      >
+        Print Reviews
+      </Button>
+
       {error && (
         <Snackbar open autoHideDuration={6000} onClose={() => setError(null)}>
           <Alert
@@ -233,7 +256,7 @@ const AdminReviewsPage: React.FC = () => {
           <CircularProgress />
         </Box>
       ) : (
-        <Paper>
+        <Paper ref={printableContentRef}>
           <div style={{ height: 600, width: '100%' }}>
             <DataGrid
               rows={reviews}
