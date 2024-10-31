@@ -1,23 +1,39 @@
-import mongoose, { Schema, Document } from 'mongoose';
+// src/models/OfferEntry.ts
 
-// Interface for offer entry
-interface IOfferEntry extends Document {
-  title: string; // Title of the offer entry
-  name: string; // Admin's name
-  endTime: Date; // End time for the offer
-  isActive: boolean; // Whether the offer is active or not
-  createdAt?: Date;
-  updatedAt?: Date;
+import mongoose, { Schema, Document, Model } from 'mongoose';
+
+export interface IOfferEntry extends Document {
+  title: string;
+  detail: string;
+  endTime: Date;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-// Create the Offer Entry schema
-const OfferEntrySchema: Schema = new Schema<IOfferEntry>({
-  title: { type: String, required: true }, // Title of the offer
-  name: { type: String, required: true }, // Admin's name
-  endTime: { type: Date, required: true }, // End time (offer expiration or completion time)
-  isActive: { type: Boolean, default: true }, // Default to true (active offer)
-}, { timestamps: true }); // Automatically manage createdAt and updatedAt fields
+const OfferEntrySchema: Schema = new Schema(
+  {
+    title: { type: String, required: true },
+    detail: { type: String, required: true },
+    endTime: { type: Date, required: true },
+    isActive: { type: Boolean, default: true },
+  },
+  { timestamps: true }
+);
 
-// Create the Offer Entry model
-const OfferEntry = mongoose.models.OfferEntry || mongoose.model<IOfferEntry>('OfferEntry', OfferEntrySchema);
+// Transform dates when converting to JSON
+OfferEntrySchema.set('toJSON', {
+  transform: (doc, ret) => {
+    ret._id = ret._id.toString();
+    if (ret.endTime) ret.endTime = ret.endTime.toISOString();
+    if (ret.createdAt) ret.createdAt = ret.createdAt.toISOString();
+    if (ret.updatedAt) ret.updatedAt = ret.updatedAt.toISOString();
+    return ret;
+  },
+});
+
+const OfferEntry: Model<IOfferEntry> =
+  mongoose.models.OfferEntry ||
+  mongoose.model<IOfferEntry>('OfferEntry', OfferEntrySchema);
+
 export default OfferEntry;
