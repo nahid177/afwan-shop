@@ -29,6 +29,7 @@ import {
   GridRenderCellParams,
 } from '@mui/x-data-grid';
 import axios from 'axios';
+import AdminLayout from '../AdminLayout';
 
 interface OfferEntry {
   _id: string;
@@ -209,7 +210,8 @@ const OfferEntriesPage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ p: 4 }}>
+    <AdminLayout>
+        <Box sx={{ p: 4 }}>
       <Typography variant="h4" gutterBottom>
         Manage Offer Entries
       </Typography>
@@ -374,6 +376,8 @@ const OfferEntriesPage: React.FC = () => {
         </DialogActions>
       </Dialog>
     </Box>
+    </AdminLayout>
+  
   );
 };
 

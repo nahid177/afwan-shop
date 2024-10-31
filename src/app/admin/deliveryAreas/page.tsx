@@ -26,6 +26,7 @@ import {
 } from '@mui/material';
 import { Edit, Delete, Save, Cancel } from '@mui/icons-material';
 import axios from 'axios';
+import AdminLayout from '../AdminLayout';
 
 interface DeliveryArea {
   _id: string;
@@ -130,7 +131,8 @@ const DeliveryAreasPage: React.FC = () => {
   };
 
   return (
-    <Box sx={{ p: 4 }}>
+    <AdminLayout>
+        <Box sx={{ p: 4 }}>
       <Typography variant="h4" gutterBottom>
         Manage Delivery Areas
       </Typography>
@@ -278,6 +280,8 @@ const DeliveryAreasPage: React.FC = () => {
         </DialogActions>
       </Dialog>
     </Box>
+    </AdminLayout>
+  
   );
 };
 

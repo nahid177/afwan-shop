@@ -30,6 +30,7 @@ import {
 } from '@mui/x-data-grid';
 import axios from 'axios';
 import Image from 'next/image';
+import AdminLayout from '../AdminLayout';
 
 interface CustomerReview {
   id: string;
@@ -212,7 +213,8 @@ const AdminReviewsPage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ p: 4 }}>
+    <AdminLayout>
+         <Box sx={{ p: 4 }}>
       <Typography variant="h4" gutterBottom>
         Manage Customer Reviews
       </Typography>
@@ -362,7 +364,9 @@ const AdminReviewsPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </Box>  
+    </AdminLayout>
+ 
   );
 };
 
