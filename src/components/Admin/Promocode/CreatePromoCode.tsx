@@ -37,7 +37,9 @@ const CreatePromoCode: React.FC<CreatePromoCodeProps> = ({ onCreate }) => {
   const [message, setMessage] = useState<string>('');
   const [severity, setSeverity] = useState<'success' | 'error'>('success');
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     const target = e.target as HTMLInputElement;
     const { name, value, type, checked } = target;
     setForm({

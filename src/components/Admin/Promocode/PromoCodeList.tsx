@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import axios from 'axios';
 import EditPromoCode from './EditPromoCode';
+import CreatePromoCode from './CreatePromoCode';
 
 interface PromoCode {
   _id: string;
@@ -53,8 +54,14 @@ const PromoCodeList: React.FC = () => {
     fetchPromoCodes();
   }, []);
 
+  const handleCreate = (newPromo: PromoCode) => {
+    setPromoCodes((prev) => [newPromo, ...prev]);
+  };
+
   const handleUpdate = (updatedPromo: PromoCode) => {
-    setPromoCodes((prev) => prev.map((promo) => (promo._id === updatedPromo._id ? updatedPromo : promo)));
+    setPromoCodes((prev) =>
+      prev.map((promo) => (promo._id === updatedPromo._id ? updatedPromo : promo))
+    );
     setEditingId(null);
   };
 
@@ -77,6 +84,7 @@ const PromoCodeList: React.FC = () => {
       <Typography variant="h6" gutterBottom>
         Promo Codes
       </Typography>
+      <CreatePromoCode onCreate={handleCreate} />
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
           <CircularProgress />
