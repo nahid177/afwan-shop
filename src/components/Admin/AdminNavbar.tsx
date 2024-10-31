@@ -7,9 +7,32 @@ import Cookies from "js-cookie";
 const AdminNavbar: React.FC = () => {
   const router = useRouter();
 
-  const handleLogout = () => {
-    Cookies.remove("token");
-    router.push("/login");
+  const handleLogout = async () => {
+    const deviceId = localStorage.getItem("deviceId");
+
+    if (deviceId) {
+      // Send logout request to server to remove deviceId
+      const response = await fetch("/api/admin/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ deviceId }),
+      });
+
+      if (response.ok) {
+        // Remove deviceId and token if logout successful
+        localStorage.removeItem("deviceId");
+        Cookies.remove("token");
+        router.push("/login");
+      } else {
+        console.error("Failed to log out");
+      }
+    } else {
+      // Fallback if deviceId is missing, simply remove the token and redirect
+      Cookies.remove("token");
+      router.push("/login");
+    }
   };
 
   return (
