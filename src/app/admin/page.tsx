@@ -18,6 +18,7 @@ const AdminPage: React.FC = () => {
     // If no token, redirect to login
     if (!token) {
       router.push("/login");
+      return; // Stop execution if no token
     }
 
     // Fetch registration and login statistics from the API
@@ -37,7 +38,12 @@ const AdminPage: React.FC = () => {
       }
     };
 
+    // Call fetchStats initially and then set interval for every 5 seconds
     fetchStats();
+    const intervalId = setInterval(fetchStats, 1000); // 5000 ms = 5 seconds
+
+    // Clean up interval on component unmount
+    return () => clearInterval(intervalId);
   }, [router]);
 
   return (
