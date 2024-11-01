@@ -1,16 +1,14 @@
 // src/app/api/orders/route.ts
-
 import { NextResponse } from 'next/server';
 import { Order, IOrder } from '@/models/Order';
 import dbConnect from '@/lib/dbConnect';
 
 export async function POST(request: Request) {
   try {
-    await dbConnect(); // Ensure database connection
+    await dbConnect();
 
     const data: IOrder = await request.json();
 
-    // Validate required fields
     const { customerName, customerNumber, address1, items, totalAmount } = data;
     if (!customerName || !customerNumber || !address1 || !items || !totalAmount) {
       return NextResponse.json(
@@ -19,7 +17,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Optional fields can be handled as needed
     const newOrder = new Order({
       customerName,
       customerNumber,
@@ -36,7 +33,7 @@ export async function POST(request: Request) {
       { message: 'Order placed successfully!', orderId: newOrder._id },
       { status: 201 }
     );
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error placing order:', error);
     return NextResponse.json(
       { message: 'Internal Server Error' },

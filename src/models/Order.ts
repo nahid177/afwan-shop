@@ -1,11 +1,8 @@
 // src/models/Order.ts
-
 import mongoose, { Schema, Document } from 'mongoose';
-import { IProduct, ProductTypes } from './ProductTypes'; // Import ProductTypes
 
-// Export the IOrderItem interface
 export interface IOrderItem {
-  product: mongoose.Types.ObjectId | IProduct;
+  product: mongoose.Types.ObjectId;
   name: string;
   color: string;
   size: string;
@@ -13,8 +10,8 @@ export interface IOrderItem {
   price: number;
 }
 
-// Export the IOrder interface
 export interface IOrder extends Document {
+  _id: string;
   customerName: string;
   customerNumber: string;
   otherNumber?: string;
@@ -46,10 +43,8 @@ const OrderSchema = new Schema<IOrder>(
     totalAmount: { type: Number, required: true },
   },
   {
-    timestamps: true, // Automatically manages createdAt and updatedAt
+    timestamps: true,
   }
 );
 
-// Export the Order model
-export const Order =
-  mongoose.models.Order || mongoose.model<IOrder>('Order', OrderSchema);
+export const Order = mongoose.models.Order || mongoose.model<IOrder>('Order', OrderSchema);

@@ -1,5 +1,4 @@
 // src/app/api/orders/[orderId]/route.ts
-
 import { NextResponse } from 'next/server';
 import { Order } from '@/models/Order';
 import dbConnect from '@/lib/dbConnect';
@@ -19,7 +18,7 @@ export async function GET(
   }
 
   try {
-    await dbConnect(); // Ensure database connection
+    await dbConnect();
 
     const order = await Order.findById(orderId).populate('items.product').exec();
 
@@ -31,7 +30,7 @@ export async function GET(
     }
 
     return NextResponse.json(order, { status: 200 });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error fetching order:', error);
     return NextResponse.json(
       { message: 'Internal Server Error' },
