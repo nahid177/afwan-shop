@@ -6,9 +6,9 @@ import axios from "axios";
 import { IOrder, IOrderItem } from "@/models/Order";
 import Toast from "@/components/Toast/Toast";
 import Link from "next/link";
-import { useTheme, ThemeProvider } from "@/mode/ThemeContext";
-import jsPDF from "jspdf"; // Import jsPDF library
-import autoTable from "jspdf-autotable"; // Import autoTable plugin
+import { useTheme } from "@/mode/ThemeContext";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable"; // Correctly imported
 
 const OrderConfirmationPage: React.FC = () => {
   const { theme } = useTheme(); // Get the current theme
@@ -19,7 +19,9 @@ const OrderConfirmationPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [toastVisible, setToastVisible] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string>("");
-  const [toastType, setToastType] = useState<"success" | "error" | "warning">("error");
+  const [toastType, setToastType] = useState<"success" | "error" | "warning">(
+    "error"
+  );
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -57,23 +59,28 @@ const OrderConfirmationPage: React.FC = () => {
     if (order.otherNumber) {
       doc.text(`Other Number: ${order.otherNumber}`, 14, 56);
     }
-    doc.text(`Address:`, 14, order.otherNumber ? 64 : 56);
-    doc.text(`${order.address1}`, 20, order.otherNumber ? 72 : 64);
+    const addressY = order.otherNumber ? 64 : 56;
+    doc.text(`Address:`, 14, addressY);
+    doc.text(`${order.address1}`, 20, addressY + 8);
     if (order.address2) {
-      doc.text(`${order.address2}`, 20, order.otherNumber ? 80 : 72);
+      doc.text(`${order.address2}`, 20, addressY + 16);
+    }
+
+    // Calculate startY for the table
+    let startY = addressY + 24;
+    if (order.address2) {
+      startY += 8;
     }
 
     // Add order items using autoTable
-    const startY = order.address2 ? (order.otherNumber ? 88 : 80) : (order.otherNumber ? 80 : 72);
-
     const itemRows = order.items.map((item, index) => [
       index + 1,
       item.name,
       item.color,
       item.size,
-      item.quantity,
-      item.price,
-      item.quantity * item.price,
+      item.quantity.toString(),
+      item.price.toString(),
+      (item.quantity * item.price).toString(),
     ]);
 
     autoTable(doc, {
@@ -83,7 +90,7 @@ const OrderConfirmationPage: React.FC = () => {
     });
 
     // Add total amount
-    const finalY = (doc as any).lastAutoTable.finalY || startY + 10;
+    const finalY = doc.lastAutoTable?.finalY || startY + 10;
     doc.text(`Total Amount: Tk. ${order.totalAmount}`, 14, finalY + 10);
 
     // Save the PDF
@@ -115,77 +122,77 @@ const OrderConfirmationPage: React.FC = () => {
   }
 
   return (
-    <ThemeProvider>
-      <div
-        className={`min-h-screen p-6 ${
-          theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
-        }`}
-      >
-        {/* Toast Notification */}
-        {toastVisible && (
-          <div className="fixed top-4 right-4 z-50">
-            <Toast
-              type={toastType}
-              message={toastMessage}
-              onClose={() => setToastVisible(false)}
-            />
-          </div>
-        )}
+    <div
+      className={`min-h-screen p-6 ${
+        theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
+      }`}
+    >
+      {/* Toast Notification */}
+      {toastVisible && (
+        <div className="fixed top-4 right-4 z-50">
+          <Toast
+            type={toastType}
+            message={toastMessage}
+            onClose={() => setToastVisible(false)}
+          />
+        </div>
+      )}
 
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl font-bold mb-6 text-center">Thank You for Your Order!</h1>
+      <div className="max-w-3xl mx-auto">
+        <h1 className="text-3xl font-bold mb-6 text-center">
+          Thank You for Your Order!
+        </h1>
 
-          <div className="mb-4">
-            <strong>Order ID:</strong> {order._id}
-          </div>
+        <div className="mb-4">
+          <strong>Order ID:</strong> {order._id}
+        </div>
 
-          <div className="mb-4">
-            <strong>Customer Name:</strong> {order.customerName}
-          </div>
+        <div className="mb-4">
+          <strong>Customer Name:</strong> {order.customerName}
+        </div>
 
-          <div className="mb-4">
-            <strong>Contact Number:</strong> {order.customerNumber}
-            {order.otherNumber && <span>, {order.otherNumber}</span>}
-          </div>
+        <div className="mb-4">
+          <strong>Contact Number:</strong> {order.customerNumber}
+          {order.otherNumber && <span>, {order.otherNumber}</span>}
+        </div>
 
-          <div className="mb-4">
-            <strong>Address:</strong>
-            <p>{order.address1}</p>
-            {order.address2 && <p>{order.address2}</p>}
-          </div>
+        <div className="mb-4">
+          <strong>Address:</strong>
+          <p>{order.address1}</p>
+          {order.address2 && <p>{order.address2}</p>}
+        </div>
 
-          <div className="mb-4">
-            <strong>Order Items:</strong>
-            <ul className="list-disc list-inside">
-              {order.items.map((item: IOrderItem, index: number) => (
-                <li key={index}>
-                  {item.name} - Color: {item.color}, Size: {item.size} x {item.quantity} @ Tk.{" "}
-                  {item.price} each
-                </li>
-              ))}
-            </ul>
-          </div>
+        <div className="mb-4">
+          <strong>Order Items:</strong>
+          <ul className="list-disc list-inside">
+            {order.items.map((item: IOrderItem, index: number) => (
+              <li key={index}>
+                {item.name} - Color: {item.color}, Size: {item.size} x{" "}
+                {item.quantity} @ Tk. {item.price} each
+              </li>
+            ))}
+          </ul>
+        </div>
 
-          <div className="mb-6">
-            <strong>Total Amount:</strong> Tk. {order.totalAmount}
-          </div>
+        <div className="mb-6">
+          <strong>Total Amount:</strong> Tk. {order.totalAmount}
+        </div>
 
-          <div className="flex flex-col md:flex-row justify-center items-center gap-4">
-            <button
-              className="px-4 py-2 rounded-md btn-gradient-blue"
-              onClick={handleDownload}
-            >
-              Download Order Details
+        <div className="flex flex-col md:flex-row justify-center items-center gap-4">
+          <button
+            className="px-4 py-2 rounded-md btn-gradient-blue"
+            onClick={handleDownload}
+          >
+            Download Order Details
+          </button>
+          <Link href="/">
+            <button className="px-4 py-2 rounded-md btn-gradient-blue">
+              Continue Shopping
             </button>
-            <Link href="/">
-              <button className="px-4 py-2 rounded-md btn-gradient-blue">
-                Continue Shopping
-              </button>
-            </Link>
-          </div>
+          </Link>
         </div>
       </div>
-    </ThemeProvider>
+    </div>
   );
 };
 
