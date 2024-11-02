@@ -1,5 +1,3 @@
-// src/components/Admin/product-types-page/ProductCard.tsx
-
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { IProduct } from '@/types'; // Import IProduct from types.ts
@@ -9,6 +7,10 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
+  // State for color and size selection
+  const [selectedColor, setSelectedColor] = useState<string | null>(null);
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
+
   // State to manage modal visibility and current image index
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [currentImageIndex, setCurrentImageIndex] = useState<number>(0);
@@ -27,8 +29,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   // Show next image
   const showNextImage = useCallback(
     (e?: React.MouseEvent | KeyboardEvent) => {
-      if (e) e.stopPropagation(); // Prevent modal from closing when clicking buttons or pressing keys
-      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % (product.images.length || 1));
+      if (e) e.stopPropagation();
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % product.images.length);
     },
     [product.images.length]
   );
@@ -38,7 +40,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
     (e?: React.MouseEvent | KeyboardEvent) => {
       if (e) e.stopPropagation();
       setCurrentImageIndex(
-        (prevIndex) => (prevIndex - 1 + (product.images.length || 1)) % (product.images.length || 1)
+        (prevIndex) => (prevIndex - 1 + product.images.length) % product.images.length
       );
     },
     [product.images.length]
@@ -48,26 +50,26 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   useEffect(() => {
     if (isModalOpen) {
       const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'ArrowRight') {
-          showNextImage(e);
-        } else if (e.key === 'ArrowLeft') {
-          showPrevImage(e);
-        } else if (e.key === 'Escape') {
-          closeModal();
-        }
+        if (e.key === 'ArrowRight') showNextImage(e);
+        else if (e.key === 'ArrowLeft') showPrevImage(e);
+        else if (e.key === 'Escape') closeModal();
       };
 
       window.addEventListener('keydown', handleKeyDown);
-
-      // Cleanup event listener on component unmount or when modal closes
-      return () => {
-        window.removeEventListener('keydown', handleKeyDown);
-      };
+      return () => window.removeEventListener('keydown', handleKeyDown);
     }
   }, [isModalOpen, showNextImage, showPrevImage, closeModal]);
 
+  const handleColorSelect = (color: string, quantity: number) => {
+    if (quantity > 0) setSelectedColor(color);
+  };
+
+  const handleSizeSelect = (size: string, quantity: number) => {
+    if (quantity > 0) setSelectedSize(size);
+  };
+
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+    <div className="bg-white rounded-lg shadow-md overflow-hidden p-4">
       {/* Product Image */}
       {product.images && product.images.length > 0 && (
         <div
@@ -87,7 +89,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <h2 className="text-xl font-semibold mb-2">{product.product_name}</h2>
 
         {/* Titles */}
-        {product.title && product.title.length > 0 && (
+        {product.title?.length > 0 && (
           <ul className="mb-2">
             {product.title.map((titleItem, index) => (
               <li key={index} className="text-gray-700">
@@ -98,7 +100,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         )}
 
         {/* Subtitles */}
-        {product.subtitle && product.subtitle.length > 0 && (
+        {product.subtitle?.length > 0 && (
           <div className="mb-2">
             {product.subtitle.map((sub, index) => (
               <div key={index}>
@@ -113,31 +115,49 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <p className="text-gray-700 mb-2">{product.description}</p>
 
         {/* Codes */}
-        {product.code && product.code.length > 0 && (
+        {product.code?.length > 0 && (
           <p className="text-gray-700 mb-2">
             <strong>Codes:</strong> {product.code.join(', ')}
           </p>
         )}
 
-        {/* Colors with Quantities */}
-        {product.colors && product.colors.length > 0 && (
-          <div className="mb-2">
-            <strong>Colors:</strong>{' '}
-            {product.colors
-              .map((c) => `${c.color} (${c.quantity})`)
-              .join(', ')}
+        {/* Color Selection */}
+        <div className="color-selection my-4">
+          <h3>Select Color:</h3>
+          <div className="flex gap-2">
+            {product.colors.map((colorItem) => (
+              <button
+                key={colorItem.color}
+                onClick={() => handleColorSelect(colorItem.color, colorItem.quantity)}
+                className={`px-3 py-1 rounded-full ${
+                  colorItem.quantity > 0 ? "border border-gray-500" : "border border-gray-300 text-gray-400"
+                } ${selectedColor === colorItem.color && colorItem.quantity > 0 ? "bg-blue-500 text-white" : ""}`}
+                disabled={colorItem.quantity === 0}
+              >
+                {colorItem.quantity > 0 ? colorItem.color : "N/A"}
+              </button>
+            ))}
           </div>
-        )}
+        </div>
 
-        {/* Sizes with Quantities */}
-        {product.sizes && product.sizes.length > 0 && (
-          <div className="mb-2">
-            <strong>Sizes:</strong>{' '}
-            {product.sizes
-              .map((s) => `${s.size} (${s.quantity})`)
-              .join(', ')}
+        {/* Size Selection */}
+        <div className="size-selection my-4">
+          <h3>Select Size:</h3>
+          <div className="flex gap-2">
+            {product.sizes.map((sizeItem) => (
+              <button
+                key={sizeItem.size}
+                onClick={() => handleSizeSelect(sizeItem.size, sizeItem.quantity)}
+                className={`px-3 py-1 rounded-full ${
+                  sizeItem.quantity > 0 ? "border border-gray-500" : "border border-gray-300 text-gray-400"
+                } ${selectedSize === sizeItem.size && sizeItem.quantity > 0 ? "bg-green-500 text-white" : ""}`}
+                disabled={sizeItem.quantity === 0}
+              >
+                {sizeItem.quantity > 0 ? sizeItem.size : "N/A"}
+              </button>
+            ))}
           </div>
-        )}
+        </div>
 
         {/* Prices */}
         <p className="text-gray-700 mb-2">
@@ -146,6 +166,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         <p className="text-gray-700 mb-2">
           <strong>Offer Price:</strong> ${product.offerPrice.toFixed(2)}
         </p>
+
+        {/* Add to Cart */}
+        <button
+          className="add-to-cart-button bg-blue-500 text-white px-4 py-2 rounded-lg mt-4"
+          disabled={!selectedColor || !selectedSize}
+        >
+          Add to Cart
+        </button>
       </div>
 
       {/* Fullscreen Image Modal */}
@@ -170,7 +198,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             </button>
 
             {/* Previous Button */}
-            {product.images && product.images.length > 1 && (
+            {product.images.length > 1 && (
               <button
                 className="absolute left-4 top-1/2 transform -translate-y-1/2 text-white text-4xl font-bold focus:outline-none"
                 onClick={showPrevImage}
@@ -187,12 +215,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
                 alt={product.product_name}
                 layout="fill"
                 objectFit="contain"
-                onClick={(e) => e.stopPropagation()} // Prevent modal from closing when clicking the image
+                onClick={(e) => e.stopPropagation()}
               />
             </div>
 
             {/* Next Button */}
-            {product.images && product.images.length > 1 && (
+            {product.images.length > 1 && (
               <button
                 className="absolute right-4 top-1/2 transform -translate-y-1/2 text-white text-4xl font-bold focus:outline-none"
                 onClick={showNextImage}

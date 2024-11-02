@@ -234,9 +234,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, 
 
   return (
     <div
-      className={`min-w-[200px] md:min-w-[250px] lg:min-w-[300px] border p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow ${
-        theme === "light" ? "bg-white text-black" : "bg-gray-800 text-white"
-      } relative`}
+      className={`min-w-[200px] md:min-w-[250px] lg:min-w-[300px] border p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow ${theme === "light" ? "bg-white text-black" : "bg-gray-800 text-white"
+        } relative`}
     >
       <div className="mb-2">
         <Image
@@ -267,9 +266,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, 
 
       <Link href={`/products/details/${typeId}/${categoryName}/${product._id}`}>
         <button
-          className={`flex items-center justify-center w-full text-xs md:text-base lg:text-xl lg:py-3 md:py-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-lg transition-all ${
-            theme === "light" ? "" : "bg-gray-700 text-white"
-          }`}
+          className={`flex items-center justify-center w-full text-xs md:text-base lg:text-xl lg:py-3 md:py-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-lg transition-all ${theme === "light" ? "" : "bg-gray-700 text-white"
+            }`}
           aria-label={`See details of ${product.product_name}`}
         >
           <FaEye className="mr-2" />
@@ -280,9 +278,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div
-            className={`bg-white dark:bg-gray-800 rounded-lg p-6 w-11/12 md:w-1/2 lg:w-1/3 ${
-              theme === "light" ? "text-black" : "text-white"
-            }`}
+            className={`bg-white dark:bg-gray-800 rounded-lg p-6 w-11/12 md:w-1/2 lg:w-1/3 ${theme === "light" ? "text-black" : "text-white"
+              }`}
           >
             <h2 className="text-xl font-semibold mb-4">Select Options</h2>
 
@@ -293,9 +290,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, 
                   <button
                     key={index}
                     onClick={() => setSelectedColor(colorItem.color)}
-                    className={`px-3 py-1 rounded-full border ${
-                      selectedColor === colorItem.color ? "bg-blue-500 text-white" : "bg-transparent text-gray-700 dark:text-gray-300"
-                    }`}
+                    className={`px-3 py-1 rounded-full border ${selectedColor === colorItem.color ? "bg-blue-500 text-white" : "bg-transparent text-gray-700 dark:text-gray-300"
+                      }`}
                     aria-pressed={selectedColor === colorItem.color}
                   >
                     {colorItem.color}
@@ -311,9 +307,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, 
                   <button
                     key={index}
                     onClick={() => setSelectedSize(sizeItem.size)}
-                    className={`px-3 py-1 rounded-full border ${
-                      selectedSize === sizeItem.size ? "bg-green-500 text-white" : "bg-transparent text-gray-700 dark:text-gray-300"
-                    }`}
+                    className={`px-3 py-1 rounded-full border ${selectedSize === sizeItem.size ? "bg-green-500 text-white" : "bg-transparent text-gray-700 dark:text-gray-300"
+                      }`}
                     aria-pressed={selectedSize === sizeItem.size}
                   >
                     {sizeItem.size}
@@ -340,19 +335,19 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, 
                     const val = parseInt(e.target.value, 10);
                     if (!isNaN(val) && val >= 1) {
                       const currentSize = product.sizes.find((s) => s.size === selectedSize);
-                      const maxQuantity = currentSize ? currentSize.quantity : 1;
+                      const maxQuantity = currentSize ? currentSize.quantity : 0;
                       setQuantity(val > maxQuantity ? maxQuantity : val);
                     }
                   }}
                   className={`w-16 text-center border rounded-lg px-2 py-1 ${theme === 'light' ? 'border-gray-400 bg-white text-gray-800' : 'border-gray-600 bg-gray-800 text-gray-200'}`}
                   min={1}
-                  max={product.sizes.find((s) => s.size === selectedSize)?.quantity || 1}
+                  max={product.sizes.find((s) => s.size === selectedSize)?.quantity || 0}
                   aria-label="Product quantity"
                 />
                 <button
                   onClick={incrementQuantity}
                   className="px-3 py-1 bg-gray-300 rounded-lg hover:bg-gray-400"
-                  disabled={quantity >= (product.sizes.find((s) => s.size === selectedSize)?.quantity || 1)}
+                  disabled={quantity >= (product.sizes.find((s) => s.size === selectedSize)?.quantity || 0)}
                   aria-label="Increase quantity"
                 >
                   +
@@ -360,7 +355,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, 
               </div>
               {selectedSize && (
                 <p className={`text-sm mt-1 ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>
-                  Max available: {product.sizes.find((s) => s.size === selectedSize)?.quantity || 1}
+                  Max available: {product.sizes.find((s) => s.size === selectedSize)?.quantity || 0}
                 </p>
               )}
             </div>
@@ -375,10 +370,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, 
                   setIsModalOpen(false);
                 }}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                disabled={!selectedColor || !selectedSize || quantity < 1}
+                disabled={!selectedColor || !selectedSize || quantity < 1 || product.sizes.find((size) => size.size === selectedSize)?.quantity === 0} // Disable if quantity is 0
               >
                 Add to Cart
               </button>
+
             </div>
           </div>
         </div>
