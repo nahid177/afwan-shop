@@ -12,11 +12,19 @@ interface ISizeQuantity {
   quantity: number;
 }
 
+interface IColorQuantity {
+  color: string;
+  quantity: number;
+}
+
 interface IProduct {
   _id: mongoose.Types.ObjectId;
   product_name: string;
   sizes: ISizeQuantity[];
+  colors: IColorQuantity[];
 }
+
+
 
 export async function PATCH(
   req: NextRequest,
@@ -53,7 +61,7 @@ export async function PATCH(
 
     // Deduct quantities from product inventories
     for (const item of order.items) {
-      console.log(`Processing order item: product ID = ${item.product}, size = ${item.size}, quantity = ${item.quantity}`);
+      console.log(`Processing order item: product ID = ${item.product}, size = ${item.size}, color = ${item.color}, quantity = ${item.quantity}`);
 
       // Find the ProductType that contains this product
       const productType = await ProductTypes.findOne({
@@ -65,7 +73,7 @@ export async function PATCH(
         await session.abortTransaction();
         session.endSession();
         return NextResponse.json(
-          { message: `Product type with ID ${item.product} not found.` },
+          { message: `Product type containing product ID ${item.product} not found.` },
           { status: 404 }
         );
       }
@@ -84,6 +92,7 @@ export async function PATCH(
         if (product) {
           console.log(`Found product: ${product.product_name}`);
           productFound = true;
+
           // Find the size index
           const sizeIndex = product.sizes.findIndex(
             (size: ISizeQuantity) => size.size === item.size
@@ -99,6 +108,22 @@ export async function PATCH(
             );
           }
 
+          // Find the color index
+          const colorIndex = product.colors.findIndex(
+            (color: IColorQuantity) => color.color === item.color
+          );
+
+          if (colorIndex === -1) {
+            console.log(`Color ${item.color} not found for product ${product.product_name}.`);
+            await session.abortTransaction();
+            session.endSession();
+            return NextResponse.json(
+              { message: `Color ${item.color} not found for product ${product.product_name}.` },
+              { status: 400 }
+            );
+          }
+
+          // Check if sufficient quantity exists for size and color
           if (product.sizes[sizeIndex].quantity < item.quantity) {
             console.log(`Insufficient stock for product ${product.product_name}, size ${item.size}.`);
             await session.abortTransaction();
@@ -109,10 +134,22 @@ export async function PATCH(
             );
           }
 
+          if (product.colors[colorIndex].quantity < item.quantity) {
+            console.log(`Insufficient stock for product ${product.product_name}, color ${item.color}.`);
+            await session.abortTransaction();
+            session.endSession();
+            return NextResponse.json(
+              { message: `Insufficient stock for product ${product.product_name}, color ${item.color}.` },
+              { status: 400 }
+            );
+          }
+
           // Deduct the quantity
           product.sizes[sizeIndex].quantity -= item.quantity;
+          product.colors[colorIndex].quantity -= item.quantity;
+
           await productType.save({ session });
-          console.log(`Deducted ${item.quantity} from product ${product.product_name}, size ${item.size}.`);
+          console.log(`Deducted ${item.quantity} from product ${product.product_name}, size ${item.size}, color ${item.color}.`);
           break;
         }
       }

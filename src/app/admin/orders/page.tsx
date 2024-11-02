@@ -1,3 +1,5 @@
+// src/app/admin/orders/page.tsx
+
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -24,7 +26,7 @@ const AdminOrdersPage: React.FC = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await axios.get<IOrder[]>("/api/admin/orders");
+        const response: AxiosResponse<IOrder[]> = await axios.get<IOrder[]>("/api/admin/orders");
         setOrders(response.data);
       } catch (error: unknown) { // Changed from 'any' to 'unknown'
         console.error("Error fetching orders:", error);
@@ -42,7 +44,7 @@ const AdminOrdersPage: React.FC = () => {
   const confirmOrder = async (orderId: string) => {
     try {
       // Specify the expected response type as IOrder
-      const response = await axios.patch<IOrder, AxiosResponse<IOrder>, any>(
+      const response: AxiosResponse<IOrder> = await axios.patch<IOrder>(
         `/api/admin/orders/${orderId}/confirm`
       );
       const updatedOrder: IOrder = response.data;
@@ -57,7 +59,7 @@ const AdminOrdersPage: React.FC = () => {
       setToastType("success");
       setToastVisible(true);
     } catch (error: unknown) { // Changed from 'any' to 'unknown'
-      if (axios.isAxiosError(error)) {
+      if (axios.isAxiosError<ApiErrorResponse>(error)) {
         // Handle Axios-specific errors
         const axiosError = error as AxiosError<ApiErrorResponse>;
         setToastMessage(
