@@ -407,7 +407,7 @@ const ProductDetailsPage: React.FC = () => {
               {selectedSize && (
                 <p className={`text-sm mt-1 ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'
                   }`}>
-                  {`Max available: ${product.sizes.find((s) => s.size === selectedSize)?.quantity || 1
+                  {`Max available: ${product.sizes.find((s) => s.size === selectedSize)?.quantity || 0
                     }`}
                 </p>
               )}
@@ -424,8 +424,8 @@ const ProductDetailsPage: React.FC = () => {
               <button
                 onClick={handleAddToCart}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                disabled={!selectedColor || !selectedSize || quantity < 1}
-              >
+                disabled={!selectedColor || !selectedSize || quantity < 1 || product.sizes.find((size) => size.size === selectedSize)?.quantity === 0} // Disable if quantity is 0
+                >
                 Add to Cart
               </button>
             </div>

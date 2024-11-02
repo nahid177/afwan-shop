@@ -108,9 +108,8 @@ const CategoryProductsPage: React.FC = () => {
 
   return (
     <div
-      className={`w-full mx-auto px-4 py-6 ${
-        theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
-      }`}
+      className={`w-full mx-auto px-4 py-6 ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
+        }`}
     >
       {toastVisible && (
         <div className="fixed top-4 right-4 z-50">
@@ -187,9 +186,8 @@ const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
 
   return (
     <div
-      className={`border lg:p-4 md:p-3 p-2 rounded-lg shadow-md hover:shadow-lg transition-shadow ${
-        theme === "light" ? "bg-white text-black" : "bg-gray-800 text-white"
-      } relative`}
+      className={`border lg:p-4 md:p-3 p-2 rounded-lg shadow-md hover:shadow-lg transition-shadow ${theme === "light" ? "bg-white text-black" : "bg-gray-800 text-white"
+        } relative`}
     >
       <div className="mb-1">
         <Image
@@ -233,9 +231,8 @@ const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
           )}/${product._id}`}
         >
           <button
-            className={`flex items-center justify-center w-full text-xs md:text-base lg:text-xl lg:py-3 md:py-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-lg transition-all ${
-              theme === "light" ? "" : "bg-gray-700 text-white"
-            }`}
+            className={`flex items-center justify-center w-full text-xs md:text-base lg:text-xl lg:py-3 md:py-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-lg transition-all ${theme === "light" ? "" : "bg-gray-700 text-white"
+              }`}
           >
             <FaEye className="mr-2" />
             <span>See Details</span>
@@ -246,9 +243,8 @@ const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
           <div
-            className={`bg-white dark:bg-gray-800 rounded-lg p-6 w-11/12 md:w-1/2 lg:w-1/3 ${
-              theme === "light" ? "text-black" : "text-white"
-            }`}
+            className={`bg-white dark:bg-gray-800 rounded-lg p-6 w-11/12 md:w-1/2 lg:w-1/3 ${theme === "light" ? "text-black" : "text-white"
+              }`}
           >
             <h2 className="text-xl font-semibold mb-4">Select Options</h2>
 
@@ -259,11 +255,10 @@ const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
                   <button
                     key={index}
                     onClick={() => setSelectedColor(colorItem.color)}
-                    className={`px-3 py-1 rounded-full border ${
-                      selectedColor === colorItem.color
+                    className={`px-3 py-1 rounded-full border ${selectedColor === colorItem.color
                         ? "bg-blue-500 text-white"
                         : "bg-transparent text-gray-700 dark:text-gray-300"
-                    }`}
+                      }`}
                   >
                     {colorItem.color}
                   </button>
@@ -278,11 +273,10 @@ const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
                   <button
                     key={index}
                     onClick={() => setSelectedSize(sizeItem.size)}
-                    className={`px-3 py-1 rounded-full border ${
-                      selectedSize === sizeItem.size
+                    className={`px-3 py-1 rounded-full border ${selectedSize === sizeItem.size
                         ? "bg-green-500 text-white"
                         : "bg-transparent text-gray-700 dark:text-gray-300"
-                    }`}
+                      }`}
                   >
                     {sizeItem.size}
                   </button>
@@ -332,7 +326,7 @@ const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
               </div>
               {selectedSize && (
                 <p className={`text-sm mt-1 ${theme === 'light' ? 'text-gray-500' : 'text-gray-400'}`}>
-                  Max available: {product.sizes.find((s) => s.size === selectedSize)?.quantity || 1}
+                  Max available: {product.sizes.find((s) => s.size === selectedSize)?.quantity || 0}
                 </p>
               )}
             </div>
@@ -350,7 +344,7 @@ const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
                   setIsModalOpen(false);
                 }}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                disabled={!selectedColor || !selectedSize || quantity < 1}
+                disabled={!selectedColor || !selectedSize || quantity < 1 || product.sizes.find((size) => size.size === selectedSize)?.quantity === 0} // Disable if quantity is 0
               >
                 Add to Cart
               </button>
