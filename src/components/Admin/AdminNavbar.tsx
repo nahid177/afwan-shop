@@ -1,3 +1,5 @@
+// src/components/Admin/AdminNavbar.tsx
+
 "use client";
 import React from "react";
 import { useRouter } from "next/navigation";
@@ -36,33 +38,26 @@ const AdminNavbar: React.FC = () => {
   };
 
   return (
-    <nav className="navbar bg-white shadow-md p-8 ">
+    <nav className="navbar bg-white shadow-md p-8">
       {/* Logo / Title Section */}
       <div className="navbar-start">
-        <button className="btn btn-ghost btn-circle lg:hidden">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M4 6h16M4 12h16M4 18h7"
-            />
-          </svg>
-        </button>
-        <span className="text-2xl font-semibold hidden lg:inline-block">Admin Dashboard</span>
+        <span className="text-2xl font-semibold hidden lg:inline-block">
+          Admin Dashboard
+        </span>
       </div>
 
       {/* Centered Navigation Menu */}
       <div className="navbar-center hidden lg:flex">
         <ul className="menu menu-horizontal space-x-4">
           <li>
-            <Link href="/admin/reviews" className="text-lg hover:text-primary transition-all">Reviews</Link>
+            <Link href="/admin/orders" className="text-lg hover:text-primary transition-all">
+              Orders
+            </Link>
+          </li>
+          <li>
+            <Link href="/admin/reviews" className="text-lg hover:text-primary transition-all">
+              Reviews
+            </Link>
           </li>
           <li tabIndex={0} className="relative group">
             <Link href="#" className="text-lg hover:text-primary transition-all flex items-center">
@@ -76,19 +71,42 @@ const AdminNavbar: React.FC = () => {
               </svg>
             </Link>
             <ul className="absolute hidden group-hover:flex flex-col mt-2 shadow-lg rounded-lg bg-white p-2 space-y-1">
-              <li><Link href="/admin/product-types" className="hover:text-primary">View All</Link></li>
-              <li><Link href="/admin/product-types/create" className="hover:text-primary">Create New</Link></li>
+              <li>
+                <Link href="/admin/product-types" className="hover:text-primary">
+                  View All
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin/product-types/create" className="hover:text-primary">
+                  Create New
+                </Link>
+              </li>
             </ul>
           </li>
-          <li><Link href="/admin/deliveryAreas" className="text-lg hover:text-primary transition-all">Delivery Areas</Link></li>
-          <li><Link href="/admin/offerEntries" className="text-lg hover:text-primary transition-all">Offer Entries</Link></li>
-          <li><Link href="/admin/promoCode" className="text-lg hover:text-primary transition-all">Promo Codes</Link></li>
+          <li>
+            <Link href="/admin/deliveryAreas" className="text-lg hover:text-primary transition-all">
+              Delivery Areas
+            </Link>
+          </li>
+          <li>
+            <Link href="/admin/offerEntries" className="text-lg hover:text-primary transition-all">
+              Offer Entries
+            </Link>
+          </li>
+          <li>
+            <Link href="/admin/promoCode" className="text-lg hover:text-primary transition-all">
+              Promo Codes
+            </Link>
+          </li>
         </ul>
       </div>
 
       {/* Right-Side Buttons */}
       <div className="navbar-end">
-        <button className="btn btn-outline btn-primary hidden lg:inline-block" onClick={handleLogout}>
+        <button
+          className="btn btn-outline btn-primary hidden lg:inline-block"
+          onClick={handleLogout}
+        >
           Logout
         </button>
 
@@ -114,12 +132,41 @@ const AdminNavbar: React.FC = () => {
             tabIndex={0}
             className="dropdown-content mt-2 p-3 shadow-lg bg-white rounded-lg w-52 space-y-1"
           >
-            <li><Link href="/admin/reviews" className="hover:text-primary">Reviews</Link></li>
-            <li><Link href="/admin/product-types" className="hover:text-primary">Product Types</Link></li>
-            <li><Link href="/admin/product-types/create" className="hover:text-primary">Create Product Type</Link></li>
-            <li><Link href="/admin/deliveryAreas" className="hover:text-primary">Delivery Areas</Link></li>
-            <li><Link href="/admin/offerEntries" className="hover:text-primary">Offer Entries</Link></li>
-            <li><Link href="/admin/promoCode" className="hover:text-primary">Promo Codes</Link></li>
+            <li>
+              <Link href="/admin/orders" className="hover:text-primary">
+                Orders
+              </Link>
+            </li>
+            <li>
+              <Link href="/admin/reviews" className="hover:text-primary">
+                Reviews
+              </Link>
+            </li>
+            <li>
+              <Link href="/admin/product-types" className="hover:text-primary">
+                Product Types
+              </Link>
+            </li>
+            <li>
+              <Link href="/admin/product-types/create" className="hover:text-primary">
+                Create Product Type
+              </Link>
+            </li>
+            <li>
+              <Link href="/admin/deliveryAreas" className="hover:text-primary">
+                Delivery Areas
+              </Link>
+            </li>
+            <li>
+              <Link href="/admin/offerEntries" className="hover:text-primary">
+                Offer Entries
+              </Link>
+            </li>
+            <li>
+              <Link href="/admin/promoCode" className="hover:text-primary">
+                Promo Codes
+              </Link>
+            </li>
             <li>
               <button className="btn btn-outline btn-primary w-full" onClick={handleLogout}>
                 Logout

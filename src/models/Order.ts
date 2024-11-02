@@ -1,4 +1,5 @@
-// src/models/Order.ts
+// /src/models/Order.ts
+
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IOrderItem {
@@ -19,6 +20,7 @@ export interface IOrder extends Document {
   address2?: string;
   items: IOrderItem[];
   totalAmount: number;
+  approved: boolean; // Added approved field
   createdAt: Date;
   updatedAt: Date;
 }
@@ -41,6 +43,7 @@ const OrderSchema = new Schema<IOrder>(
     address2: { type: String },
     items: { type: [OrderItemSchema], required: true },
     totalAmount: { type: Number, required: true },
+    approved: { type: Boolean, required: true, default: false }, // Added approved field with default value
   },
   {
     timestamps: true,

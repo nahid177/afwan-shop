@@ -2,22 +2,22 @@
 
 import mongoose, { Schema, Document } from 'mongoose';
 
-interface IColorQuantity {
+export interface IColorQuantity {
   color: string;
   quantity: number;
 }
 
-interface ISizeQuantity {
+export interface ISizeQuantity {
   size: string;
   quantity: number;
 }
 
-interface ISubtitle {
+export interface ISubtitle {
   title: string;
   titledetail: string;
 }
 
-interface IProduct extends Document {
+export interface IProduct extends Document {
   product_name: string;
   code: string[];
   colors: IColorQuantity[];
@@ -32,12 +32,12 @@ interface IProduct extends Document {
   updatedAt?: Date;
 }
 
-interface IProductCategory {
+export interface IProductCategory {
   catagory_name: string;
   product: IProduct[];
 }
 
-interface IProductType extends Document {
+export interface IProductType extends Document {
   types_name: string;
   product_catagory: IProductCategory[];
 }
