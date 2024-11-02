@@ -1,23 +1,42 @@
-// /src/app/admin/orders/[orderId]/page.tsx
+// src/app/admin/orders/[orderId]/page.tsx
 
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
 import AdminLayout from "../../AdminLayout";
-import { useParams } from "next/navigation";
-import axios from "axios";
+import { useParams, useRouter } from "next/navigation"; // Import useRouter
+import axios, { AxiosError } from "axios";
 import { IOrder } from "@/models/Order";
 import { useReactToPrint } from "react-to-print";
 import PrintableOrder from "./PrintableOrder";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { FaTrash, FaEdit } from "react-icons/fa"; // Import the trash and edit icons
+import Toast from "@/components/Toast/Toast";
+import ConfirmationModal from "@/components/Admin/ConfirmationModal"; // Import the confirmation modal
+import EditOrderModal from "@/components/Admin/EditOrderModal"; // Import the edit order modal
+
+// Define the error response interface
+interface ApiErrorResponse {
+  message: string;
+}
 
 const OrderDetailsPage: React.FC = () => {
   const params = useParams();
+  const router = useRouter(); // Initialize useRouter
   const orderId = params.orderId as string;
   const [order, setOrder] = useState<IOrder | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [toastVisible, setToastVisible] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string>("");
+  const [toastType, setToastType] = useState<"success" | "error" | "warning">(
+    "success"
+  );
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false); // State for edit modal
+
   const componentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -25,7 +44,7 @@ const OrderDetailsPage: React.FC = () => {
       try {
         const response = await axios.get<IOrder>(`/api/admin/orders/${orderId}`);
         setOrder(response.data);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Error fetching order:", error);
         setError("Failed to fetch order details.");
       } finally {
@@ -87,6 +106,72 @@ const OrderDetailsPage: React.FC = () => {
     const finalY = doc.lastAutoTable?.finalY || startY + 10;
     doc.text(`Total Amount: Tk. ${order.totalAmount}`, 14, finalY + 10);
     doc.save(`Order_${order._id}.pdf`);
+  };
+
+  const deleteOrder = async () => {
+    if (!order) return;
+
+    try {
+      await axios.delete(`/api/admin/orders/${order._id}`);
+      setToastMessage("Order deleted successfully!");
+      setToastType("success");
+      setToastVisible(true);
+      // Redirect to the orders list page after deletion
+      router.push("/admin/orders");
+    } catch (error: unknown) {
+      if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        const axiosError = error as AxiosError<ApiErrorResponse>;
+        setToastMessage(
+          axiosError.response?.data?.message || "Failed to delete the order."
+        );
+      } else if (error instanceof Error) {
+        setToastMessage(error.message || "An unexpected error occurred.");
+      } else {
+        setToastMessage("An unexpected error occurred.");
+      }
+      console.error("Error deleting order:", error);
+      setToastType("error");
+      setToastVisible(true);
+    }
+  };
+
+  const handleDeleteConfirm = () => {
+    deleteOrder();
+  };
+
+  const handleDeleteCancel = () => {
+    setIsDeleteModalOpen(false);
+  };
+
+  const handleEditOrder = async (updatedData: Partial<IOrder>) => {
+    if (!order) return;
+
+    try {
+      const response = await axios.patch<IOrder>(`/api/admin/orders/${order._id}/edit`, updatedData);
+      setOrder(response.data);
+      setToastMessage("Order updated successfully!");
+      setToastType("success");
+      setToastVisible(true);
+      setIsEditModalOpen(false);
+    } catch (error: unknown) {
+      if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        const axiosError = error as AxiosError<ApiErrorResponse>;
+        setToastMessage(
+          axiosError.response?.data?.message || "Failed to update the order."
+        );
+      } else if (error instanceof Error) {
+        setToastMessage(error.message || "An unexpected error occurred.");
+      } else {
+        setToastMessage("An unexpected error occurred.");
+      }
+      console.error("Error updating order:", error);
+      setToastType("error");
+      setToastVisible(true);
+    }
+  };
+
+  const handleEditClick = () => {
+    setIsEditModalOpen(true);
   };
 
   if (loading) {
@@ -154,12 +239,56 @@ const OrderDetailsPage: React.FC = () => {
           >
             Download PDF
           </button>
+          {/* Edit Button */}
+          <button
+            onClick={handleEditClick}
+            className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 mt-4 flex items-center"
+            title="Edit Order"
+          >
+            <FaEdit className="mr-2" /> Edit Order
+          </button>
+          {/* Delete Button */}
+          <button
+            onClick={() => setIsDeleteModalOpen(true)}
+            className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 mt-4 flex items-center"
+            title="Delete Order"
+          >
+            <FaTrash className="mr-2" /> Delete Order
+          </button>
         </div>
       </div>
       {/* Printable Component */}
       <div style={{ display: "none" }}>
         {order && <PrintableOrder ref={componentRef} order={order} />}
       </div>
+
+      {/* Toast Notification */}
+      {toastVisible && (
+        <div className="fixed top-4 right-4 z-50">
+          <Toast
+            type={toastType}
+            message={toastMessage}
+            onClose={() => setToastVisible(false)}
+          />
+        </div>
+      )}
+
+      {/* Confirmation Modal for Deletion */}
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        title="Confirm Deletion"
+        message="Are you sure you want to delete this order? This action cannot be undone."
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
+
+      {/* Edit Order Modal */}
+      <EditOrderModal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        order={order}
+        onSave={handleEditOrder}
+      />
     </AdminLayout>
   );
 };

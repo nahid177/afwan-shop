@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { Order } from '@/models/Order';
 import dbConnect from '@/lib/dbConnect';
 import mongoose from 'mongoose';
@@ -133,3 +133,20 @@ export async function GET(
   }
 }
 
+// DELETE /api/admin/orders/[orderId]
+export async function DELETE(req: NextRequest, { params }: { params: { orderId: string } }) {
+  const { orderId } = params;
+
+  await dbConnect();
+
+  try {
+    const deletedOrder = await Order.findByIdAndDelete(orderId);
+    if (!deletedOrder) {
+      return NextResponse.json({ message: 'Order not found.' }, { status: 404 });
+    }
+    return NextResponse.json({ message: 'Order deleted successfully.' }, { status: 200 });
+  } catch (error) {
+    console.error('Error deleting order:', error);
+    return NextResponse.json({ message: 'Internal server error.' }, { status: 500 });
+  }
+}

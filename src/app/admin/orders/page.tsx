@@ -4,10 +4,12 @@
 
 import React, { useEffect, useState } from "react";
 import AdminLayout from "../AdminLayout";
-import axios, { AxiosError, AxiosResponse } from "axios"; // Import AxiosError and AxiosResponse
+import axios, { AxiosError, AxiosResponse } from "axios";
 import { IOrder } from "@/models/Order";
 import Link from "next/link";
 import Toast from "@/components/Toast/Toast";
+import { FaTrash } from "react-icons/fa"; // Import the trash icon
+import ConfirmationModal from "@/components/Admin/ConfirmationModal"; // Import the confirmation modal
 
 // Define the error response interface
 interface ApiErrorResponse {
@@ -23,12 +25,16 @@ const AdminOrdersPage: React.FC = () => {
     "success"
   );
 
+  // States for delete confirmation modal
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+
   useEffect(() => {
     const fetchOrders = async () => {
       try {
         const response: AxiosResponse<IOrder[]> = await axios.get<IOrder[]>("/api/admin/orders");
         setOrders(response.data);
-      } catch (error: unknown) { // Changed from 'any' to 'unknown'
+      } catch (error: unknown) {
         console.error("Error fetching orders:", error);
         setToastMessage("Failed to fetch orders.");
         setToastType("error");
@@ -43,7 +49,6 @@ const AdminOrdersPage: React.FC = () => {
 
   const confirmOrder = async (orderId: string) => {
     try {
-      // Specify the expected response type as IOrder
       const response: AxiosResponse<IOrder> = await axios.patch<IOrder>(
         `/api/admin/orders/${orderId}/confirm`
       );
@@ -58,24 +63,58 @@ const AdminOrdersPage: React.FC = () => {
       setToastMessage("Order approved successfully!");
       setToastType("success");
       setToastVisible(true);
-    } catch (error: unknown) { // Changed from 'any' to 'unknown'
+    } catch (error: unknown) {
       if (axios.isAxiosError<ApiErrorResponse>(error)) {
-        // Handle Axios-specific errors
         const axiosError = error as AxiosError<ApiErrorResponse>;
         setToastMessage(
           axiosError.response?.data?.message || "Failed to confirm the order."
         );
       } else if (error instanceof Error) {
-        // Handle general JavaScript errors
         setToastMessage(error.message || "An unexpected error occurred.");
       } else {
-        // Handle unknown errors
         setToastMessage("An unexpected error occurred.");
       }
       console.error("Error confirming order:", error);
       setToastType("error");
       setToastVisible(true);
     }
+  };
+
+  const deleteOrder = async (orderId: string) => {
+    try {
+      await axios.delete(`/api/admin/orders/${orderId}`);
+      setOrders((prevOrders) => prevOrders.filter((order) => order._id !== orderId));
+      setToastMessage("Order deleted successfully!");
+      setToastType("success");
+      setToastVisible(true);
+    } catch (error: unknown) {
+      if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        const axiosError = error as AxiosError<ApiErrorResponse>;
+        setToastMessage(
+          axiosError.response?.data?.message || "Failed to delete the order."
+        );
+      } else if (error instanceof Error) {
+        setToastMessage(error.message || "An unexpected error occurred.");
+      } else {
+        setToastMessage("An unexpected error occurred.");
+      }
+      console.error("Error deleting order:", error);
+      setToastType("error");
+      setToastVisible(true);
+    }
+  };
+
+  const handleDeleteConfirm = () => {
+    if (selectedOrderId) {
+      deleteOrder(selectedOrderId);
+      setSelectedOrderId(null);
+      setIsDeleteModalOpen(false);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setSelectedOrderId(null);
+    setIsDeleteModalOpen(false);
   };
 
   if (loading) {
@@ -140,6 +179,17 @@ const AdminOrdersPage: React.FC = () => {
                       Approve
                     </button>
                   )}
+                  {/* Delete Button */}
+                  <button
+                    onClick={() => {
+                      setSelectedOrderId(order._id);
+                      setIsDeleteModalOpen(true);
+                    }}
+                    className="text-red-500 hover:text-red-700"
+                    title="Delete Order"
+                  >
+                    <FaTrash size={18} />
+                  </button>
                 </td>
               </tr>
             ))}
@@ -157,6 +207,15 @@ const AdminOrdersPage: React.FC = () => {
           />
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={isDeleteModalOpen}
+        title="Confirm Deletion"
+        message="Are you sure you want to delete this order? This action cannot be undone."
+        onConfirm={handleDeleteConfirm}
+        onCancel={handleDeleteCancel}
+      />
     </AdminLayout>
   );
 };
