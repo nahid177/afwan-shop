@@ -1,0 +1,234 @@
+// src/app/admin/storeOrders/page.tsx
+
+"use client";
+
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import { IStoreOrder, IProductType } from "@/types";
+import Link from "next/link";
+import Toast from "@/components/Toast/Toast";
+import ConfirmationModal from "@/components/Admin/ConfirmationModal";
+import CreateOrderModal from "@/components/Admin/CreateOrderModal";
+import AdminLayout from "../AdminLayout";
+
+const AdminStoreOrdersPage: React.FC = () => {
+  const [storeOrders, setStoreOrders] = useState<IStoreOrder[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Toast state
+  const [toastVisible, setToastVisible] = useState<boolean>(false);
+  const [toastMessage, setToastMessage] = useState<string>("");
+  const [toastType, setToastType] = useState<"success" | "error" | "warning">("success");
+
+  // Confirmation Modal state
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
+  const [orderToDelete, setOrderToDelete] = useState<string>("");
+
+  // Create Order Modal state
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
+  const [selectedProductType, setSelectedProductType] = useState<IProductType | null>(null);
+
+  // Helper function to extract error message
+  const getErrorMessage = (error: unknown, defaultMessage: string): string => {
+    if (axios.isAxiosError(error)) {
+      if (error.response && error.response.data && typeof error.response.data.message === "string") {
+        return error.response.data.message;
+      }
+    }
+    return defaultMessage;
+  };
+
+  useEffect(() => {
+    const fetchStoreOrders = async () => {
+      try {
+        const response = await axios.get<IStoreOrder[]>("/api/storeOrders");
+        setStoreOrders(response.data);
+      } catch (error: unknown) {
+        console.error("Error fetching store orders:", error);
+        setError("Failed to load store orders.");
+
+        const message = getErrorMessage(error, "Failed to load store orders.");
+        setToastMessage(message);
+        setToastType("error");
+        setToastVisible(true);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStoreOrders();
+  }, []);
+
+  const handleDelete = async () => {
+    try {
+      await axios.delete(`/api/storeOrders/${orderToDelete}`);
+      setStoreOrders(storeOrders.filter((order) => order._id !== orderToDelete));
+      setToastMessage("Order deleted successfully.");
+      setToastType("success");
+      setToastVisible(true);
+    } catch (error: unknown) {
+      console.error("Error deleting store order:", error);
+
+      const message = getErrorMessage(error, "Failed to delete store order.");
+      setToastMessage(message);
+      setToastType("error");
+      setToastVisible(true);
+    } finally {
+      setIsDeleteModalOpen(false);
+    }
+  };
+
+  const handleCreateOrder = async (orderData: Omit<IStoreOrder, '_id'>) => {
+    try {
+      const response = await axios.post<IStoreOrder>("/api/storeOrders", orderData);
+      setStoreOrders([...storeOrders, response.data]);
+      setToastMessage("Order created successfully.");
+      setToastType("success");
+      setToastVisible(true);
+    } catch (error: unknown) {
+      console.error("Error creating store order:", error);
+
+      const message = getErrorMessage(error, "Failed to create store order.");
+      setToastMessage(message);
+      setToastType("error");
+      setToastVisible(true);
+    }
+  };
+
+  const openDeleteModal = (orderId: string) => {
+    setOrderToDelete(orderId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const openCreateModal = async () => {
+    try {
+      const response = await axios.get<IProductType[]>("/api/productTypes"); // Adjust API endpoint as needed
+      if (response.data.length > 0) {
+        setSelectedProductType(response.data[0]); // Select the first product type for simplicity
+        setIsCreateModalOpen(true);
+      } else {
+        alert("No product types available.");
+      }
+    } catch (error: unknown) {
+      console.error("Error fetching product types:", error);
+      const message = getErrorMessage(error, "Failed to load product types.");
+      setToastMessage(message);
+      setToastType("error");
+      setToastVisible(true);
+    }
+  };
+
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex justify-center items-center h-16">
+          <p>Loading store orders...</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  if (error) {
+    const errorMessage = typeof error === "string" ? error : "An unexpected error occurred.";
+    return (
+      <AdminLayout>
+        <div className="flex justify-center items-center h-16">
+          <p>{errorMessage}</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  return (
+    <AdminLayout>
+      <div className="p-4">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold">Store Orders</h1>
+          <button
+            onClick={openCreateModal}
+            className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+          >
+            Create Order
+          </button>
+        </div>
+
+        {toastVisible && (
+          <div className="fixed top-4 right-4 z-50">
+            <Toast
+              type={toastType}
+              message={toastMessage}
+              onClose={() => setToastVisible(false)}
+            />
+          </div>
+        )}
+
+        {storeOrders.length === 0 ? (
+          <p>No store orders found.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white dark:bg-gray-800">
+              <thead>
+                <tr>
+                  <th className="py-2 px-4 border-b">Order ID</th>
+                  <th className="py-2 px-4 border-b">Customer Name</th>
+                  <th className="py-2 px-4 border-b">Email</th>
+                  <th className="py-2 px-4 border-b">Phone</th>
+                  <th className="py-2 px-4 border-b">Total Amount</th>
+                  {/* <th className="py-2 px-4 border-b">Status</th> */} {/* Removed */}
+                  <th className="py-2 px-4 border-b">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {storeOrders.map((order) => (
+                  <tr key={order._id} className="text-center">
+                    <td className="py-2 px-4 border-b">{order._id}</td>
+                    <td className="py-2 px-4 border-b">{order.customerName}</td>
+                    <td className="py-2 px-4 border-b">{order.customerEmail}</td>
+                    <td className="py-2 px-4 border-b">{order.customerPhone}</td>
+                    <td className="py-2 px-4 border-b">Tk. {order.totalAmount.toFixed(2)}</td>
+                    {/* <td className="py-2 px-4 border-b">{order.status}</td> */} {/* Removed */}
+                    <td className="py-2 px-4 border-b">
+                      <Link href={`/admin/storeOrders/${order._id}`}>
+                        <button className="mr-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
+                          View
+                        </button>
+                      </Link>
+                      <button
+                        onClick={() => openDeleteModal(order._id)}
+                        className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Confirmation Modal for Deletion */}
+        <ConfirmationModal
+          isOpen={isDeleteModalOpen}
+          title="Confirm Deletion"
+          message="Are you sure you want to delete this store order? This action cannot be undone."
+          onConfirm={handleDelete}
+          onCancel={() => setIsDeleteModalOpen(false)}
+        />
+
+        {/* Create Order Modal */}
+        {selectedProductType && (
+          <CreateOrderModal
+            isOpen={isCreateModalOpen}
+            onClose={() => setIsCreateModalOpen(false)}
+            productType={selectedProductType}
+            onCreateOrder={handleCreateOrder}
+          />
+        )}
+      </div>
+    </AdminLayout>
+  );
+};
+
+export default AdminStoreOrdersPage;

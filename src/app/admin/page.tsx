@@ -40,7 +40,7 @@ const AdminPage: React.FC = () => {
 
     // Call fetchStats initially and then set interval for every 5 seconds
     fetchStats();
-    const intervalId = setInterval(fetchStats, 1000); // 5000 ms = 5 seconds
+    const intervalId = setInterval(fetchStats, 9000); // 5000 ms = 5 seconds
 
     // Clean up interval on component unmount
     return () => clearInterval(intervalId);

@@ -44,3 +44,31 @@ export interface IProductType {
   types_name: string;
   product_catagory: IProductCategory[];
 }
+export interface IOrderProduct {
+  _id?: string;
+  productId: string; // Must be a string
+  productName: string;
+  color: string;
+  size: string;
+  quantity: number;
+  price: number;
+}
+
+export interface IStoreOrderProduct {
+  product: string; // Reference to product ID as string
+  quantity: number;
+  color?: string;
+  size?: string;
+}
+
+export interface IStoreOrder {
+  _id?: string; // Made optional for order creation
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  products: IStoreOrderProduct[];
+  totalAmount: number;
+  // status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled'; // Removed
+  createdAt?: Date;
+  updatedAt?: Date;
+}
