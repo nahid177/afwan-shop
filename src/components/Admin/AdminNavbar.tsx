@@ -1,5 +1,3 @@
-// src/components/Admin/AdminNavbar.tsx
-
 "use client";
 import React from "react";
 import { useRouter } from "next/navigation";
@@ -13,7 +11,6 @@ const AdminNavbar: React.FC = () => {
     const deviceId = localStorage.getItem("deviceId");
 
     if (deviceId) {
-      // Send logout request to server to remove deviceId
       const response = await fetch("/api/admin/logout", {
         method: "POST",
         headers: {
@@ -23,7 +20,6 @@ const AdminNavbar: React.FC = () => {
       });
 
       if (response.ok) {
-        // Remove deviceId and token if logout successful
         localStorage.removeItem("deviceId");
         Cookies.remove("token");
         router.push("/login");
@@ -31,7 +27,6 @@ const AdminNavbar: React.FC = () => {
         console.error("Failed to log out");
       }
     } else {
-      // Fallback if deviceId is missing, simply remove the token and redirect
       Cookies.remove("token");
       router.push("/login");
     }
@@ -39,19 +34,22 @@ const AdminNavbar: React.FC = () => {
 
   return (
     <nav className="navbar bg-white shadow-md p-8">
-      {/* Logo / Title Section */}
       <div className="navbar-start">
         <span className="text-2xl font-semibold hidden lg:inline-block">
           Admin Dashboard
         </span>
       </div>
 
-      {/* Centered Navigation Menu */}
       <div className="navbar-center hidden lg:flex">
         <ul className="menu menu-horizontal space-x-4">
           <li>
             <Link href="/admin/orders" className="text-lg hover:text-primary transition-all">
               Orders
+            </Link>
+          </li>
+          <li>
+            <Link href="/admin/storeOrders" className="text-lg hover:text-primary transition-all">
+              Store Orders
             </Link>
           </li>
           <li>
@@ -101,7 +99,6 @@ const AdminNavbar: React.FC = () => {
         </ul>
       </div>
 
-      {/* Right-Side Buttons */}
       <div className="navbar-end">
         <button
           className="btn btn-outline btn-primary hidden lg:inline-block"
@@ -110,7 +107,6 @@ const AdminNavbar: React.FC = () => {
           Logout
         </button>
 
-        {/* Dropdown Menu for Mobile */}
         <div className="dropdown dropdown-end lg:hidden">
           <label tabIndex={0} className="btn btn-ghost btn-circle">
             <svg
@@ -135,6 +131,11 @@ const AdminNavbar: React.FC = () => {
             <li>
               <Link href="/admin/orders" className="hover:text-primary">
                 Orders
+              </Link>
+            </li>
+            <li>
+              <Link href="/admin/storeOrders" className="hover:text-primary">
+                Store Orders
               </Link>
             </li>
             <li>
