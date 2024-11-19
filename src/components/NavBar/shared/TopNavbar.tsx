@@ -1,5 +1,4 @@
 // src/components/NavBar/shared/TopNavbar.tsx
-
 "use client";
 
 import React, { useEffect, useState, useRef } from "react";
@@ -13,6 +12,7 @@ import {
   FiBell,
   FiTrash2,
   FiHome,
+  FiX, // Ensure FiX is imported
 } from "react-icons/fi";
 import Link from "next/link";
 import { useTheme } from "@/mode/ThemeContext";
@@ -20,6 +20,9 @@ import { usePathname } from "next/navigation";
 import axios from "axios";
 import { useCart } from "@/context/CartContext";
 import Toast from "@/components/Toast/Toast";
+import NotificationsDrawer from "@/components/NotificationsDrawer"; // Import the NotificationsDrawer component
+import useSWR from "swr"; // Import useSWR
+import { Notification } from "@/interfaces/Notification"; // Import Notification interface
 
 interface ProductCategory {
   _id: string;
@@ -41,6 +44,7 @@ const TopNavbar: React.FC = () => {
   // State variables for drawers
   const [menuDrawerOpen, setMenuDrawerOpen] = useState<boolean>(false);
   const [cartDrawerOpen, setCartDrawerOpen] = useState<boolean>(false);
+  const [notificationsDrawerOpen, setNotificationsDrawerOpen] = useState<boolean>(false); // New state for Notifications Drawer
 
   const { cartItems, totalQuantity, totalAmount, removeFromCart, updateQuantity } = useCart();
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
@@ -57,6 +61,9 @@ const TopNavbar: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string>("");
   const [toastType, setToastType] = useState<"success" | "error" | "warning">("success");
 
+  // Define the fetcher function
+  const fetcher = (url: string) => axios.get(url).then((res) => res.data.offerEntries);
+
   // Fetch product types on component mount
   useEffect(() => {
     const fetchProductTypes = async () => {
@@ -71,6 +78,14 @@ const TopNavbar: React.FC = () => {
     fetchProductTypes();
   }, []);
 
+  // Fetch notifications to get unread count
+  const { data: notifications, error: notificationsError } = useSWR<Notification[]>("/api/offer-entries", fetcher);
+
+  // Calculate unread notifications (assuming isActive represents unread)
+  const unreadCount = notifications
+    ? notifications.filter((notification) => notification.isActive).length
+    : 0;
+
   // Search toggle functionality
   const toggleSearch = () => {
     setSearchOpen(!searchOpen);
@@ -80,6 +95,7 @@ const TopNavbar: React.FC = () => {
     // Close other drawers
     setMenuDrawerOpen(false);
     setCartDrawerOpen(false);
+    setNotificationsDrawerOpen(false); // Close Notifications Drawer when opening search
   };
 
   // Handle search input
@@ -93,12 +109,21 @@ const TopNavbar: React.FC = () => {
     setMenuDrawerOpen(!menuDrawerOpen);
     setCartDrawerOpen(false);
     setSearchOpen(false);
+    setNotificationsDrawerOpen(false); // Close Notifications Drawer when opening Menu
   };
 
   const toggleCartDrawer = () => {
     setCartDrawerOpen(!cartDrawerOpen);
     setMenuDrawerOpen(false);
     setSearchOpen(false);
+    setNotificationsDrawerOpen(false); // Close Notifications Drawer when opening Cart
+  };
+
+  const toggleNotificationsDrawer = () => {
+    setNotificationsDrawerOpen(!notificationsDrawerOpen);
+    setMenuDrawerOpen(false);
+    setCartDrawerOpen(false);
+    setSearchOpen(false); // Close other drawers when opening Notifications
   };
 
   // Close drawers when clicking outside
@@ -125,13 +150,20 @@ const TopNavbar: React.FC = () => {
       ) {
         setSearchOpen(false);
       }
+      if (
+        notificationsDrawerOpen &&
+        !(event.target as HTMLElement).closest("#notifications-drawer") &&
+        !(event.target as HTMLElement).closest("#notifications-button")
+      ) {
+        setNotificationsDrawerOpen(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [menuDrawerOpen, cartDrawerOpen, searchOpen]);
+  }, [menuDrawerOpen, cartDrawerOpen, searchOpen, notificationsDrawerOpen]);
 
   const isAdminPage = pathname.startsWith("/admin");
 
@@ -151,6 +183,12 @@ const TopNavbar: React.FC = () => {
         </div>
       )}
 
+      {/* Notifications Drawer */}
+      <NotificationsDrawer
+        isOpen={notificationsDrawerOpen}
+        onClose={() => setNotificationsDrawerOpen(false)}
+      />
+
       {/* Mobile and Tablet Navbar */}
       <div
         className={`navbar ${
@@ -158,7 +196,7 @@ const TopNavbar: React.FC = () => {
         } py-4 lg:hidden flex justify-between px-4 items-center`}
       >
         {/* Menu Icon */}
-        <button className="btn btn-ghost" onClick={toggleMenuDrawer}>
+        <button className="btn btn-ghost" onClick={toggleMenuDrawer} aria-label="Open Menu">
           <FiMenu className="h-6 w-6" />
         </button>
 
@@ -170,11 +208,31 @@ const TopNavbar: React.FC = () => {
         {/* Right Section */}
         <div className="flex items-center space-x-4">
           {/* Theme Toggle */}
-          <button className="btn btn-ghost" onClick={toggleTheme}>
+          <button className="btn btn-ghost" onClick={toggleTheme} aria-label="Toggle Theme">
             {theme === "light" ? (
               <FiSun className="h-6 w-6 text-yellow-500" />
             ) : (
               <FiMoon className="h-6 w-6 text-white" />
+            )}
+          </button>
+
+          {/* Notifications Icon */}
+          <button
+            id="notifications-button"
+            className="btn btn-ghost btn-circle relative"
+            onClick={toggleNotificationsDrawer}
+            aria-label="Open Notifications"
+          >
+            <FiBell
+              className={`h-6 w-6 ${
+                theme === "light" ? "text-gray-800" : "text-gray-300"
+              }`}
+            />
+            {/* Notification Badge */}
+            {unreadCount > 0 && (
+              <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                {unreadCount}
+              </span>
             )}
           </button>
         </div>
@@ -194,8 +252,9 @@ const TopNavbar: React.FC = () => {
           <button
             onClick={toggleMenuDrawer}
             className="text-lg mb-4 flex items-center"
+            aria-label="Close Menu"
           >
-            <FiMenu className="mr-2" />
+            <FiX className="mr-2" />
             Close
           </button>
           <ul className="menu space-y-2">
@@ -247,8 +306,8 @@ const TopNavbar: React.FC = () => {
               placeholder="Search..."
               className="input input-bordered w-full rounded-md"
             />
-            <button onClick={toggleSearch} className="ml-2 text-lg">
-              Close
+            <button onClick={toggleSearch} className="ml-2 text-lg" aria-label="Close Search">
+              <FiX className="h-6 w-6 text-gray-600 dark:text-gray-300" />
             </button>
           </div>
         </div>
@@ -263,7 +322,7 @@ const TopNavbar: React.FC = () => {
         {/* Navbar Start */}
         <div className="navbar-start">
           <div className="dropdown">
-            <button tabIndex={0} className="btn btn-ghost btn-circle">
+            <button tabIndex={0} className="btn btn-ghost btn-circle" aria-label="Open Dropdown Menu">
               <FiMenu
                 className={`h-6 w-6 ${
                   theme === "light" ? "text-gray-800" : "text-gray-300"
@@ -305,6 +364,7 @@ const TopNavbar: React.FC = () => {
             <button
               className="btn btn-ghost btn-circle"
               onClick={toggleSearch}
+              aria-label="Open Search"
             >
               <FiSearch
                 className={`h-5 w-5 md:h-6 md:w-6 ${
@@ -329,21 +389,30 @@ const TopNavbar: React.FC = () => {
           </div>
 
           {/* Notifications Icon */}
-          <button className="btn btn-ghost btn-circle">
-            <div className="indicator">
-              <FiBell
-                className={`h-5 w-5 md:h-6 md:w-6 ${
-                  theme === "light" ? "text-gray-800" : "text-gray-300"
-                }`}
-              />
-              <span className="badge badge-xs badge-primary indicator-item"></span>
-            </div>
+          <button
+            id="notifications-button"
+            className="btn btn-ghost btn-circle relative"
+            onClick={toggleNotificationsDrawer}
+            aria-label="Open Notifications"
+          >
+            <FiBell
+              className={`h-5 w-5 md:h-6 md:w-6 ${
+                theme === "light" ? "text-gray-800" : "text-gray-300"
+              }`}
+            />
+            {/* Notification Badge */}
+            {unreadCount > 0 && (
+              <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white bg-red-600 rounded-full">
+                {unreadCount}
+              </span>
+            )}
           </button>
 
           {/* Cart Icon */}
           <button
             className="btn btn-ghost btn-circle"
             onClick={toggleCartDrawer}
+            aria-label="Open Cart"
           >
             <div className="indicator">
               <FiShoppingCart
@@ -361,7 +430,7 @@ const TopNavbar: React.FC = () => {
           </button>
 
           {/* Theme Toggle */}
-          <button className="btn btn-ghost" onClick={toggleTheme}>
+          <button className="btn btn-ghost" onClick={toggleTheme} aria-label="Toggle Theme">
             {theme === "light" ? (
               <FiSun className="h-6 w-6 text-yellow-500" />
             ) : (
@@ -378,19 +447,19 @@ const TopNavbar: React.FC = () => {
         } lg:hidden flex justify-around items-center py-2 shadow-md`}
       >
         {/* Menu Icon */}
-        <button className="btn btn-ghost" onClick={toggleMenuDrawer}>
+        <button className="btn btn-ghost" onClick={toggleMenuDrawer} aria-label="Open Menu">
           <FiMenu className="h-6 w-6" />
         </button>
 
         {/* Home Button */}
         <Link href="/">
-          <button className="btn btn-ghost">
+          <button className="btn btn-ghost" aria-label="Home">
             <FiHome className="h-6 w-6" />
           </button>
         </Link>
 
         {/* Cart Icon */}
-        <button className="btn btn-ghost" onClick={toggleCartDrawer}>
+        <button className="btn btn-ghost" onClick={toggleCartDrawer} aria-label="Open Cart">
           <div className="indicator">
             <FiShoppingCart className="h-6 w-6" />
             {totalQuantity > 0 && (
@@ -402,7 +471,7 @@ const TopNavbar: React.FC = () => {
         </button>
 
         {/* Search Icon */}
-        <button className="btn btn-ghost" onClick={toggleSearch}>
+        <button className="btn btn-ghost" onClick={toggleSearch} aria-label="Open Search">
           <FiSearch className="h-6 w-6" />
         </button>
       </div>
@@ -418,8 +487,8 @@ const TopNavbar: React.FC = () => {
       >
         <div className="flex justify-between items-center border-b dark:border-gray-700 p-4">
           <h2 className="text-lg mx-auto font-bold">Shopping Cart</h2>
-          <button onClick={toggleCartDrawer} className="ml-auto text-lg">
-            Close
+          <button onClick={toggleCartDrawer} className="ml-auto text-lg" aria-label="Close Cart">
+            <FiX className="h-6 w-6 text-gray-600 dark:text-gray-300" />
           </button>
         </div>
 
