@@ -79,7 +79,7 @@ const TopNavbar: React.FC = () => {
   }, []);
 
   // Fetch notifications to get unread count
-  const { data: notifications, error: notificationsError } = useSWR<Notification[]>("/api/offer-entries", fetcher);
+  const { data: notifications } = useSWR<Notification[]>("/api/offer-entries", fetcher);
 
   // Calculate unread notifications (assuming isActive represents unread)
   const unreadCount = notifications

@@ -17,11 +17,6 @@ const fetcher = (url: string) => axios.get(url).then((res) => res.data.offerEntr
 const NotificationsDrawer: React.FC<NotificationsDrawerProps> = ({ isOpen, onClose }) => {
   const { data: notifications, error } = useSWR<Notification[]>("/api/offer-entries", fetcher);
 
-  // Calculate unread notifications (assuming isActive represents unread)
-  const unreadCount = notifications
-    ? notifications.filter((notification) => notification.isActive).length
-    : 0;
-
   const markAsRead = async (id: string) => {
     try {
       await axios.put("/api/offer-entries", { id, isActive: false });
