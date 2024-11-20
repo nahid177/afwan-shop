@@ -15,6 +15,7 @@ export interface IStoreOrderDocument extends Document {
   customerPhone: string;
   products: IStoreOrderProduct[];
   totalAmount: number;
+  approved: boolean; // Ensure this field exists
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -32,6 +33,7 @@ const StoreOrderSchema = new Schema<IStoreOrderDocument>({
   customerPhone: { type: String, required: true },
   products: [StoreOrderProductSchema],
   totalAmount: { type: Number, required: true },
+  approved: { type: Boolean, default: false }, // Added default value
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

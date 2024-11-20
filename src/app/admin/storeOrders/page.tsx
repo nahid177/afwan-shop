@@ -21,9 +21,13 @@ const AdminStoreOrdersPage: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string>("");
   const [toastType, setToastType] = useState<"success" | "error" | "warning">("success");
 
-  // Confirmation Modal state
+  // Confirmation Modal state for Deletion
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
   const [orderToDelete, setOrderToDelete] = useState<string>("");
+
+  // Confirmation Modal state for Confirmation
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
+  const [orderToConfirm, setOrderToConfirm] = useState<string>("");
 
   // Create Order Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
@@ -79,6 +83,26 @@ const AdminStoreOrdersPage: React.FC = () => {
     }
   };
 
+  const handleConfirm = async () => {
+    try {
+      const response = await axios.patch<IStoreOrder>(`/api/storeOrders/${orderToConfirm}/confirm`);
+      // Update the specific order in the state
+      setStoreOrders(storeOrders.map(order => order._id === response.data._id ? response.data : order));
+      setToastMessage("Order confirmed successfully.");
+      setToastType("success");
+      setToastVisible(true);
+    } catch (error: unknown) {
+      console.error("Error confirming store order:", error);
+
+      const message = getErrorMessage(error, "Failed to confirm store order.");
+      setToastMessage(message);
+      setToastType("error");
+      setToastVisible(true);
+    } finally {
+      setIsConfirmModalOpen(false);
+    }
+  };
+
   const handleCreateOrder = async (orderData: Omit<IStoreOrder, '_id'>) => {
     try {
       const response = await axios.post<IStoreOrder>("/api/storeOrders", orderData);
@@ -99,6 +123,11 @@ const AdminStoreOrdersPage: React.FC = () => {
   const openDeleteModal = (orderId: string) => {
     setOrderToDelete(orderId);
     setIsDeleteModalOpen(true);
+  };
+
+  const openConfirmModal = (orderId: string) => {
+    setOrderToConfirm(orderId);
+    setIsConfirmModalOpen(true);
   };
 
   const openCreateModal = async () => {
@@ -175,7 +204,7 @@ const AdminStoreOrdersPage: React.FC = () => {
                   <th className="py-2 px-4 border-b">Email</th>
                   <th className="py-2 px-4 border-b">Phone</th>
                   <th className="py-2 px-4 border-b">Total Amount</th>
-                  {/* <th className="py-2 px-4 border-b">Status</th> */} {/* Removed */}
+                  <th className="py-2 px-4 border-b">Status</th> {/* Added Status Column */}
                   <th className="py-2 px-4 border-b">Actions</th>
                 </tr>
               </thead>
@@ -187,13 +216,27 @@ const AdminStoreOrdersPage: React.FC = () => {
                     <td className="py-2 px-4 border-b">{order.customerEmail}</td>
                     <td className="py-2 px-4 border-b">{order.customerPhone}</td>
                     <td className="py-2 px-4 border-b">Tk. {order.totalAmount.toFixed(2)}</td>
-                    {/* <td className="py-2 px-4 border-b">{order.status}</td> */} {/* Removed */}
+                    <td className="py-2 px-4 border-b">
+                      {order.approved ? (
+                        <span className="text-green-600 font-semibold">Approved</span>
+                      ) : (
+                        <span className="text-yellow-600 font-semibold">Pending</span>
+                      )}
+                    </td>
                     <td className="py-2 px-4 border-b">
                       <Link href={`/admin/storeOrders/${order._id}`}>
                         <button className="mr-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
                           View
                         </button>
                       </Link>
+                      {!order.approved && ( // Show Confirm button only if not approved
+                        <button
+                          onClick={() => openConfirmModal(order._id)}
+                          className="mr-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                        >
+                          Confirm
+                        </button>
+                      )}
                       <button
                         onClick={() => openDeleteModal(order._id)}
                         className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
@@ -215,6 +258,15 @@ const AdminStoreOrdersPage: React.FC = () => {
           message="Are you sure you want to delete this store order? This action cannot be undone."
           onConfirm={handleDelete}
           onCancel={() => setIsDeleteModalOpen(false)}
+        />
+
+        {/* Confirmation Modal for Confirmation */}
+        <ConfirmationModal
+          isOpen={isConfirmModalOpen}
+          title="Confirm Order"
+          message="Are you sure you want to confirm this order? This will deduct the inventory quantities accordingly."
+          onConfirm={handleConfirm}
+          onCancel={() => setIsConfirmModalOpen(false)}
         />
 
         {/* Create Order Modal */}
