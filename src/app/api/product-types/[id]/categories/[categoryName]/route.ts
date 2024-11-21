@@ -1,6 +1,6 @@
-// src/app/api/product-types/[id]/categories/[categoryName]/route.ts
+// src/app/api/product-types/[id]/categories/[categoryName]/products/route.ts
 
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import { ProductTypes } from '@/models/ProductTypes';
 import mongoose from 'mongoose';
@@ -22,32 +22,33 @@ interface ISizeQuantity {
 interface INewProduct {
   product_name: string;
   code: string[];
-  color: string[];
+  colors: IColorQuantity[];
   sizes: ISizeQuantity[];
   originalPrice: number;
   offerPrice: number;
+  buyingPrice: number; // New Field
   title: string[];
   subtitle: ISubtitle[];
   description: string;
   images: string[];
 }
 
+interface IColorQuantity {
+  color: string;
+  quantity: number;
+}
+
 interface IProduct {
   _id: string;
   product_name: string;
   code: string[];
-  color: string[];
-  sizes: {
-    size: string;
-    quantity: number;
-  }[];
+  colors: IColorQuantity[];
+  sizes: ISizeQuantity[];
   originalPrice: number;
   offerPrice: number;
+  buyingPrice: number; // New Field
   title: string[];
-  subtitle: {
-    title: string;
-    titledetail: string;
-  }[];
+  subtitle: ISubtitle[];
   description: string;
   images: string[];
 }
@@ -57,7 +58,7 @@ interface IProductTypeLean {
   types_name: string;
   product_catagory: {
     catagory_name: string;
-    product: IProduct[]; // Replaced 'any[]' with 'IProduct[]'
+    product: IProduct[];
   }[];
 }
 

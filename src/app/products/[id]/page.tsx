@@ -252,7 +252,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, 
 
       <div className="mb-4 flex gap-3 justify-center">
         {product.offerPrice && <span className="text-red-500 text-lg font-bold">{product.offerPrice.toFixed(0)}৳</span>}
-        {product.originalPrice && product.originalPrice < product.offerPrice && (
+        {product.originalPrice && product.originalPrice > product.offerPrice && (
           <span className="text-gray-500 line-through text-lg">{product.originalPrice.toFixed(0)}৳</span>
         )}
       </div>

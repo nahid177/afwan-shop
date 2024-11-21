@@ -10,10 +10,10 @@ import AdminLayoutTypesName from '../AdminLayoutTypesName';
 import AddCategoryModal from '@/components/Admin/product-types-page/AddCategoryModal';
 import RenameCategoryModal from '@/components/Admin/product-types-page/RenameCategoryModal';
 import DeleteCategoryModal from '@/components/Admin/product-types-page/DeleteCategoryModal';
-import { FaPlus, FaShoppingCart } from 'react-icons/fa'; // Added FaShoppingCart for order button
-import { IProductType, IProductCategory, IStoreOrder } from '@/types'; // Removed IProduct
-import Toast from '@/components/Toast/Toast'; // Import Toast for notifications
-import CreateOrderModal from '@/components/Admin/CreateOrderModal'; // New Modal Component
+import { FaPlus, FaShoppingCart } from 'react-icons/fa';
+import { IProductType, IProductCategory, IStoreOrder } from '@/types';
+import Toast from '@/components/Toast/Toast';
+import CreateOrderModal from '@/components/Admin/CreateOrderModal';
 
 const ProductTypePage = ({ params }: { params: { id: string } }) => {
   const [productType, setProductType] = useState<IProductType | null>(null);
@@ -21,7 +21,7 @@ const ProductTypePage = ({ params }: { params: { id: string } }) => {
   const [isAddModalOpen, setIsAddModalOpen] = useState<boolean>(false);
   const [isRenameModalOpen, setIsRenameModalOpen] = useState<boolean>(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
-  const [isOrderModalOpen, setIsOrderModalOpen] = useState<boolean>(false); // State for Order Modal
+  const [isOrderModalOpen, setIsOrderModalOpen] = useState<boolean>(false);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const { id } = params;
 
@@ -117,7 +117,7 @@ const ProductTypePage = ({ params }: { params: { id: string } }) => {
   };
 
   // Function to handle order creation
-  const handleCreateOrder = async (orderData: Omit<IStoreOrder, '_id'>) => { // Updated parameter type
+  const handleCreateOrder = async (orderData: Omit<IStoreOrder, '_id'>) => {
     try {
       await axios.post<IStoreOrder>('/api/storeOrders', orderData);
       setToastMessage('Store order created successfully.');
@@ -267,7 +267,7 @@ const ProductTypePage = ({ params }: { params: { id: string } }) => {
           isOpen={isOrderModalOpen}
           onClose={() => setIsOrderModalOpen(false)}
           productType={productType}
-          onCreateOrder={handleCreateOrder} // Now correctly typed
+          onCreateOrder={handleCreateOrder}
         />
       )}
     </AdminLayout>

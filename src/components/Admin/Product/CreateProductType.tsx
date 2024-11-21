@@ -1,6 +1,7 @@
 // src/components/Admin/Product/CreateProductType.tsx
 
 "use client";
+
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
@@ -30,6 +31,7 @@ interface IProduct {
   sizes: ISizeQuantity[];
   originalPrice: number;
   offerPrice: number;
+  buyingPrice: number; // Newly added buyingPrice field
   title: string[];
   subtitle: ISubtitle[];
   description: string;
@@ -55,6 +57,7 @@ const CreateProductType: React.FC = () => {
           sizes: [{ size: "", quantity: 0 }], // Initialize with an empty size and quantity
           originalPrice: 0,
           offerPrice: 0,
+          buyingPrice: 0, // Initialize buyingPrice
           title: [""],
           subtitle: [{ title: "", titledetail: "" }],
           description: "",
@@ -245,6 +248,7 @@ const CreateProductType: React.FC = () => {
             sizes: [{ size: "", quantity: 0 }],
             originalPrice: 0,
             offerPrice: 0,
+            buyingPrice: 0, // Initialize buyingPrice
             title: [""],
             subtitle: [{ title: "", titledetail: "" }],
             description: "",
@@ -273,6 +277,7 @@ const CreateProductType: React.FC = () => {
       sizes: [{ size: "", quantity: 0 }],
       originalPrice: 0,
       offerPrice: 0,
+      buyingPrice: 0, // Initialize buyingPrice
       title: [""],
       subtitle: [{ title: "", titledetail: "" }],
       description: "",
@@ -339,11 +344,16 @@ const CreateProductType: React.FC = () => {
       // Loop through each category and product to upload images
       for (const category of categoriesCopy) {
         for (const product of category.product) {
-           // Filter out empty colors
-           product.colors = product.colors.filter(
+          // Filter out empty colors and sizes
+          product.colors = product.colors.filter(
             (colorItem) =>
-              colorItem.color.trim() !== '' && colorItem.quantity > 0
+              colorItem.color.trim() !== "" && colorItem.quantity > 0
           );
+          product.sizes = product.sizes.filter(
+            (sizeItem) =>
+              sizeItem.size.trim() !== "" && sizeItem.quantity > 0
+          );
+
           if (product.imageFiles && product.imageFiles.length > 0) {
             const formData = new FormData();
             product.imageFiles.forEach((file: File) => {
@@ -388,6 +398,7 @@ const CreateProductType: React.FC = () => {
       }
     } catch (error) {
       console.error("Error creating product type:", error);
+      alert("An unexpected error occurred. Please try again.");
     }
   };
 
@@ -406,6 +417,7 @@ const CreateProductType: React.FC = () => {
             value={typesName}
             onChange={(e) => setTypesName(e.target.value)}
             required
+            placeholder="e.g., Clothing, Electronics"
           />
         </div>
 
@@ -413,14 +425,16 @@ const CreateProductType: React.FC = () => {
         {productCategories.map((category, catIndex) => (
           <div key={catIndex} className="border p-4 rounded-lg relative">
             {/* Remove Category Button */}
-            <button
-              type="button"
-              className="absolute top-2 right-2 text-red-500"
-              onClick={() => removeCategory(catIndex)}
-              title="Remove Category"
-            >
-              <FiTrash2 size={20} />
-            </button>
+            {productCategories.length > 1 && (
+              <button
+                type="button"
+                className="absolute top-2 right-2 text-red-500"
+                onClick={() => removeCategory(catIndex)}
+                title="Remove Category"
+              >
+                <FiTrash2 size={20} />
+              </button>
+            )}
 
             <h2 className="text-xl font-semibold mb-2">
               Category {catIndex + 1}
@@ -441,6 +455,7 @@ const CreateProductType: React.FC = () => {
                   handleCategoryChange(catIndex, "catagory_name", e.target.value)
                 }
                 required
+                placeholder="e.g., Shirts, Smartphones"
               />
             </div>
 
@@ -451,14 +466,16 @@ const CreateProductType: React.FC = () => {
                 className="border p-4 mt-4 rounded-lg relative"
               >
                 {/* Remove Product Button */}
-                <button
-                  type="button"
-                  className="absolute top-2 right-2 text-red-500"
-                  onClick={() => removeProduct(catIndex, prodIndex)}
-                  title="Remove Product"
-                >
-                  <FiTrash2 size={20} />
-                </button>
+                {category.product.length > 1 && (
+                  <button
+                    type="button"
+                    className="absolute top-2 right-2 text-red-500"
+                    onClick={() => removeProduct(catIndex, prodIndex)}
+                    title="Remove Product"
+                  >
+                    <FiTrash2 size={20} />
+                  </button>
+                )}
 
                 <h3 className="text-lg font-semibold">
                   Product {prodIndex + 1}
@@ -485,6 +502,7 @@ const CreateProductType: React.FC = () => {
                       )
                     }
                     required
+                    placeholder="e.g., Casual Shirt, iPhone 14"
                   />
                 </div>
 
@@ -507,16 +525,18 @@ const CreateProductType: React.FC = () => {
                           )
                         }
                       />
-                      <button
-                        type="button"
-                        className="ml-2 text-red-500"
-                        onClick={() =>
-                          removeTitle(catIndex, prodIndex, titleIndex)
-                        }
-                        title="Remove Title"
-                      >
-                        <FiTrash2 size={20} />
-                      </button>
+                      {product.title.length > 1 && (
+                        <button
+                          type="button"
+                          className="ml-2 text-red-500"
+                          onClick={() =>
+                            removeTitle(catIndex, prodIndex, titleIndex)
+                          }
+                          title="Remove Title"
+                        >
+                          <FiTrash2 size={20} />
+                        </button>
+                      )}
                     </div>
                   ))}
                   {/* Add Title Button */}
@@ -579,6 +599,7 @@ const CreateProductType: React.FC = () => {
                               alt={`Selected Image ${index + 1}`}
                               layout="fill"
                               objectFit="cover"
+                              className="rounded"
                               onLoad={() => URL.revokeObjectURL(objectUrl)}
                             />
                             {/* Remove Image Button */}
@@ -639,17 +660,20 @@ const CreateProductType: React.FC = () => {
                             Number(e.target.value)
                           )
                         }
+                        min={0}
                       />
-                      <button
-                        type="button"
-                        className="text-red-500"
-                        onClick={() =>
-                          removeColor(catIndex, prodIndex, colorIndex)
-                        }
-                        title="Remove Color"
-                      >
-                        <FiTrash2 size={20} />
-                      </button>
+                      {product.colors.length > 1 && (
+                        <button
+                          type="button"
+                          className="text-red-500"
+                          onClick={() =>
+                            removeColor(catIndex, prodIndex, colorIndex)
+                          }
+                          title="Remove Color"
+                        >
+                          <FiTrash2 size={20} />
+                        </button>
+                      )}
                     </div>
                   ))}
                   {/* Add Color Button */}
@@ -698,17 +722,20 @@ const CreateProductType: React.FC = () => {
                             Number(e.target.value)
                           )
                         }
+                        min={0}
                       />
-                      <button
-                        type="button"
-                        className="text-red-500"
-                        onClick={() =>
-                          removeSize(catIndex, prodIndex, sizeIndex)
-                        }
-                        title="Remove Size"
-                      >
-                        <FiTrash2 size={20} />
-                      </button>
+                      {product.sizes.length > 1 && (
+                        <button
+                          type="button"
+                          className="text-red-500"
+                          onClick={() =>
+                            removeSize(catIndex, prodIndex, sizeIndex)
+                          }
+                          title="Remove Size"
+                        >
+                          <FiTrash2 size={20} />
+                        </button>
+                      )}
                     </div>
                   ))}
                   {/* Add Size Button */}
@@ -738,6 +765,9 @@ const CreateProductType: React.FC = () => {
                         Number(e.target.value)
                       )
                     }
+                    min={0}
+                    step={0.01}
+                    placeholder="e.g., 49.99"
                   />
                 </div>
 
@@ -758,6 +788,33 @@ const CreateProductType: React.FC = () => {
                         Number(e.target.value)
                       )
                     }
+                    min={0}
+                    step={0.01}
+                    placeholder="e.g., 39.99"
+                  />
+                </div>
+
+                {/* Buying Price */}
+                <div className="form-group">
+                  <label className="block text-lg font-medium">
+                    Buying Price
+                  </label>
+                  <input
+                    type="number"
+                    className="input input-bordered w-full"
+                    value={product.buyingPrice}
+                    onChange={(e) =>
+                      handleProductChange(
+                        catIndex,
+                        prodIndex,
+                        "buyingPrice",
+                        Number(e.target.value)
+                      )
+                    }
+                    min={0}
+                    step={0.01}
+                    placeholder="e.g., 29.99"
+                    required
                   />
                 </div>
 
@@ -777,6 +834,7 @@ const CreateProductType: React.FC = () => {
                         e.target.value
                       )
                     }
+                    placeholder="Enter detailed description of the product."
                   ></textarea>
                 </div>
 
@@ -786,16 +844,18 @@ const CreateProductType: React.FC = () => {
                   {product.subtitle.map((sub, subIndex) => (
                     <div key={subIndex} className="border p-2 rounded mb-2 relative">
                       {/* Remove Subtitle Button */}
-                      <button
-                        type="button"
-                        className="absolute top-1 right-1 text-red-500"
-                        onClick={() =>
-                          removeSubtitle(catIndex, prodIndex, subIndex)
-                        }
-                        title="Remove Subtitle"
-                      >
-                        <FiTrash2 size={16} />
-                      </button>
+                      {product.subtitle.length > 1 && (
+                        <button
+                          type="button"
+                          className="absolute top-1 right-1 text-red-500"
+                          onClick={() =>
+                            removeSubtitle(catIndex, prodIndex, subIndex)
+                          }
+                          title="Remove Subtitle"
+                        >
+                          <FiTrash2 size={16} />
+                        </button>
+                      )}
                       <div className="form-group">
                         <label className="block text-sm font-medium">Title</label>
                         <input
@@ -811,6 +871,7 @@ const CreateProductType: React.FC = () => {
                               e.target.value
                             )
                           }
+                          placeholder="Enter subtitle title"
                         />
                       </div>
                       <div className="form-group">
@@ -830,6 +891,7 @@ const CreateProductType: React.FC = () => {
                               e.target.value
                             )
                           }
+                          placeholder="Enter subtitle detail"
                         />
                       </div>
                     </div>
@@ -844,7 +906,7 @@ const CreateProductType: React.FC = () => {
                   </button>
                 </div>
 
-                {/* Add more fields as needed */}
+                {/* Additional fields can be added here */}
               </div>
             ))}
 
@@ -868,7 +930,8 @@ const CreateProductType: React.FC = () => {
           Add Another Category
         </button>
 
-        <button type="submit" className="btn btn-primary">
+        {/* Submit Button */}
+        <button type="submit" className="btn btn-primary mt-6">
           Create Product Type
         </button>
       </form>

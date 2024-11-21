@@ -1,6 +1,8 @@
+// src/components/Admin/product-types-page/CategoryPage.tsx
+
 "use client";
 
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import axios from "axios";
 import Image from "next/image";
@@ -9,6 +11,8 @@ import AdminLayoutTypesName from "@/app/admin/product-types/AdminLayoutTypesName
 import AdminLayout from "@/app/admin/AdminLayout";
 import EditProductForm from "@/components/Admin/product-types-page/EditProduct";
 import { IProduct } from "@/types"; // Import interfaces
+import { FiTrash2 } from "react-icons/fi"; // Import Trash Icon
+import { FaTimes } from "react-icons/fa"; // Import Close Icon
 
 const CategoryPage: React.FC = () => {
   const params = useParams();
@@ -20,6 +24,11 @@ const CategoryPage: React.FC = () => {
   // State for Edit Modal
   const [isEditModalOpen, setIsEditModalOpen] = useState<boolean>(false);
   const [productToEdit, setProductToEdit] = useState<IProduct | null>(null);
+
+  // State for Image Modal
+  const [isImageModalOpen, setIsImageModalOpen] = useState<boolean>(false);
+  const [currentProductImages, setCurrentProductImages] = useState<string[]>([]);
+  const [currentProductName, setCurrentProductName] = useState<string>("");
 
   // Fetch products on component mount
   useEffect(() => {
@@ -90,6 +99,20 @@ const CategoryPage: React.FC = () => {
     setIsEditModalOpen(false);
   };
 
+  // Function to open image modal
+  const openImageModal = (images: string[], productName: string) => {
+    setCurrentProductImages(images);
+    setCurrentProductName(productName);
+    setIsImageModalOpen(true);
+  };
+
+  // Function to close image modal
+  const closeImageModal = () => {
+    setCurrentProductImages([]);
+    setCurrentProductName("");
+    setIsImageModalOpen(false);
+  };
+
   if (loading) {
     return (
       <AdminLayout>
@@ -138,7 +161,10 @@ const CategoryPage: React.FC = () => {
                     <div className="flex flex-col items-center">
                       {/* Product Image (Only the first image) */}
                       {product.images.length > 0 ? (
-                        <div className="w-32 h-32 relative mb-4">
+                        <div
+                          className="w-[300px] h-[300px] relative mb-4 cursor-pointer"
+                          onClick={() => openImageModal(product.images, product.product_name)}
+                        >
                           <Image
                             src={product.images[0]}
                             alt={`Product Image 1`}
@@ -160,7 +186,7 @@ const CategoryPage: React.FC = () => {
                       )}
 
                       {/* Product Details */}
-                      <h2 className="text-2xl font-semibold mb-2 text-center truncate">
+                      <h2 className="text-2xl font-semibold mb-2 text-center  break-words">
                         {product.product_name}
                       </h2>
                       <p className="text-gray-600 mb-4 text-center">
@@ -175,18 +201,23 @@ const CategoryPage: React.FC = () => {
                           <span className="font-semibold">Offer Price:</span>{" "}
                           ${product.offerPrice.toFixed(2)}
                         </div>
+                        {/* Buying Price */}
+                        <div className="mb-2">
+                          <span className="font-semibold">Buying Price:</span>{" "}
+                          ${product.buyingPrice.toFixed(2)}
+                        </div>
                         <div className="mb-2">
                           <span className="font-semibold">Codes:</span>{" "}
                           {product.code.join(", ")}
                         </div>
                         <div className="mb-2">
-                          <span className="font-semibold">Colors:</span>{" "}
+                          <span className="font-semibold break-words">Colors:</span>{" "}
                           {product.colors
                             .map((c) => `${c.color} (${c.quantity})`)
                             .join(", ")}
                         </div>
                         <div className="mb-2">
-                          <span className="font-semibold">Sizes:</span>{" "}
+                          <span className="font-semibold break-words">Sizes:</span>{" "}
                           {product.sizes
                             .map((size) => `${size.size} (${size.quantity})`)
                             .join(", ")}
@@ -240,13 +271,72 @@ const CategoryPage: React.FC = () => {
         {/* Edit Product Modal */}
         {isEditModalOpen && productToEdit && (
           <EditProductForm
-      
             productTypeId={id}
             categoryName={categoryname}
             product={productToEdit}
             onProductUpdated={handleProductUpdated}
             onClose={closeEditModal}
+            
           />
+        )}
+
+        {/* Fullscreen Image Modal */}
+        {isImageModalOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-80 overflow-auto"
+            onClick={closeImageModal}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div
+              className="relative w-11/12 md:w-3/4 lg:w-2/3 xl:w-1/2 bg-white rounded-lg p-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Close Button */}
+              <button
+                className="absolute top-4 right-4 text-gray-700 text-3xl font-bold focus:outline-none"
+                onClick={closeImageModal}
+                aria-label="Close"
+              >
+                <FaTimes />
+              </button>
+
+              {/* Modal Header */}
+              <h2 className="text-2xl font-semibold mb-4 text-center">
+                {currentProductName} - Images
+              </h2>
+
+              {/* Images Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                {currentProductImages.map((imageUrl, index) => (
+                  <div
+                    key={index}
+                    className="relative w-full h-48 cursor-pointer"
+                    onClick={() => window.open(imageUrl, "_blank")}
+                  >
+                    <Image
+                      src={imageUrl}
+                      alt={`${currentProductName} Image ${index + 1}`}
+                      layout="fill"
+                      objectFit="cover"
+                      className="rounded"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.onerror = null;
+                        target.src = "/fallback-image.png"; // Path to a fallback image
+                      }}
+                      loading="lazy"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Optional: Instructions */}
+              <p className="mt-4 text-center text-gray-600">
+                Click on an image to view it in a new tab.
+              </p>
+            </div>
+          </div>
         )}
       </AdminLayoutTypesName>
     </AdminLayout>

@@ -5,6 +5,7 @@ import axios from 'axios';
 import Image from 'next/image';
 import { FiTrash2 } from 'react-icons/fi';
 import { IProduct, ISizeQuantity, ISubtitle, IColorQuantity, IProductCategory } from '@/types';
+import { FaTimes } from 'react-icons/fa'; // Import Close Icon
 
 interface AddCategoryModalProps {
   isOpen: boolean;
@@ -19,7 +20,7 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
   productTypeId,
   onCategoryAdded,
 }) => {
-  const [catagoryName, setCatagoryName] = useState('');
+  const [categoryName, setCategoryName] = useState('');
   const [products, setProducts] = useState<IProduct[]>([
     {
       product_name: '',
@@ -28,6 +29,7 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
       sizes: [{ size: '', quantity: 0 }],
       originalPrice: 0,
       offerPrice: 0,
+      buyingPrice: 0, // Initialize buyingPrice
       title: [''],
       subtitle: [{ title: '', titledetail: '' }],
       description: '',
@@ -101,6 +103,7 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
         sizes: [{ size: '', quantity: 0 }],
         originalPrice: 0,
         offerPrice: 0,
+        buyingPrice: 0, // Initialize buyingPrice for new product
         title: [''],
         subtitle: [{ title: '', titledetail: '' }],
         description: '',
@@ -189,13 +192,35 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
 
   const handleSubmit = async () => {
     try {
-      if (catagoryName.trim() === '') {
+      if (categoryName.trim() === '') {
         alert('Category name is required.');
         return;
       }
 
+      // Validate products
+      for (let index = 0; index < products.length; index++) {
+        const product = products[index];
+        if (product.product_name.trim() === '') {
+          alert(`Product ${index + 1}: Product name is required.`);
+          return;
+        }
+        if (product.originalPrice < 0) {
+          alert(`Product ${index + 1}: Original price cannot be negative.`);
+          return;
+        }
+        if (product.offerPrice < 0) {
+          alert(`Product ${index + 1}: Offer price cannot be negative.`);
+          return;
+        }
+        if (product.buyingPrice < 0) {
+          alert(`Product ${index + 1}: Buying price cannot be negative.`);
+          return;
+        }
+        // Add more validations as needed
+      }
+
       const newCategory: IProductCategory = {
-        catagory_name: catagoryName,
+        catagory_name: categoryName,
         product: products,
       };
 
@@ -203,34 +228,35 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
       const categoryCopy = deepCopyWithFiles(newCategory);
 
       // Loop through each product to upload images
-      for (const product of categoryCopy.product) {
-        if (product.imageFiles && product.imageFiles.length > 0) {
-          const formData = new FormData();
-          product.imageFiles.forEach((file: File) => {
-            formData.append('files', file);
-          });
+      await Promise.all(
+        categoryCopy.product.map(async (product) => {
+          if (product.imageFiles && product.imageFiles.length > 0) {
+            const formData = new FormData();
+            product.imageFiles.forEach((file: File) => {
+              formData.append('files', file);
+            });
 
-          // Upload images and get URLs
-          const res = await fetch('/api/upload', {
-            method: 'POST',
-            body: formData,
-          });
+            // Upload images and get URLs
+            const res = await fetch('/api/upload', {
+              method: 'POST',
+              body: formData,
+            });
 
-          if (res.ok) {
-            const data = await res.json();
-            const imageUrls = data.urls;
+            if (res.ok) {
+              const data = await res.json();
+              const imageUrls: string[] = data.urls;
 
-            // Update product's images with uploaded URLs
-            product.images = imageUrls;
-          } else {
-            alert('Failed to upload images.');
-            return;
+              // Update product's images with uploaded URLs
+              product.images = imageUrls;
+            } else {
+              throw new Error('Failed to upload images.');
+            }
+
+            // Remove imageFiles as they are no longer needed
+            delete product.imageFiles;
           }
-
-          // Remove imageFiles as they are no longer needed
-          delete product.imageFiles;
-        }
-      }
+        })
+      );
 
       // Prepare data for submission
       const data = {
@@ -262,14 +288,23 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
         className="bg-white p-6 rounded shadow-lg max-w-2xl w-full overflow-y-auto max-h-screen"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-2xl font-bold mb-4">Add New Category</h2>
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">Add New Category</h2>
+          <button
+            className="text-gray-700 text-2xl font-bold focus:outline-none"
+            onClick={onClose}
+            aria-label="Close"
+          >
+            <FaTimes />
+          </button>
+        </div>
         <div className="mb-4">
           <label className="block font-semibold mb-2">Category Name</label>
           <input
             type="text"
             className="w-full border px-3 py-2 rounded"
-            value={catagoryName}
-            onChange={(e) => setCatagoryName(e.target.value)}
+            value={categoryName}
+            onChange={(e) => setCategoryName(e.target.value)}
           />
         </div>
 
@@ -297,6 +332,8 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
                   <label className="block font-semibold mb-1">Original Price</label>
                   <input
                     type="number"
+                    min="0"
+                    step="0.01"
                     className="w-full border px-3 py-2 rounded"
                     value={product.originalPrice}
                     onChange={(e) =>
@@ -313,12 +350,32 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
                   <label className="block font-semibold mb-1">Offer Price</label>
                   <input
                     type="number"
+                    min="0"
+                    step="0.01"
                     className="w-full border px-3 py-2 rounded"
                     value={product.offerPrice}
                     onChange={(e) =>
                       handleProductChange(
                         index,
                         'offerPrice',
+                        parseFloat(e.target.value)
+                      )
+                    }
+                  />
+                </div>
+                {/* Buying Price */}
+                <div>
+                  <label className="block font-semibold mb-1">Buying Price</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className="w-full border px-3 py-2 rounded"
+                    value={product.buyingPrice}
+                    onChange={(e) =>
+                      handleProductChange(
+                        index,
+                        'buyingPrice',
                         parseFloat(e.target.value)
                       )
                     }
@@ -404,6 +461,20 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
                             handleProductChange(index, 'subtitle', newSubtitles);
                           }}
                         />
+                        {/* Remove Subtitle Button */}
+                        {product.subtitle.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newSubtitles = [...product.subtitle];
+                              newSubtitles.splice(subIndex, 1);
+                              handleProductChange(index, 'subtitle', newSubtitles);
+                            }}
+                            className="mt-2 text-red-600 hover:underline"
+                          >
+                            Remove Subtitle
+                          </button>
+                        )}
                       </div>
                     ))}
                     <button
@@ -443,6 +514,7 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
                               alt={`Selected Image ${idx + 1}`}
                               layout="fill"
                               objectFit="cover"
+                              className="rounded"
                               onLoad={() => URL.revokeObjectURL(objectUrl)}
                             />
                             {/* Remove Image Button */}
@@ -464,7 +536,6 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
                   </p>
                 </div>
               </div>
-
               {/* Sizes */}
               <div className="mb-2">
                 <label className="block font-semibold mb-1">Sizes & Quantities</label>
@@ -481,6 +552,7 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
                     />
                     <input
                       type="number"
+                      min="0"
                       placeholder="Quantity"
                       className="w-1/2 border px-3 py-2 rounded"
                       value={sizeItem.quantity}
@@ -496,6 +568,7 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
                   </div>
                 ))}
                 <button
+                  type="button"
                   onClick={() => addSizeField(index)}
                   className="text-blue-600 hover:underline"
                 >
@@ -519,6 +592,7 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
                     />
                     <input
                       type="number"
+                      min="0"
                       placeholder="Quantity"
                       className="w-1/2 border px-3 py-2 rounded"
                       value={colorItem.quantity}
@@ -534,6 +608,7 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
                   </div>
                 ))}
                 <button
+                  type="button"
                   onClick={() => addColorField(index)}
                   className="text-blue-600 hover:underline"
                 >
@@ -542,11 +617,12 @@ const AddCategoryModal: React.FC<AddCategoryModalProps> = ({
               </div>
             </div>
           ))}
-          <button onClick={addProductField} className="text-blue-600 hover:underline">
+          <button onClick={addProductField} className="text-blue-600 hover:underline mt-2">
             + Add Another Product
           </button>
         </div>
 
+        {/* Submit and Cancel Buttons */}
         <div className="flex justify-end space-x-2">
           <button
             onClick={onClose}

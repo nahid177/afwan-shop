@@ -210,7 +210,7 @@ const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
           </span>
         )}
         {product.originalPrice &&
-          product.originalPrice < product.offerPrice && (
+          product.originalPrice > product.offerPrice && (
             <span className="text-gray-500 line-through text-xs md:text-base lg:text-xl">
               {product.originalPrice.toFixed(0)}৳
             </span>

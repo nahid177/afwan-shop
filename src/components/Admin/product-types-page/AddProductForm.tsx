@@ -1,8 +1,10 @@
+// src/components/Admin/product-types-page/AddProductForm.tsx
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { IProduct, ISizeQuantity, ISubtitle, IColorQuantity } from '@/types'; // Import interfaces
+import { IProduct, ISizeQuantity, ISubtitle, IColorQuantity } from '@/types';
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import { FaPlus, FaTimes } from 'react-icons/fa';
@@ -30,6 +32,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     code: string;
     originalPrice: number;
     offerPrice: number;
+    buyingPrice: number; // New Field
     title: string;
     description: string;
   }>({
@@ -37,6 +40,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     code: '',
     originalPrice: 0,
     offerPrice: 0,
+    buyingPrice: 0, // Initialize
     title: '',
     description: '',
   });
@@ -53,11 +57,11 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  // Handle form input changes
+  // Handle input changes for simple fields
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    const target = e.target as HTMLInputElement | HTMLTextAreaElement;
+    const target = e.target;
     const { name, value } = target;
 
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -145,6 +149,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
   const removeImage = (index: number) => {
     setSelectedImages((prev) => {
       const updated = [...prev];
+      // Revoke the object URL to avoid memory leaks
+      URL.revokeObjectURL(updated[index].preview);
       updated.splice(index, 1);
       return updated;
     });
@@ -164,7 +170,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
     setSubmitError(null);
 
     try {
-      // Validate required fields
+      // Validate required fields, including buyingPrice
       if (
         !formData.product_name ||
         !formData.code ||
@@ -172,13 +178,14 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
         colors.length === 0 ||
         formData.originalPrice <= 0 ||
         formData.offerPrice <= 0 ||
+        formData.buyingPrice <= 0 || // Ensure buyingPrice is provided
         !formData.title ||
         subtitles.length === 0 ||
         !formData.description ||
         selectedImages.length === 0
       ) {
         setSubmitError(
-          'Please fill in all required fields and upload at least one image.'
+          'Please fill in all required fields, including Buying Price.'
         );
         setSubmitting(false);
         return;
@@ -217,6 +224,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
         sizes: filteredSizes,
         originalPrice: formData.originalPrice,
         offerPrice: formData.offerPrice,
+        buyingPrice: formData.buyingPrice, // Include buyingPrice
         title: formData.title.split(',').map((t) => t.trim()),
         subtitle: subtitles,
         description: formData.description,
@@ -241,6 +249,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
         code: '',
         originalPrice: 0,
         offerPrice: 0,
+        buyingPrice: 0, // Reset buyingPrice
         title: '',
         description: '',
       });
@@ -259,6 +268,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
 
   return (
     <>
+      {/* Button to open the modal */}
       <button
         onClick={() => setIsModalOpen(true)}
         className="flex items-center px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 mt-4"
@@ -266,6 +276,7 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
         <FaPlus className="mr-2" /> Add Product
       </button>
 
+      {/* Modal */}
       <Transition appear show={isModalOpen} as={Fragment}>
         <Dialog
           as="div"
@@ -379,6 +390,23 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
                         />
                       </div>
 
+                      {/* Buying Price */}
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Buying Price ($)
+                        </label>
+                        <input
+                          type="number"
+                          name="buyingPrice"
+                          value={formData.buyingPrice}
+                          onChange={handleChange}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                          min="0"
+                          step="0.01"
+                          required
+                        />
+                      </div>
+
                       {/* Title */}
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700">
@@ -409,203 +437,212 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
                           placeholder="Detailed description of the product."
                         ></textarea>
                       </div>
-                    </div>
 
-                    {/* Sizes */}
-                    <div className="mt-4">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Sizes & Quantities
-                      </label>
-                      {sizes.map((sizeItem, index) => (
-                        <div key={index} className="flex space-x-2 mb-2">
-                          <input
-                            type="text"
-                            placeholder="Size"
-                            className="w-1/2 border px-3 py-2 rounded"
-                            value={sizeItem.size}
-                            onChange={(e) =>
-                              handleSizeChange(index, 'size', e.target.value)
-                            }
-                          />
-                          <input
-                            type="number"
-                            placeholder="Quantity"
-                            className="w-1/2 border px-3 py-2 rounded"
-                            value={sizeItem.quantity}
-                            onChange={(e) =>
-                              handleSizeChange(
-                                index,
-                                'quantity',
-                                parseInt(e.target.value)
-                              )
-                            }
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeSizeField(index)}
-                            className="text-red-600 hover:underline"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={addSizeField}
-                        className="text-blue-600 hover:underline"
-                      >
-                        + Add Another Size
-                      </button>
-                    </div>
-
-                    {/* Colors */}
-                    <div className="mt-4">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Colors & Quantities
-                      </label>
-                      {colors.map((colorItem, index) => (
-                        <div key={index} className="flex space-x-2 mb-2">
-                          <input
-                            type="text"
-                            placeholder="Color"
-                            className="w-1/2 border px-3 py-2 rounded"
-                            value={colorItem.color}
-                            onChange={(e) =>
-                              handleColorChange(index, 'color', e.target.value)
-                            }
-                          />
-                          <input
-                            type="number"
-                            placeholder="Quantity"
-                            className="w-1/2 border px-3 py-2 rounded"
-                            value={colorItem.quantity}
-                            onChange={(e) =>
-                              handleColorChange(
-                                index,
-                                'quantity',
-                                parseInt(e.target.value)
-                              )
-                            }
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeColorField(index)}
-                            className="text-red-600 hover:underline"
-                          >
-                            Remove
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={addColorField}
-                        className="text-blue-600 hover:underline"
-                      >
-                        + Add Another Color
-                      </button>
-                    </div>
-
-                    {/* Subtitles */}
-                    <div className="mt-4">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Subtitles
-                      </label>
-                      {subtitles.map((subtitleItem, index) => (
-                        <div
-                          key={index}
-                          className="mb-4 border p-2 rounded relative"
-                        >
-                          <button
-                            type="button"
-                            onClick={() => removeSubtitleField(index)}
-                            className="absolute top-1 right-1 text-red-600 hover:text-red-800"
-                            aria-label="Remove Subtitle"
-                          >
-                            <FaTimes size={16} />
-                          </button>
-                          <input
-                            type="text"
-                            placeholder="Subtitle Title"
-                            className="w-full border px-3 py-2 rounded mb-2"
-                            value={subtitleItem.title}
-                            onChange={(e) =>
-                              handleSubtitleChange(index, 'title', e.target.value)
-                            }
-                          />
-                          <textarea
-                            placeholder="Subtitle Detail"
-                            className="w-full border px-3 py-2 rounded"
-                            value={subtitleItem.titledetail}
-                            onChange={(e) =>
-                              handleSubtitleChange(
-                                index,
-                                'titledetail',
-                                e.target.value
-                              )
-                            }
-                          />
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={addSubtitleField}
-                        className="text-blue-600 hover:underline"
-                      >
-                        + Add Another Subtitle
-                      </button>
-                    </div>
-
-                    {/* Images */}
-                    <div className="mt-4">
-                      <label className="block text-sm font-medium text-gray-700">
-                        Product Images (Max 5)
-                      </label>
-                      <input
-                        type="file"
-                        name="images"
-                        onChange={handleImageChange}
-                        className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
-                        accept="image/*"
-                        multiple
-                      />
-                      {selectedImages.length > 0 && (
-                        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-                          {selectedImages.map((image, index) => (
-                            <div key={index} className="relative">
-                              <Image
-                                src={image.preview}
-                                alt={`Selected Image ${index + 1}`}
-                                width={100}
-                                height={100}
-                                className="object-cover rounded-md"
-                              />
+                      {/* Sizes */}
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Sizes & Quantities
+                        </label>
+                        {sizes.map((sizeItem, index) => (
+                          <div key={index} className="flex space-x-2 mb-2">
+                            <input
+                              type="text"
+                              placeholder="Size"
+                              className="w-1/2 border px-3 py-2 rounded"
+                              value={sizeItem.size}
+                              onChange={(e) =>
+                                handleSizeChange(index, 'size', e.target.value)
+                              }
+                            />
+                            <input
+                              type="number"
+                              placeholder="Quantity"
+                              className="w-1/2 border px-3 py-2 rounded"
+                              value={sizeItem.quantity}
+                              onChange={(e) =>
+                                handleSizeChange(
+                                  index,
+                                  'quantity',
+                                  parseInt(e.target.value)
+                                )
+                              }
+                            />
+                            {sizes.length > 1 && (
                               <button
                                 type="button"
-                                onClick={() => removeImage(index)}
-                                className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 focus:outline-none"
-                                aria-label={`Remove Image ${index + 1}`}
+                                onClick={() => removeSizeField(index)}
+                                className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                aria-label={`Remove Size ${index + 1}`}
                               >
                                 <FaTimes size={12} />
                               </button>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={addSizeField}
+                          className="flex items-center text-blue-600 hover:underline"
+                        >
+                          <FaPlus className="mr-1" /> Add Another Size
+                        </button>
+                      </div>
+
+                      {/* Colors */}
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Colors & Quantities
+                        </label>
+                        {colors.map((colorItem, index) => (
+                          <div key={index} className="flex space-x-2 mb-2">
+                            <input
+                              type="text"
+                              placeholder="Color"
+                              className="w-1/2 border px-3 py-2 rounded"
+                              value={colorItem.color}
+                              onChange={(e) =>
+                                handleColorChange(index, 'color', e.target.value)
+                              }
+                            />
+                            <input
+                              type="number"
+                              placeholder="Quantity"
+                              className="w-1/2 border px-3 py-2 rounded"
+                              value={colorItem.quantity}
+                              onChange={(e) =>
+                                handleColorChange(
+                                  index,
+                                  'quantity',
+                                  parseInt(e.target.value)
+                                )
+                              }
+                            />
+                            {colors.length > 1 && (
+                              <button
+                                type="button"
+                                onClick={() => removeColorField(index)}
+                                className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                                aria-label={`Remove Color ${index + 1}`}
+                              >
+                                <FaTimes size={12} />
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={addColorField}
+                          className="flex items-center text-blue-600 hover:underline"
+                        >
+                          <FaPlus className="mr-1" /> Add Another Color
+                        </button>
+                      </div>
+
+                      {/* Subtitles */}
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Subtitles
+                        </label>
+                        {subtitles.map((subtitleItem, index) => (
+                          <div
+                            key={index}
+                            className="mb-4 border p-2 rounded relative"
+                          >
+                            <button
+                              type="button"
+                              onClick={() => removeSubtitleField(index)}
+                              className="absolute top-1 right-1 text-red-600 hover:text-red-800 focus:outline-none"
+                              aria-label={`Remove Subtitle ${index + 1}`}
+                            >
+                              <FaTimes size={16} />
+                            </button>
+                            <input
+                              type="text"
+                              placeholder="Subtitle Title"
+                              className="w-full border px-3 py-2 rounded mb-2"
+                              value={subtitleItem.title}
+                              onChange={(e) =>
+                                handleSubtitleChange(index, 'title', e.target.value)
+                              }
+                            />
+                            <textarea
+                              placeholder="Subtitle Detail"
+                              className="w-full border px-3 py-2 rounded"
+                              value={subtitleItem.titledetail}
+                              onChange={(e) =>
+                                handleSubtitleChange(
+                                  index,
+                                  'titledetail',
+                                  e.target.value
+                                )
+                              }
+                            />
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={addSubtitleField}
+                          className="flex items-center text-blue-600 hover:underline"
+                        >
+                          <FaPlus className="mr-1" /> Add Another Subtitle
+                        </button>
+                      </div>
+
+                      {/* Images */}
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700">
+                          Product Images (Max 5)
+                        </label>
+                        <input
+                          type="file"
+                          name="images"
+                          onChange={handleImageChange}
+                          className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                          accept="image/*"
+                          multiple
+                        />
+                        {selectedImages.length > 0 && (
+                          <div className="flex flex-wrap mt-2">
+                            {selectedImages.map((image, idx) => (
+                              <div key={idx} className="relative mr-2 mb-2 w-24 h-24">
+                                <Image
+                                  src={image.preview}
+                                  alt={`Selected Image ${idx + 1}`}
+                                  layout="fill"
+                                  objectFit="cover"
+                                  className="rounded"
+                                />
+                                {/* Remove Image Button */}
+                                <button
+                                  type="button"
+                                  className="absolute top-0 right-0 bg-red-500 text-white rounded-full p-1"
+                                  onClick={() => removeImage(idx)}
+                                  title="Remove Image"
+                                >
+                                  <FaTimes size={12} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        {/* Display number of images selected */}
+                        <p className="text-sm text-gray-500">
+                          {selectedImages.length} / 5 images selected
+                        </p>
+                      </div>
                     </div>
 
-                    {/* Display Submit Error */}
+                    {/* Submit Error */}
                     {submitError && (
-                      <p className="text-red-500 mt-2">{submitError}</p>
+                      <p className="text-red-500 text-sm mt-2">{submitError}</p>
                     )}
 
-                    {/* Submit Button */}
-                    <div className="mt-6 flex justify-end">
+                    {/* Buttons */}
+                    <div className="mt-6 flex justify-end space-x-2">
                       <button
                         type="button"
-                        className="mr-4 px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
                         onClick={() => setIsModalOpen(false)}
-                        disabled={submitting}
-                        aria-label="Cancel"
+                        className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
                       >
                         Cancel
                       </button>
@@ -615,9 +652,8 @@ const AddProductForm: React.FC<AddProductFormProps> = ({
                           submitting ? 'opacity-50 cursor-not-allowed' : ''
                         }`}
                         disabled={submitting}
-                        aria-label="Submit Product"
                       >
-                        {submitting ? 'Submitting...' : 'Submit Product'}
+                        {submitting ? 'Submitting...' : 'Add Product'}
                       </button>
                     </div>
                   </form>

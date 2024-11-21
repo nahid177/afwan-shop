@@ -69,13 +69,15 @@ const ProductDetailsPage: React.FC = () => {
 
   // State to control the visibility of the modal
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
-
   useEffect(() => {
     const fetchProductDetails = async () => {
       try {
-        // Removed manual encoding to prevent double encoding
+        // Decode categoryName to prevent double encoding
+        const decodedCategoryName = decodeURIComponent(categoryName);
+        const encodedCategoryName = encodeURIComponent(decodedCategoryName);
+
         const productResponse = await axios.get(
-          `/api/product-types/${id}/categories/${categoryName}/products/${productId}`
+          `/api/product-types/${id}/categories/${encodedCategoryName}/products/${productId}`
         );
         setProduct(productResponse.data);
         // Set default selected color and size

@@ -1,10 +1,10 @@
 // src/types.ts
 
-import { Types } from 'mongoose';
+import mongoose from 'mongoose';
 
-export interface ISubtitle {
-  title: string;
-  titledetail: string;
+export interface IColorQuantity {
+  color: string;
+  quantity: number;
 }
 
 export interface ISizeQuantity {
@@ -12,26 +12,27 @@ export interface ISizeQuantity {
   quantity: number;
 }
 
-export interface IColorQuantity {
-  color: string;
-  quantity: number;
+export interface ISubtitle {
+  title: string;
+  titledetail: string;
 }
 
 export interface IProduct {
-  _id?: Types.ObjectId | string; // Optional for new products
+  imageFiles: never[];
+  _id?: mongoose.Types.ObjectId;
   product_name: string;
   code: string[];
-  colors: IColorQuantity[]; // Updated to include color quantities
+  colors: IColorQuantity[];
   sizes: ISizeQuantity[];
   originalPrice: number;
   offerPrice: number;
+  buyingPrice: number; // New Field
   title: string[];
   subtitle: ISubtitle[];
   description: string;
   images: string[];
-  imageFiles?: File[]; // For image uploads
-  createdAt?: Date;
-  updatedAt?: Date;
+  totalQuantity?: number; // Optional field for total quantity
+
 }
 
 export interface IProductCategory {
@@ -40,35 +41,27 @@ export interface IProductCategory {
 }
 
 export interface IProductType {
-  _id?: Types.ObjectId | string;
+  _id: string;
   types_name: string;
   product_catagory: IProductCategory[];
 }
-export interface IOrderProduct {
-  _id?: string;
-  productId: string; // Must be a string
-  productName: string;
-  color: string;
-  size: string;
-  quantity: number;
-  price: number;
-}
 
 export interface IStoreOrderProduct {
-  product: string; // Reference to product ID as string
+  product: mongoose.Types.ObjectId; // Reference to product ID
   quantity: number;
   color?: string;
   size?: string;
+  buyingPrice?: number; // Optional: Store buyingPrice at order time
 }
 
 export interface IStoreOrder {
-  _id?: string; // Made optional for order creation
+  _id: string;
   customerName: string;
   customerEmail: string;
   customerPhone: string;
   products: IStoreOrderProduct[];
   totalAmount: number;
-  // status: 'Pending' | 'Processing' | 'Shipped' | 'Delivered' | 'Cancelled'; // Removed
+  approved: boolean;
   createdAt?: Date;
   updatedAt?: Date;
 }

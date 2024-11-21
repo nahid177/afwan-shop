@@ -22,6 +22,7 @@ export interface IProduct extends Document {
   code: string[];
   colors: IColorQuantity[];
   sizes: ISizeQuantity[];
+  buyingPrice: number; // New Field
   originalPrice: number;
   offerPrice: number;
   title: string[];
@@ -62,6 +63,7 @@ const ProductSchema = new Schema<IProduct>({
   code: [{ type: String, required: true }],
   colors: [ColorQuantitySchema], // Correctly define colors field
   sizes: [SizeQuantitySchema],
+  buyingPrice: { type: Number, required: true }, // New Field
   originalPrice: { type: Number, required: true },
   offerPrice: { type: Number, required: true },
   title: [{ type: String, required: true }],
