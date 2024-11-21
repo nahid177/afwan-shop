@@ -7,6 +7,7 @@ import {
     IOrderProduct
 } from '@/types';
 import { FaTimes } from 'react-icons/fa';
+import Image from 'next/image'; // Import Image component for displaying product images
 
 interface CreateOrderModalProps {
     isOpen: boolean;
@@ -152,6 +153,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
                                                     colors: product.colors,
                                                     sizes: product.sizes,
                                                     offerPrice: product.offerPrice,
+                                                    images: product.images, // Pass images to the selection card
                                                 }}
                                                 onSelect={handleProductSelection}
                                             />
@@ -169,10 +171,20 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
                             <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">Selected Products</h3>
                             <ul className="space-y-2">
                                 {selectedProducts.map((item, index) => (
-                                    <li key={index} className="flex justify-between items-center bg-gray-100 p-2 rounded-lg shadow">
-                                        <span className="text-gray-700 dark:text-gray-200">
-                                            {item.productName} - {item.color} - {item.size} x {item.quantity}
-                                        </span>
+                                    <li key={index} className="flex items-center justify-between bg-gray-100 dark:bg-gray-800 p-2 rounded-lg shadow">
+                                        {/* Product Image */}
+                                        <div className="flex items-center space-x-4">
+                                            <Image
+                                                src={item.imageUrl || "/placeholder.png"}
+                                                alt={item.productName}
+                                                width={50}
+                                                height={50}
+                                                className="w-12 h-12 object-cover rounded"
+                                            />
+                                            <span className="text-gray-700 dark:text-gray-200">
+                                                {item.productName} - {item.color} - {item.size} x {item.quantity}
+                                            </span>
+                                        </div>
                                         <button
                                             type="button"
                                             onClick={() => handleRemoveProduct(index)}
@@ -226,6 +238,7 @@ interface ProductSelectionCardProps {
         colors: Array<{ color: string; quantity: number }>;
         sizes: Array<{ size: string; quantity: number }>;
         offerPrice: number;
+        images: string[]; // Include images in the product prop
     };
     onSelect: (product: IOrderProduct) => void;
 }
@@ -244,6 +257,7 @@ const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({ product, on
                 size: selectedSize,
                 quantity,
                 price: product.offerPrice,
+                imageUrl: product.images[0] || '/placeholder.png', // Include image URL
             });
             setSelectedColor('');
             setSelectedSize('');
@@ -255,6 +269,16 @@ const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({ product, on
 
     return (
         <div className="border p-4 rounded-lg shadow-md">
+            {/* Product Image */}
+            <div className="mb-2">
+                <Image
+                    src={product.images[0] || "/placeholder.png"}
+                    alt={product.product_name}
+                    width={200}
+                    height={200}
+                    className="w-full h-32 object-cover rounded"
+                />
+            </div>
             <h5 className="font-medium text-gray-700 dark:text-gray-200 mb-2">{product.product_name}</h5>
             <div className="mb-2">
                 <label className="block text-sm text-gray-600 dark:text-gray-300">Color:</label>
