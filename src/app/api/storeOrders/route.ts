@@ -3,13 +3,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import StoreOrder from '@/models/StoreOrder';
+import mongoose from 'mongoose';
 
 // GET: Retrieve all store orders
 export async function GET() {
   await dbConnect();
 
   try {
-    const storeOrders = await StoreOrder.find().populate('products.product');
+    // Fetch all store orders
+    const storeOrders = await StoreOrder.find()
+      .select('-__v'); // Exclude __v field if not needed
+
     return NextResponse.json(storeOrders, { status: 200 });
   } catch (error: unknown) {
     console.error('Error fetching store orders:', error);
@@ -28,20 +32,41 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
 
     // Basic Validation
-    if (!data.customerName || !data.customerEmail || !data.customerPhone || !data.products || !data.totalAmount) {
+    if (!data.customerName || !data.customerPhone || !data.products || !data.totalAmount) {
       return NextResponse.json(
         { message: 'Missing required fields.' },
         { status: 400 }
       );
     }
 
-    // Further validation can be added here (e.g., using a validation library)
+    // Validate each product has required fields
+    const isValid = data.products.every(
+      (product: any) =>
+        typeof product.buyingPrice === 'number' &&
+        typeof product.offerPrice === 'number' &&
+        typeof product.productImage === 'string' &&
+        typeof product.productName === 'string'
+    );
+
+    if (!isValid) {
+      return NextResponse.json(
+        { message: 'Each product must have buyingPrice (number), offerPrice (number), productImage (string), and productName (string).' },
+        { status: 400 }
+      );
+    }
 
     const newStoreOrder = new StoreOrder(data);
     const savedOrder = await newStoreOrder.save();
     return NextResponse.json(savedOrder, { status: 201 });
   } catch (error: unknown) {
     console.error('Error creating store order:', error);
+    // If error is a Mongoose ValidationError, extract the message
+    if (error instanceof mongoose.Error.ValidationError) {
+      return NextResponse.json(
+        { message: error.message },
+        { status: 400 }
+      );
+    }
     return NextResponse.json(
       { message: 'Error creating store order.' },
       { status: 500 }

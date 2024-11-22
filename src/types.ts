@@ -47,6 +47,9 @@ export interface IProductType {
 }
 
 export interface IStoreOrderProduct {
+  offerPrice: any;
+  productName: string;
+  productImage: string;
   product: mongoose.Types.ObjectId; // Reference to product ID
   quantity: number;
   color?: string;
@@ -55,6 +58,8 @@ export interface IStoreOrderProduct {
 }
 
 export interface IStoreOrder {
+  image: string | StaticImport;
+  buyingPrice: any;
   _id: string;
   customerName: string;
   customerEmail: string;

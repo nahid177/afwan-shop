@@ -1,4 +1,5 @@
 // src/app/api/storeOrders/[id]/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import StoreOrder from '@/models/StoreOrder';
@@ -23,7 +24,9 @@ export async function GET(request: NextRequest, { params }: { params: Params }) 
   try {
     await dbConnect();
 
-    const storeOrder = await StoreOrder.findById(id).populate('products.product');
+    const storeOrder = await StoreOrder.findById(id)
+      .populate('products.product', 'name price')
+      .select('-__v');
 
     if (!storeOrder) {
       return NextResponse.json(
@@ -60,7 +63,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Params }
     const { status } = await request.json();
 
     // Validate the new status
-    const validStatuses = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+    const validStatuses = ['Pending', 'Approved'];
     if (!validStatuses.includes(status)) {
       return NextResponse.json(
         { message: `Invalid status. Valid statuses are: ${validStatuses.join(', ')}.` },
@@ -70,7 +73,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Params }
 
     const updatedOrder = await StoreOrder.findByIdAndUpdate(
       id,
-      { status, updatedAt: new Date() },
+      { approved: status === 'Approved', updatedAt: new Date() },
       { new: true }
     ).populate('products.product');
 

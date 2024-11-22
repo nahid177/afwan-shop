@@ -10,6 +10,8 @@ import Toast from "@/components/Toast/Toast";
 import ConfirmationModal from "@/components/Admin/ConfirmationModal";
 import CreateOrderModal from "@/components/Admin/CreateOrderModal";
 import AdminLayout from "../AdminLayout";
+import Image from "next/image";
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import eye icons
 
 const AdminStoreOrdersPage: React.FC = () => {
   const [storeOrders, setStoreOrders] = useState<IStoreOrder[]>([]);
@@ -19,7 +21,8 @@ const AdminStoreOrdersPage: React.FC = () => {
   // Toast state
   const [toastVisible, setToastVisible] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string>("");
-  const [toastType, setToastType] = useState<"success" | "error" | "warning">("success");
+  const [toastType, setToastType] =
+    useState<"success" | "error" | "warning">("success");
 
   // Confirmation Modal state for Deletion
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
@@ -31,12 +34,20 @@ const AdminStoreOrdersPage: React.FC = () => {
 
   // Create Order Modal state
   const [isCreateModalOpen, setIsCreateModalOpen] = useState<boolean>(false);
-  const [selectedProductType, setSelectedProductType] = useState<IProductType | null>(null);
+  const [selectedProductType, setSelectedProductType] =
+    useState<IProductType | null>(null);
+
+  // State to manage visibility of sensitive information
+  const [showSensitiveInfo, setShowSensitiveInfo] = useState<boolean>(false);
 
   // Helper function to extract error message
   const getErrorMessage = (error: unknown, defaultMessage: string): string => {
     if (axios.isAxiosError(error)) {
-      if (error.response && error.response.data && typeof error.response.data.message === "string") {
+      if (
+        error.response &&
+        error.response.data &&
+        typeof error.response.data.message === "string"
+      ) {
         return error.response.data.message;
       }
     }
@@ -85,9 +96,18 @@ const AdminStoreOrdersPage: React.FC = () => {
 
   const handleConfirm = async () => {
     try {
-      const response = await axios.patch<IStoreOrder>(`/api/storeOrders/${orderToConfirm}/confirm`);
+      const response = await axios.patch<IStoreOrder>(
+        `/api/storeOrders/${orderToConfirm}`,
+        {
+          status: "Approved",
+        }
+      );
       // Update the specific order in the state
-      setStoreOrders(storeOrders.map(order => order._id === response.data._id ? response.data : order));
+      setStoreOrders(
+        storeOrders.map((order) =>
+          order._id === response.data._id ? response.data : order
+        )
+      );
       setToastMessage("Order confirmed successfully.");
       setToastType("success");
       setToastVisible(true);
@@ -103,9 +123,12 @@ const AdminStoreOrdersPage: React.FC = () => {
     }
   };
 
-  const handleCreateOrder = async (orderData: Omit<IStoreOrder, '_id'>) => {
+  const handleCreateOrder = async (orderData: Omit<IStoreOrder, "_id">) => {
     try {
-      const response = await axios.post<IStoreOrder>("/api/storeOrders", orderData);
+      const response = await axios.post<IStoreOrder>(
+        "/api/storeOrders",
+        orderData
+      );
       setStoreOrders([...storeOrders, response.data]);
       setToastMessage("Order created successfully.");
       setToastType("success");
@@ -132,9 +155,9 @@ const AdminStoreOrdersPage: React.FC = () => {
 
   const openCreateModal = async () => {
     try {
-      const response = await axios.get<IProductType[]>("/api/productTypes"); // Adjust API endpoint as needed
+      const response = await axios.get<IProductType[]>("/api/productTypes");
       if (response.data.length > 0) {
-        setSelectedProductType(response.data[0]); // Select the first product type for simplicity
+        setSelectedProductType(response.data[0]);
         setIsCreateModalOpen(true);
       } else {
         alert("No product types available.");
@@ -159,7 +182,8 @@ const AdminStoreOrdersPage: React.FC = () => {
   }
 
   if (error) {
-    const errorMessage = typeof error === "string" ? error : "An unexpected error occurred.";
+    const errorMessage =
+      typeof error === "string" ? error : "An unexpected error occurred.";
     return (
       <AdminLayout>
         <div className="flex justify-center items-center h-16">
@@ -201,51 +225,124 @@ const AdminStoreOrdersPage: React.FC = () => {
                 <tr>
                   <th className="py-2 px-4 border-b">Order ID</th>
                   <th className="py-2 px-4 border-b">Customer Name</th>
-                  <th className="py-2 px-4 border-b">Email</th>
                   <th className="py-2 px-4 border-b">Phone</th>
+                  <th className="py-2 px-4 border-b">Image</th>
                   <th className="py-2 px-4 border-b">Total Amount</th>
-                  <th className="py-2 px-4 border-b">Status</th> {/* Added Status Column */}
+                  {/* Buying Price Header with Eye Icon */}
+                  <th className="py-2 px-4 border-b">
+                    <div className="flex items-center justify-center">
+                      Buying Price
+                      <button
+                        onClick={() => setShowSensitiveInfo(!showSensitiveInfo)}
+                        className="ml-2 text-gray-600 hover:text-gray-800"
+                      >
+                        {showSensitiveInfo ? <FaEyeSlash /> : <FaEye />}
+                      </button>
+                    </div>
+                  </th>
+                  {/* Profit Header */}
+                  <th className="py-2 px-4 border-b">Profit</th>
+                  <th className="py-2 px-4 border-b">Status</th>
                   <th className="py-2 px-4 border-b">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {storeOrders.map((order) => (
-                  <tr key={order._id} className="text-center">
-                    <td className="py-2 px-4 border-b">{order._id}</td>
-                    <td className="py-2 px-4 border-b">{order.customerName}</td>
-                    <td className="py-2 px-4 border-b">{order.customerEmail}</td>
-                    <td className="py-2 px-4 border-b">{order.customerPhone}</td>
-                    <td className="py-2 px-4 border-b">Tk. {order.totalAmount.toFixed(2)}</td>
-                    <td className="py-2 px-4 border-b">
-                      {order.approved ? (
-                        <span className="text-green-600 font-semibold">Approved</span>
-                      ) : (
-                        <span className="text-yellow-600 font-semibold">Pending</span>
-                      )}
-                    </td>
-                    <td className="py-2 px-4 border-b">
-                      <Link href={`/admin/storeOrders/${order._id}`}>
-                        <button className="mr-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
-                          View
-                        </button>
-                      </Link>
-                      {!order.approved && ( // Show Confirm button only if not approved
+                {storeOrders.map((order) => {
+                  // Calculate total buying price
+                  const totalBuyingPrice = order.products
+                    ? order.products.reduce(
+                        (sum, product) =>
+                          sum +
+                          (product.buyingPrice || 0) * (product.quantity || 0),
+                        0
+                      )
+                    : 0;
+
+                  // Calculate profit
+                  const profit = (order.totalAmount || 0) - totalBuyingPrice;
+
+                  return (
+                    <tr key={order._id} className="text-center">
+                      <td className="py-2 px-4 border-b">{order._id}</td>
+                      <td className="py-2 px-4 border-b">
+                        {order.customerName}
+                      </td>
+                      <td className="py-2 px-4 border-b">
+                        {order.customerPhone}
+                      </td>
+                      {/* Display the image from the first product */}
+                      <td className="py-2 px-4 border-b">
+                        {order.products &&
+                        order.products.length > 0 &&
+                        order.products[0].productImage ? (
+                          <Image
+                            src={order.products[0].productImage}
+                            alt="Product Image"
+                            width={50}
+                            height={50}
+                            className="mx-auto"
+                          />
+                        ) : (
+                          "N/A"
+                        )}
+                      </td>
+                      <td className="py-2 px-4 border-b">
+                        Tk.{" "}
+                        {order.totalAmount
+                          ? order.totalAmount.toFixed(2)
+                          : "0.00"}
+                      </td>
+                      {/* Buying Price Column */}
+                      <td className="py-2 px-4 border-b">
+                        {showSensitiveInfo ? (
+                          `Tk. ${totalBuyingPrice.toFixed(2)}`
+                        ) : (
+                          <span className="text-gray-500">•••••</span>
+                        )}
+                      </td>
+                      {/* Profit Column */}
+                      <td className="py-2 px-4 border-b">
+                        {showSensitiveInfo ? (
+                          `Tk. ${profit.toFixed(2)}`
+                        ) : (
+                          <span className="text-gray-500">•••••</span>
+                        )}
+                      </td>
+                      <td className="py-2 px-4 border-b">
+                        {order.approved ? (
+                          <span className="text-green-600 font-semibold">
+                            Approved
+                          </span>
+                        ) : (
+                          <span className="text-yellow-600 font-semibold">
+                            Pending
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2 px-4 border-b">
+                        <Link href={`/admin/storeOrders/${order._id}`}>
+                          <button className="mr-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
+                            View
+                          </button>
+                        </Link>
+                        {!order.approved && (
+                          <button
+                            onClick={() => openConfirmModal(order._id)}
+                            className="mr-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                          >
+                            Confirm
+                          </button>
+                        )}
                         <button
-                          onClick={() => openConfirmModal(order._id)}
-                          className="mr-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                          onClick={() => openDeleteModal(order._id)}
+                          className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                         >
-                          Confirm
+                          Delete
                         </button>
-                      )}
-                      <button
-                        onClick={() => openDeleteModal(order._id)}
-                        className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -264,7 +361,7 @@ const AdminStoreOrdersPage: React.FC = () => {
         <ConfirmationModal
           isOpen={isConfirmModalOpen}
           title="Confirm Order"
-          message="Are you sure you want to confirm this order? This will deduct the inventory quantities accordingly."
+          message="Are you sure you want to confirm this order?"
           onConfirm={handleConfirm}
           onCancel={() => setIsConfirmModalOpen(false)}
         />

@@ -1,3 +1,5 @@
+// src/components/Admin/CreateOrderModal.tsx
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -7,7 +9,7 @@ import {
     IOrderProduct
 } from '@/types';
 import { FaTimes } from 'react-icons/fa';
-import Image from 'next/image'; // Import Image component for displaying product images
+import Image from 'next/image';
 
 interface CreateOrderModalProps {
     isOpen: boolean;
@@ -18,7 +20,6 @@ interface CreateOrderModalProps {
 
 const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, productType, onCreateOrder }) => {
     const [customerName, setCustomerName] = useState<string>('');
-    const [customerEmail, setCustomerEmail] = useState<string>('');
     const [customerPhone, setCustomerPhone] = useState<string>('');
     const [selectedProducts, setSelectedProducts] = useState<IOrderProduct[]>([]);
     const [discount, setDiscount] = useState<number>(0);
@@ -28,7 +29,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
         if (isOpen) {
             // Reset fields when modal is opened
             setCustomerName('');
-            setCustomerEmail('');
             setCustomerPhone('');
             setSelectedProducts([]);
             setDiscount(0);
@@ -37,14 +37,20 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
     }, [isOpen]);
 
     useEffect(() => {
-        // Calculate total amount whenever selectedProducts change
-        const calculatedTotal = selectedProducts.reduce((acc, item) => acc + item.price * item.quantity, 0);
-        setTotalAmount(calculatedTotal); // Set totalAmount automatically
+        // Calculate total amount based on offerPrice
+        const calculatedTotal = selectedProducts.reduce(
+            (acc, item) => acc + item.offerPrice * item.quantity,
+            0
+        );
+        setTotalAmount(calculatedTotal);
     }, [selectedProducts]);
 
     const handleProductSelection = (product: IOrderProduct) => {
         const existingProductIndex = selectedProducts.findIndex(
-            (p) => p.productId === product.productId && p.color === product.color && p.size === product.size
+            (p) =>
+                p.productId === product.productId &&
+                p.color === product.color &&
+                p.size === product.size
         );
 
         if (existingProductIndex > -1) {
@@ -65,7 +71,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!customerName || !customerEmail || !customerPhone || selectedProducts.length === 0) {
+        if (!customerName || !customerPhone || selectedProducts.length === 0) {
             alert('Please fill in all customer details and select at least one product.');
             return;
         }
@@ -74,15 +80,20 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
 
         const orderData: Omit<IStoreOrder, '_id'> = {
             customerName,
-            customerEmail,
             customerPhone,
             products: selectedProducts.map((item) => ({
                 product: item.productId,
+                productName: item.productName,
                 quantity: item.quantity,
                 color: item.color,
                 size: item.size,
+                buyingPrice: item.buyingPrice,
+                offerPrice: item.offerPrice,
+                productImage: item.productImage,
             })),
             totalAmount: finalAmount,
+            totalBeforeDiscount: totalAmount,
+            discount: discount,
         };
 
         onCreateOrder(orderData);
@@ -109,16 +120,6 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
                                 type="text"
                                 value={customerName}
                                 onChange={(e) => setCustomerName(e.target.value)}
-                                className="w-full p-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                required
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-lg font-medium text-gray-700 dark:text-gray-200">Customer Email</label>
-                            <input
-                                type="email"
-                                value={customerEmail}
-                                onChange={(e) => setCustomerEmail(e.target.value)}
                                 className="w-full p-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 required
                             />
@@ -153,13 +154,13 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
                                                     colors: product.colors,
                                                     sizes: product.sizes,
                                                     offerPrice: product.offerPrice,
-                                                    images: product.images, // Pass images to the selection card
+                                                    buyingPrice: product.buyingPrice,
+                                                    images: product.images,
                                                 }}
                                                 onSelect={handleProductSelection}
                                             />
                                         ))}
                                     </div>
-
                                 </div>
                             ))}
                         </div>
@@ -175,7 +176,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
                                         {/* Product Image */}
                                         <div className="flex items-center space-x-4">
                                             <Image
-                                                src={item.imageUrl || "/placeholder.png"}
+                                                src={item.productImage || "/placeholder.png"}
                                                 alt={item.productName}
                                                 width={50}
                                                 height={50}
@@ -196,7 +197,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
                                 ))}
                             </ul>
                             <p className="mt-4 font-semibold text-gray-900 dark:text-gray-100">
-                                Total Amount: ${totalAmount.toFixed(2)}
+                                Total Amount: Tk. {totalAmount.toFixed(2)}
                             </p>
                             <div className="mt-2">
                                 <label className="block text-lg font-medium text-gray-700 dark:text-gray-200">Discount</label>
@@ -209,7 +210,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
                                 />
                             </div>
                             <p className="mt-4 font-semibold text-gray-900 dark:text-gray-100">
-                                Final Amount (after discount): ${Math.max(totalAmount - discount, 0).toFixed(2)}
+                                Final Amount (after discount): Tk. {Math.max(totalAmount - discount, 0).toFixed(2)}
                             </p>
                         </div>
                     )}
@@ -238,7 +239,8 @@ interface ProductSelectionCardProps {
         colors: Array<{ color: string; quantity: number }>;
         sizes: Array<{ size: string; quantity: number }>;
         offerPrice: number;
-        images: string[]; // Include images in the product prop
+        buyingPrice: number;
+        images: string[];
     };
     onSelect: (product: IOrderProduct) => void;
 }
@@ -256,9 +258,11 @@ const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({ product, on
                 color: selectedColor,
                 size: selectedSize,
                 quantity,
-                price: product.offerPrice,
-                imageUrl: product.images[0] || '/placeholder.png', // Include image URL
+                buyingPrice: product.buyingPrice,
+                offerPrice: product.offerPrice,
+                productImage: product.images[0] || '/placeholder.png',
             });
+            // Reset selection
             setSelectedColor('');
             setSelectedSize('');
             setQuantity(1);
