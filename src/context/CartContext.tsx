@@ -9,6 +9,7 @@ interface CartItem {
   id: string;
   name: string;
   price: number;
+  buyingPrice: number; // Ensure buyingPrice is included
   quantity: number;
   imageUrl: string;
   size?: string;

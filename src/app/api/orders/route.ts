@@ -1,43 +1,190 @@
 // src/app/api/orders/route.ts
-import { NextResponse } from 'next/server';
-import { Order, IOrder } from '@/models/Order';
+
+import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
+import { Order } from '@/models/Order';
+import { ProductTypes } from '@/models/ProductTypes';
+import mongoose from 'mongoose';
 
-export async function POST(request: Request) {
+// Define necessary interfaces
+interface ISizeQuantity {
+  size: string;
+  quantity: number;
+}
+
+interface IColorQuantity {
+  color: string;
+  quantity: number;
+}
+
+interface IProduct {
+  images: any;
+  _id: mongoose.Types.ObjectId;
+  product_name: string;
+  sizes: ISizeQuantity[];
+  colors: IColorQuantity[];
+  buyingPrice: number; // Ensure buyingPrice is part of the product
+}
+
+interface IProductCategory {
+  catagory_name: string;
+  product: IProduct[];
+}
+
+interface IProductType {
+  save(arg0: { session: mongoose.mongo.ClientSession; }): unknown;
+  types_name: string;
+  product_catagory: IProductCategory[];
+}
+
+interface IOrderItem {
+  product: mongoose.Types.ObjectId;
+  name: string;
+  color: string;
+  size: string;
+  quantity: number;
+  price: number;
+  buyingPrice: number; // This will be set on the backend
+  image: string;       // This will be set on the backend
+}
+
+interface IOrder {
+  _id: string;
+  customerName: string;
+  customerNumber: string;
+  otherNumber?: string;
+  address1: string;
+  address2?: string;
+  items: IOrderItem[];
+  totalAmount: number;
+  approved: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export async function POST(req: NextRequest) {
+  await dbConnect();
+
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    await dbConnect();
+    const data = await req.json();
+    console.log("Received order data:", JSON.stringify(data, null, 2)); // Debugging
 
-    const data: IOrder = await request.json();
+    const { customerName, customerNumber, otherNumber, address1, address2, items, totalAmount } = data;
 
-    const { customerName, customerNumber, address1, items, totalAmount } = data;
-    if (!customerName || !customerNumber || !address1 || !items || !totalAmount) {
-      return NextResponse.json(
-        { message: 'Missing required fields.' },
-        { status: 400 }
-      );
+    // Validate required fields
+    if (!customerName || !customerNumber || !address1 || !items || items.length === 0) {
+      throw new Error('Missing required fields.');
     }
 
+    // Process each item to validate and set buyingPrice and image
+    const processedItems: IOrderItem[] = [];
+
+    for (const item of items) {
+      const { product, color, size, quantity, price } = item; // Exclude buyingPrice and image from frontend
+
+      // Validate product ID
+      if (!mongoose.Types.ObjectId.isValid(product)) {
+        throw new Error(`Invalid product ID: ${product}`);
+      }
+
+      const productId = new mongoose.Types.ObjectId(product);
+
+      // Find the ProductType containing this product
+      const productType: IProductType | null = await ProductTypes.findOne({
+        'product_catagory.product._id': productId
+      }).session(session);
+
+      if (!productType) {
+        throw new Error(`Product with ID ${product} not found in any ProductType.`);
+      }
+
+      // Find the specific product within the ProductType
+      let productDoc: IProduct | null = null;
+
+      for (const category of productType.product_catagory) {
+        const foundProduct = category.product.find((prod: IProduct) => prod._id.equals(productId));
+        if (foundProduct) {
+          productDoc = foundProduct;
+          break;
+        }
+      }
+
+      if (!productDoc) {
+        throw new Error(`Product with ID ${product} not found in the category.`);
+      }
+
+      // Check color availability
+      const colorObj = productDoc.colors.find((c: IColorQuantity) => c.color === color);
+      if (!colorObj) {
+        throw new Error(`Color ${color} not available for product ${productDoc.product_name}.`);
+      }
+      if (colorObj.quantity < quantity) {
+        throw new Error(`Insufficient stock for color ${color} of product ${productDoc.product_name}.`);
+      }
+
+      // Check size availability
+      const sizeObj = productDoc.sizes.find((s: ISizeQuantity) => s.size === size);
+      if (!sizeObj) {
+        throw new Error(`Size ${size} not available for product ${productDoc.product_name}.`);
+      }
+      if (sizeObj.quantity < quantity) {
+        throw new Error(`Insufficient stock for size ${size} of product ${productDoc.product_name}.`);
+      }
+
+      // Deduct quantities
+      colorObj.quantity -= quantity;
+      sizeObj.quantity -= quantity;
+
+      // Save the updated ProductTypes document
+      await productType.save({ session });
+
+      // Fetch buyingPrice and image from productDoc
+      const buyingPrice = productDoc.buyingPrice;
+      const image = productDoc.images[0] || ''; // Default to empty string if no image
+
+      // Create the processed order item
+      const processedItem: IOrderItem = {
+        product: productId,
+        name: productDoc.product_name,
+        color,
+        size,
+        quantity,
+        price,
+        buyingPrice,
+        image,
+      };
+
+      processedItems.push(processedItem);
+    }
+
+    // Create the order
     const newOrder = new Order({
       customerName,
       customerNumber,
-      otherNumber: data.otherNumber,
+      otherNumber,
       address1,
-      address2: data.address2,
-      items,
+      address2,
+      items: processedItems,
       totalAmount,
+      approved: false
     });
 
-    await newOrder.save();
+    await newOrder.save({ session });
 
-    return NextResponse.json(
-      { message: 'Order placed successfully!', orderId: newOrder._id },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error('Error placing order:', error);
-    return NextResponse.json(
-      { message: 'Internal Server Error' },
-      { status: 500 }
-    );
+    await session.commitTransaction();
+    session.endSession();
+
+    console.log(`Order created successfully with ID: ${newOrder._id}`);
+
+    return NextResponse.json({ orderId: newOrder._id }, { status: 201 });
+
+  } catch (error: any) {
+    await session.abortTransaction();
+    session.endSession();
+    console.error('Error placing order:', error.message);
+    return NextResponse.json({ message: error.message }, { status: 400 });
   }
 }

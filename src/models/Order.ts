@@ -1,14 +1,17 @@
-// /src/models/Order.ts
+// src/models/Order.ts
 
 import mongoose, { Schema, Document } from 'mongoose';
 
+// Extend the IOrderItem interface to include image and buyingPrice
 export interface IOrderItem {
   product: mongoose.Types.ObjectId;
   name: string;
   color: string;
   size: string;
   quantity: number;
-  price: number;
+  price: number;        // Selling price
+  buyingPrice: number;  // Cost price
+  image: string;        // URL of the product image
 }
 
 export interface IOrder extends Document {
@@ -20,11 +23,12 @@ export interface IOrder extends Document {
   address2?: string;
   items: IOrderItem[];
   totalAmount: number;
-  approved: boolean; // Added approved field
+  approved: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
+// Updated OrderItemSchema with image and buyingPrice
 const OrderItemSchema = new Schema<IOrderItem>({
   product: { type: Schema.Types.ObjectId, ref: 'ProductTypes', required: true },
   name: { type: String, required: true },
@@ -32,6 +36,8 @@ const OrderItemSchema = new Schema<IOrderItem>({
   size: { type: String, required: true },
   quantity: { type: Number, required: true },
   price: { type: Number, required: true },
+  buyingPrice: { type: Number, required: true }, // New field
+  image: { type: String, required: true },        // New field
 });
 
 const OrderSchema = new Schema<IOrder>(
@@ -43,11 +49,12 @@ const OrderSchema = new Schema<IOrder>(
     address2: { type: String },
     items: { type: [OrderItemSchema], required: true },
     totalAmount: { type: Number, required: true },
-    approved: { type: Boolean, required: true, default: false }, // Added approved field with default value
+    approved: { type: Boolean, required: true, default: false },
   },
   {
     timestamps: true,
   }
 );
 
-export const Order = mongoose.models.Order || mongoose.model<IOrder>('Order', OrderSchema);
+export const Order =
+  mongoose.models.Order || mongoose.model<IOrder>('Order', OrderSchema);

@@ -1,3 +1,5 @@
+// src/app/place-order/page.tsx
+
 "use client";
 
 import React, { useState } from "react";
@@ -60,18 +62,24 @@ const PlaceOrderPage: React.FC = () => {
     setLoading(true);
 
     try {
+      // Add a console log to verify cart items
+      console.log("Cart Items Before Submission:", cartItems);
+
       const orderData = {
         ...formData,
         items: cartItems.map((item) => ({
           product: item.id,
-          name: item.name,
+          name: item.name,              // Ensure name is included
           color: item.color,
           size: item.size,
           quantity: item.quantity,
-          price: item.price,
+          price: item.price,            // Ensure price is included
+          // Remove buyingPrice and imageUrl as backend handles them
         })),
         totalAmount,
       };
+
+      console.log("Submitting order data:", orderData); // Debugging
 
       const response = await axios.post("/api/orders", orderData);
 
@@ -89,9 +97,9 @@ const PlaceOrderPage: React.FC = () => {
         setToastType("error");
         setToastVisible(true);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error placing order:", error);
-      setToastMessage("An unexpected error occurred.");
+      setToastMessage(error.response?.data?.message || "An unexpected error occurred.");
       setToastType("error");
       setToastVisible(true);
     } finally {

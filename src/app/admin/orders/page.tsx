@@ -1,5 +1,3 @@
-// src/app/admin/orders/page.tsx
-
 "use client";
 
 import React, { useEffect, useState } from "react";
