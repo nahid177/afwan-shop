@@ -33,6 +33,7 @@ interface IProductCategory {
 }
 
 interface IProductType {
+  save(arg0: { session: mongoose.mongo.ClientSession }): unknown;
   types_name: string;
   product_catagory: IProductCategory[];
 }
@@ -66,8 +67,7 @@ interface IOrder {
 export async function POST(req: NextRequest) {
   await dbConnect();
 
-  const session = await mongoose.startSession();
-  session.startTransaction();
+  // Removed session and transaction as we're not modifying inventory here
 
   try {
     const data = await req.json();
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
       // Find the ProductType containing this product
       const productType: IProductType | null = await ProductTypes.findOne({
         'product_catagory.product._id': productId
-      }).session(session);
+      });
 
       if (!productType) {
         throw new Error(`Product with ID ${product} not found in any ProductType.`);
@@ -117,30 +117,16 @@ export async function POST(req: NextRequest) {
         throw new Error(`Product with ID ${product} not found in the category.`);
       }
 
-      // Check color availability
+      // Optional: You can still validate color and size existence without modifying stock
       const colorObj = productDoc.colors.find((c: IColorQuantity) => c.color === color);
       if (!colorObj) {
         throw new Error(`Color ${color} not available for product ${productDoc.product_name}.`);
       }
-      if (colorObj.quantity < quantity) {
-        throw new Error(`Insufficient stock for color ${color} of product ${productDoc.product_name}.`);
-      }
 
-      // Check size availability
       const sizeObj = productDoc.sizes.find((s: ISizeQuantity) => s.size === size);
       if (!sizeObj) {
         throw new Error(`Size ${size} not available for product ${productDoc.product_name}.`);
       }
-      if (sizeObj.quantity < quantity) {
-        throw new Error(`Insufficient stock for size ${size} of product ${productDoc.product_name}.`);
-      }
-
-      // Deduct quantities
-      colorObj.quantity -= quantity;
-      sizeObj.quantity -= quantity;
-
-      // Save the updated ProductTypes document
-      await productType.save({ session });
 
       // Fetch buyingPrice, image, and code from productDoc
       const buyingPrice = productDoc.buyingPrice;
@@ -175,18 +161,13 @@ export async function POST(req: NextRequest) {
       approved: false
     });
 
-    await newOrder.save({ session });
-
-    await session.commitTransaction();
-    session.endSession();
+    await newOrder.save();
 
     console.log(`Order created successfully with ID: ${newOrder._id}`);
 
     return NextResponse.json({ orderId: newOrder._id }, { status: 201 });
 
   } catch (error: any) {
-    await session.abortTransaction();
-    session.endSession();
     console.error('Error placing order:', error.message);
     return NextResponse.json({ message: error.message }, { status: 400 });
   }

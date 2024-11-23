@@ -1,3 +1,5 @@
+// /src/app/admin/orders/page.tsx
+
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -6,35 +8,112 @@ import axios, { AxiosError, AxiosResponse } from "axios";
 import { IOrder } from "@/models/Order";
 import Link from "next/link";
 import Toast from "@/components/Toast/Toast";
-import { FaTrash } from "react-icons/fa"; // Import the trash icon
+import { FaTrash, FaEye, FaEyeSlash, FaTimes } from "react-icons/fa"; // Import FaTimes for close icon
 import ConfirmationModal from "@/components/Admin/ConfirmationModal"; // Import the confirmation modal
+import Image from "next/image";
 
 // Define the error response interface
 interface ApiErrorResponse {
   message: string;
 }
 
+// ImageModal Component
+interface ImageModalProps {
+  isOpen: boolean;
+  imageUrl: string;
+  onClose: () => void;
+}
+
+const ImageModal: React.FC<ImageModalProps> = ({ isOpen, imageUrl, onClose }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
+      onClick={onClose}
+      aria-modal="true"
+      role="dialog"
+      aria-labelledby="image-modal-title"
+    >
+      <div
+        className="relative"
+        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal content
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-white text-2xl focus:outline-none"
+          aria-label="Close Image Modal"
+        >
+          <FaTimes />
+        </button>
+        <Image
+          src={imageUrl}
+          alt="Full Size Product Image"
+          width={800} // Adjust as needed
+          height={800} // Adjust as needed
+          className="rounded-lg"
+        />
+      </div>
+    </div>
+  );
+};
+
 const AdminOrdersPage: React.FC = () => {
   const [orders, setOrders] = useState<IOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Toast state
   const [toastVisible, setToastVisible] = useState<boolean>(false);
   const [toastMessage, setToastMessage] = useState<string>("");
-  const [toastType, setToastType] = useState<"success" | "error" | "warning">(
-    "success"
-  );
+  const [toastType, setToastType] =
+    useState<"success" | "error" | "warning">("success");
 
-  // States for delete confirmation modal
+  // Confirmation Modal state for Deletion
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [orderToDelete, setOrderToDelete] = useState<string>("");
+
+  // Confirmation Modal state for Confirmation
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
+  const [orderToConfirm, setOrderToConfirm] = useState<string>("");
+
+  // State to manage visibility of sensitive information
+  const [showSensitiveInfo, setShowSensitiveInfo] = useState<boolean>(false);
+
+  // State for Image Modal
+  const [isImageModalOpen, setIsImageModalOpen] = useState<boolean>(false);
+  const [selectedImage, setSelectedImage] = useState<string>("");
+
+  // Helper function to extract error message
+  const getErrorMessage = (
+    error: unknown,
+    defaultMessage: string
+  ): string => {
+    if (axios.isAxiosError(error)) {
+      if (
+        error.response &&
+        error.response.data &&
+        typeof error.response.data.message === "string"
+      ) {
+        return error.response.data.message;
+      }
+    }
+    return defaultMessage;
+  };
 
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response: AxiosResponse<IOrder[]> = await axios.get<IOrder[]>("/api/admin/orders");
+        const response: AxiosResponse<IOrder[]> = await axios.get<IOrder[]>(
+          "/api/admin/orders"
+        );
         setOrders(response.data);
       } catch (error: unknown) {
         console.error("Error fetching orders:", error);
-        setToastMessage("Failed to fetch orders.");
+        setError("Failed to load orders.");
+
+        const message = getErrorMessage(error, "Failed to load orders.");
+        setToastMessage(message);
         setToastType("error");
         setToastVisible(true);
       } finally {
@@ -81,7 +160,9 @@ const AdminOrdersPage: React.FC = () => {
   const deleteOrder = async (orderId: string) => {
     try {
       await axios.delete(`/api/admin/orders/${orderId}`);
-      setOrders((prevOrders) => prevOrders.filter((order) => order._id !== orderId));
+      setOrders((prevOrders) =>
+        prevOrders.filter((order) => order._id !== orderId)
+      );
       setToastMessage("Order deleted successfully!");
       setToastType("success");
       setToastVisible(true);
@@ -103,16 +184,43 @@ const AdminOrdersPage: React.FC = () => {
   };
 
   const handleDeleteConfirm = () => {
-    if (selectedOrderId) {
-      deleteOrder(selectedOrderId);
-      setSelectedOrderId(null);
+    if (orderToDelete) {
+      deleteOrder(orderToDelete);
+      setOrderToDelete("");
       setIsDeleteModalOpen(false);
     }
   };
 
   const handleDeleteCancel = () => {
-    setSelectedOrderId(null);
+    setOrderToDelete("");
     setIsDeleteModalOpen(false);
+  };
+
+  const openDeleteModal = (orderId: string) => {
+    setOrderToDelete(orderId);
+    setIsDeleteModalOpen(true);
+  };
+
+  const openConfirmModal = (orderId: string) => {
+    setOrderToConfirm(orderId);
+    setIsConfirmModalOpen(true);
+  };
+
+  // Function to toggle visibility of Buying Price and Profit
+  const toggleSensitiveInfo = () => {
+    setShowSensitiveInfo((prev) => !prev);
+  };
+
+  // Function to open Image Modal
+  const openImageModal = (imageUrl: string) => {
+    setSelectedImage(imageUrl);
+    setIsImageModalOpen(true);
+  };
+
+  // Function to close Image Modal
+  const closeImageModal = () => {
+    setSelectedImage("");
+    setIsImageModalOpen(false);
   };
 
   if (loading) {
@@ -125,94 +233,221 @@ const AdminOrdersPage: React.FC = () => {
     );
   }
 
+  if (error) {
+    const errorMessage =
+      typeof error === "string" ? error : "An unexpected error occurred.";
+    return (
+      <AdminLayout>
+        <div className="flex justify-center items-center h-16">
+          <p>{errorMessage}</p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout>
       <div className="p-4">
-        <h1 className="text-2xl font-bold mb-4">Orders Management</h1>
-        <table className="min-w-full bg-white border border-gray-200">
-          <thead>
-            <tr>
-              {[
-                "Order ID",
-                "Customer Name",
-                "Contact Number",
-                "Total Amount",
-                "Date",
-                "Approved",
-                "Actions",
-              ].map((heading) => (
-                <th key={heading} className="py-2 px-4 border-b">
-                  {heading}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {orders.map((order) => (
-              <tr
-                key={order._id}
-                className={order.approved ? "bg-green-100" : "bg-white"}
-              >
-                <td className="py-2 px-4 border-b">{order._id}</td>
-                <td className="py-2 px-4 border-b">{order.customerName}</td>
-                <td className="py-2 px-4 border-b">{order.customerNumber}</td>
-                <td className="py-2 px-4 border-b">Tk. {order.totalAmount}</td>
-                <td className="py-2 px-4 border-b">
-                  {new Date(order.createdAt).toLocaleString()}
-                </td>
-                <td className="py-2 px-4 border-b">
-                  {order.approved ? "Yes" : "No"}
-                </td>
-                <td className="py-2 px-4 border-b flex space-x-2">
-                  <Link href={`/admin/orders/${order._id}`}>
-                    <button className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600">
-                      View Details
-                    </button>
-                  </Link>
-                  {!order.approved && (
-                    <button
-                      onClick={() => confirmOrder(order._id)}
-                      className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-2xl font-bold">Orders Management</h1>
+          {/* Toggle Button for Sensitive Information */}
+          <button
+            onClick={toggleSensitiveInfo}
+            className="flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 focus:outline-none"
+            aria-label={showSensitiveInfo ? "Hide Sensitive Info" : "Show Sensitive Info"}
+            title={showSensitiveInfo ? "Hide Buying Price and Profit" : "Show Buying Price and Profit"}
+          >
+            {showSensitiveInfo ? (
+              <>
+                <FaEyeSlash className="mr-2" />
+                Hide Info
+              </>
+            ) : (
+              <>
+                <FaEye className="mr-2" />
+                Show Info
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Toast Notification */}
+        {toastVisible && (
+          <div className="fixed top-4 right-4 z-50">
+            <Toast
+              type={toastType}
+              message={toastMessage}
+              onClose={() => setToastVisible(false)}
+            />
+          </div>
+        )}
+
+        {orders.length === 0 ? (
+          <p>No orders found.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white dark:bg-gray-800">
+              <thead>
+                <tr>
+                  {[
+                    "Customer Name",
+                    "Contact Number",
+                    "Total Amount",
+                    "Date",
+                    "Approved",
+                    "Codes",
+                    "Image",
+                    "Buying Price",
+                    "Profit", // New Profit Column
+                    "Actions",
+                  ].map((heading) => (
+                    <th key={heading} className="py-2 px-4 border-b text-left">
+                      {heading}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order) => {
+                  // Aggregate codes from all items
+                  const allCodes = order.items
+                    .map((item) => item.code.join(", "))
+                    .join("; ");
+
+                  // Aggregate buying prices from all items
+                  const totalBuyingPrice = order.items.reduce(
+                    (sum, item) =>
+                      sum + (item.buyingPrice || 0) * (item.quantity || 0),
+                    0
+                  );
+
+                  // Calculate profit
+                  const profit = (order.totalAmount || 0) - totalBuyingPrice;
+
+                  // Collect images from items (taking the first image for simplicity)
+                  const images = order.items
+                    .map((item) => item.image)
+                    .filter((img) => img !== "");
+                  const thumbnail =
+                    images.length > 0 ? images[0] : "/placeholder.png"; // Use a placeholder if no image
+
+                  return (
+                    <tr
+                      key={order._id}
+                      className={!order.approved ? "bg-yellow-100" : "bg-white"}
                     >
-                      Approve
-                    </button>
-                  )}
-                  {/* Delete Button */}
-                  <button
-                    onClick={() => {
-                      setSelectedOrderId(order._id);
-                      setIsDeleteModalOpen(true);
-                    }}
-                    className="text-red-500 hover:text-red-700"
-                    title="Delete Order"
-                  >
-                    <FaTrash size={18} />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                      <td className="py-2 px-4 border-b">{order.customerName}</td>
+                      <td className="py-2 px-4 border-b">{order.customerNumber}</td>
+                      <td className="py-2 px-4 border-b">
+                        Tk. {order.totalAmount.toFixed(2)}
+                      </td>
+                      <td className="py-2 px-4 border-b">
+                        {new Date(order.createdAt).toLocaleString()}
+                      </td>
+                      <td className="py-2 px-4 border-b">
+                        {order.approved ? (
+                          <span className="text-green-600 font-semibold">
+                            Yes
+                          </span>
+                        ) : (
+                          <span className="text-yellow-600 font-semibold">
+                            No
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-2 px-4 border-b">{allCodes}</td>
+                      <td className="py-2 px-4 border-b">
+                        <button
+                          onClick={() => openImageModal(thumbnail)}
+                          className="focus:outline-none"
+                          aria-label="View Full Image"
+                        >
+                          <Image
+                            src={thumbnail}
+                            alt="Product Image"
+                            width={64}
+                            height={64}
+                            className="object-cover rounded hover:opacity-75 transition-opacity duration-200"
+                          />
+                        </button>
+                      </td>
+                      {/* Buying Price Column */}
+                      <td className="py-2 px-4 border-b">
+                        {showSensitiveInfo ? (
+                          `Tk. ${totalBuyingPrice.toFixed(2)}`
+                        ) : (
+                          <span className="text-gray-500">•••••</span>
+                        )}
+                      </td>
+                      {/* Profit Column */}
+                      <td
+                        className={`py-2 px-4 border-b ${
+                          profit >= 0 ? "text-green-600" : "text-red-600"
+                        }`}
+                      >
+                        {showSensitiveInfo ? (
+                          `Tk. ${profit.toFixed(2)}`
+                        ) : (
+                          <span className="text-gray-500">•••••</span>
+                        )}
+                      </td>
+                      <td className="py-2 px-4 border-b">
+                        <div className="flex justify-center space-x-2">
+                          <Link href={`/admin/orders/${order._id}`}>
+                            <button className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600">
+                              View Details
+                            </button>
+                          </Link>
+                          {!order.approved && (
+                            <button
+                              onClick={() => openConfirmModal(order._id)}
+                              className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
+                            >
+                              Approve
+                            </button>
+                          )}
+                          <button
+                            onClick={() => openDeleteModal(order._id)}
+                            className="text-red-500 hover:text-red-700"
+                            title="Delete Order"
+                            aria-label="Delete Order"
+                          >
+                            <FaTrash size={18} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
-      {/* Toast Notification */}
-      {toastVisible && (
-        <div className="fixed top-4 right-4 z-50">
-          <Toast
-            type={toastType}
-            message={toastMessage}
-            onClose={() => setToastVisible(false)}
-          />
-        </div>
-      )}
+      {/* Image Modal */}
+      <ImageModal
+        isOpen={isImageModalOpen}
+        imageUrl={selectedImage}
+        onClose={closeImageModal}
+      />
 
-      {/* Confirmation Modal */}
+      {/* Confirmation Modal for Deletion */}
       <ConfirmationModal
         isOpen={isDeleteModalOpen}
         title="Confirm Deletion"
         message="Are you sure you want to delete this order? This action cannot be undone."
         onConfirm={handleDeleteConfirm}
         onCancel={handleDeleteCancel}
+      />
+
+      {/* Confirmation Modal for Approval */}
+      <ConfirmationModal
+        isOpen={isConfirmModalOpen}
+        title="Confirm Approval"
+        message="Are you sure you want to approve this order?"
+        onConfirm={() => confirmOrder(orderToConfirm)}
+        onCancel={() => setIsConfirmModalOpen(false)}
       />
     </AdminLayout>
   );
