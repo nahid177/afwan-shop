@@ -18,12 +18,13 @@ interface IColorQuantity {
 }
 
 interface IProduct {
-  images: any;
+  images: string[];               // Changed from any to string[]
   _id: mongoose.Types.ObjectId;
   product_name: string;
+  code: string[];                 // Added code field
   sizes: ISizeQuantity[];
   colors: IColorQuantity[];
-  buyingPrice: number; // Ensure buyingPrice is part of the product
+  buyingPrice: number;            // Ensure buyingPrice is part of the product
 }
 
 interface IProductCategory {
@@ -32,7 +33,6 @@ interface IProductCategory {
 }
 
 interface IProductType {
-  save(arg0: { session: mongoose.mongo.ClientSession; }): unknown;
   types_name: string;
   product_catagory: IProductCategory[];
 }
@@ -46,6 +46,7 @@ interface IOrderItem {
   price: number;
   buyingPrice: number; // This will be set on the backend
   image: string;       // This will be set on the backend
+  code: string[];      // New field to store product codes
 }
 
 interface IOrder {
@@ -79,11 +80,11 @@ export async function POST(req: NextRequest) {
       throw new Error('Missing required fields.');
     }
 
-    // Process each item to validate and set buyingPrice and image
+    // Process each item to validate and set buyingPrice, image, and code
     const processedItems: IOrderItem[] = [];
 
     for (const item of items) {
-      const { product, color, size, quantity, price } = item; // Exclude buyingPrice and image from frontend
+      const { product, color, size, quantity, price } = item; // Exclude buyingPrice, image, and code from frontend
 
       // Validate product ID
       if (!mongoose.Types.ObjectId.isValid(product)) {
@@ -141,9 +142,10 @@ export async function POST(req: NextRequest) {
       // Save the updated ProductTypes document
       await productType.save({ session });
 
-      // Fetch buyingPrice and image from productDoc
+      // Fetch buyingPrice, image, and code from productDoc
       const buyingPrice = productDoc.buyingPrice;
       const image = productDoc.images[0] || ''; // Default to empty string if no image
+      const code = productDoc.code;             // Fetch the code array
 
       // Create the processed order item
       const processedItem: IOrderItem = {
@@ -155,6 +157,7 @@ export async function POST(req: NextRequest) {
         price,
         buyingPrice,
         image,
+        code, // Set the code array
       };
 
       processedItems.push(processedItem);

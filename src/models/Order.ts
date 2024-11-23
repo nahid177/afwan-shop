@@ -2,7 +2,7 @@
 
 import mongoose, { Schema, Document } from 'mongoose';
 
-// Extend the IOrderItem interface to include image and buyingPrice
+// Extend the IOrderItem interface to include image, buyingPrice, and code
 export interface IOrderItem {
   product: mongoose.Types.ObjectId;
   name: string;
@@ -12,6 +12,7 @@ export interface IOrderItem {
   price: number;        // Selling price
   buyingPrice: number;  // Cost price
   image: string;        // URL of the product image
+  code: string[];       // Array of product codes
 }
 
 export interface IOrder extends Document {
@@ -28,7 +29,7 @@ export interface IOrder extends Document {
   updatedAt: Date;
 }
 
-// Updated OrderItemSchema with image and buyingPrice
+// Updated OrderItemSchema with image, buyingPrice, and code
 const OrderItemSchema = new Schema<IOrderItem>({
   product: { type: Schema.Types.ObjectId, ref: 'ProductTypes', required: true },
   name: { type: String, required: true },
@@ -38,6 +39,7 @@ const OrderItemSchema = new Schema<IOrderItem>({
   price: { type: Number, required: true },
   buyingPrice: { type: Number, required: true }, // New field
   image: { type: String, required: true },        // New field
+  code: { type: [String], required: true },       // New field
 });
 
 const OrderSchema = new Schema<IOrder>(

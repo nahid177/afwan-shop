@@ -14,6 +14,7 @@ interface CartItem {
   imageUrl: string;
   size?: string;
   color?: string;
+  code: string[]; // Optional: Include code if needed in frontend
 }
 
 interface CartContextProps {
