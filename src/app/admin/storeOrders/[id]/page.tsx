@@ -384,9 +384,7 @@ const Receipt: React.FC<ReceiptProps> = ({ storeOrder }) => {
           <p>
             <strong>Phone:</strong> {storeOrder.customerPhone}
           </p>
-          <p>
-            <strong>Email:</strong> {storeOrder.customerEmail || "N/A"}
-          </p>
+        
         </div>
       </div>
 

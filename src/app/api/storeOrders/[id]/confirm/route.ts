@@ -58,7 +58,7 @@ export async function PATCH(
 
     // Deduct quantities from product inventories
     for (const item of order.products) {
-      console.log(`Processing order item: productType ID = ${item.productType}, product ID = ${item.product}, size = ${item.size}, color = ${item.color}, quantity = ${item.quantity}`);
+      console.log(`Processing order item: productType ID = ${item.productType}, product ID = ${item.productId}, size = ${item.size}, color = ${item.color}, quantity = ${item.quantity}`);
 
       // Find the ProductType by ID
       const productType = await ProductTypes.findById(item.productType).session(session);
@@ -82,7 +82,7 @@ export async function PATCH(
         console.log(`Checking category: ${category.catagory_name}`);
 
         const product = category.product.find(
-          (prod: IProduct) => prod._id.toString() === item.product.toString()
+          (prod: IProduct) => prod._id.toString() === item.productId.toString()
         );
 
         if (product) {
@@ -94,11 +94,11 @@ export async function PATCH(
       }
 
       if (!productFound || !targetProduct) {
-        console.log(`Product with ID ${item.product} not found in any category.`);
+        console.log(`Product with ID ${item.productId} not found in any category.`);
         await session.abortTransaction();
         session.endSession();
         return NextResponse.json(
-          { message: `Product with ID ${item.product} not found in any category.` },
+          { message: `Product with ID ${item.productId} not found in any category.` },
           { status: 404 }
         );
       }

@@ -1,5 +1,3 @@
-// src/app/admin/storeOrders/page.tsx
-
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -11,7 +9,7 @@ import ConfirmationModal from "@/components/Admin/ConfirmationModal";
 import CreateOrderModal from "@/components/Admin/CreateOrderModal";
 import AdminLayout from "../AdminLayout";
 import Image from "next/image";
-import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import eye icons
+import { FaEye, FaEyeSlash, FaChevronDown, FaChevronUp } from "react-icons/fa"; // Import additional icons
 
 const AdminStoreOrdersPage: React.FC = () => {
   const [storeOrders, setStoreOrders] = useState<IStoreOrder[]>([]);
@@ -39,6 +37,9 @@ const AdminStoreOrdersPage: React.FC = () => {
 
   // State to manage visibility of sensitive information
   const [showSensitiveInfo, setShowSensitiveInfo] = useState<boolean>(false);
+
+  // State to manage expanded rows
+  const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
 
   // Helper function to extract error message
   const getErrorMessage = (error: unknown, defaultMessage: string): string => {
@@ -171,6 +172,16 @@ const AdminStoreOrdersPage: React.FC = () => {
     }
   };
 
+  const toggleExpandOrder = (orderId: string) => {
+    const newExpandedOrders = new Set(expandedOrders);
+    if (expandedOrders.has(orderId)) {
+      newExpandedOrders.delete(orderId);
+    } else {
+      newExpandedOrders.add(orderId);
+    }
+    setExpandedOrders(newExpandedOrders);
+  };
+
   if (loading) {
     return (
       <AdminLayout>
@@ -223,7 +234,8 @@ const AdminStoreOrdersPage: React.FC = () => {
             <table className="min-w-full bg-white dark:bg-gray-800">
               <thead>
                 <tr>
-                  <th className="py-2 px-4 border-b">Order ID</th>
+                  {/* Removed Order ID Header */}
+                  <th className="py-2 px-4 border-b">Code</th>
                   <th className="py-2 px-4 border-b">Customer Name</th>
                   <th className="py-2 px-4 border-b">Phone</th>
                   <th className="py-2 px-4 border-b">Image</th>
@@ -244,6 +256,7 @@ const AdminStoreOrdersPage: React.FC = () => {
                   <th className="py-2 px-4 border-b">Profit</th>
                   <th className="py-2 px-4 border-b">Status</th>
                   <th className="py-2 px-4 border-b">Actions</th>
+                  <th className="py-2 px-4 border-b">Products</th> {/* New Header for Products */}
                 </tr>
               </thead>
               <tbody>
@@ -261,86 +274,178 @@ const AdminStoreOrdersPage: React.FC = () => {
                   // Calculate profit
                   const profit = (order.totalAmount || 0) - totalBuyingPrice;
 
+                  const isExpanded = expandedOrders.has(order._id);
+
                   return (
-                    <tr key={order._id} className="text-center">
-                      <td className="py-2 px-4 border-b">{order._id}</td>
-                      <td className="py-2 px-4 border-b">
-                        {order.customerName}
-                      </td>
-                      <td className="py-2 px-4 border-b">
-                        {order.customerPhone}
-                      </td>
-                      {/* Display the image from the first product */}
-                      <td className="py-2 px-4 border-b">
-                        {order.products &&
-                        order.products.length > 0 &&
-                        order.products[0].productImage ? (
-                          <Image
-                            src={order.products[0].productImage}
-                            alt="Product Image"
-                            width={50}
-                            height={50}
-                            className="mx-auto"
-                          />
-                        ) : (
-                          "N/A"
-                        )}
-                      </td>
-                      <td className="py-2 px-4 border-b">
-                        Tk.{" "}
-                        {order.totalAmount
-                          ? order.totalAmount.toFixed(2)
-                          : "0.00"}
-                      </td>
-                      {/* Buying Price Column */}
-                      <td className="py-2 px-4 border-b">
-                        {showSensitiveInfo ? (
-                          `Tk. ${totalBuyingPrice.toFixed(2)}`
-                        ) : (
-                          <span className="text-gray-500">•••••</span>
-                        )}
-                      </td>
-                      {/* Profit Column */}
-                      <td className="py-2 px-4 border-b">
-                        {showSensitiveInfo ? (
-                          `Tk. ${profit.toFixed(2)}`
-                        ) : (
-                          <span className="text-gray-500">•••••</span>
-                        )}
-                      </td>
-                      <td className="py-2 px-4 border-b">
-                        {order.approved ? (
-                          <span className="text-green-600 font-semibold">
-                            Approved
-                          </span>
-                        ) : (
-                          <span className="text-yellow-600 font-semibold">
-                            Pending
-                          </span>
-                        )}
-                      </td>
-                      <td className="py-2 px-4 border-b">
-                        <Link href={`/admin/storeOrders/${order._id}`}>
-                          <button className="mr-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
-                            View
-                          </button>
-                        </Link>
-                        {!order.approved && (
+                    <React.Fragment key={order._id}>
+                      <tr className="text-center">
+                        {/* Removed Order ID Cell */}
+                        <td className="py-2 px-4 border-b">{order.code}</td>
+                        <td className="py-2 px-4 border-b">
+                          {order.customerName}
+                        </td>
+                        <td className="py-2 px-4 border-b">
+                          {order.customerPhone}
+                        </td>
+                        {/* Display the image from the first product */}
+                        <td className="py-2 px-4 border-b">
+                          {order.products &&
+                          order.products.length > 0 &&
+                          order.products[0].productImage ? (
+                            <Image
+                              src={order.products[0].productImage}
+                              alt="Product Image"
+                              width={50}
+                              height={50}
+                              className="mx-auto"
+                            />
+                          ) : (
+                            "N/A"
+                          )}
+                        </td>
+                        <td className="py-2 px-4 border-b">
+                          Tk.{" "}
+                          {order.totalAmount
+                            ? order.totalAmount.toFixed(2)
+                            : "0.00"}
+                        </td>
+                        {/* Buying Price Column */}
+                        <td className="py-2 px-4 border-b">
+                          {showSensitiveInfo ? (
+                            `Tk. ${totalBuyingPrice.toFixed(2)}`
+                          ) : (
+                            <span className="text-gray-500">•••••</span>
+                          )}
+                        </td>
+                        {/* Profit Column */}
+                        <td className="py-2 px-4 border-b">
+                          {showSensitiveInfo ? (
+                            `Tk. ${profit.toFixed(2)}`
+                          ) : (
+                            <span className="text-gray-500">•••••</span>
+                          )}
+                        </td>
+                        <td className="py-2 px-4 border-b">
+                          {order.approved ? (
+                            <span className="text-green-600 font-semibold">
+                              Approved
+                            </span>
+                          ) : (
+                            <span className="text-yellow-600 font-semibold">
+                              Pending
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-2 px-4 border-b">
+                          <Link href={`/admin/storeOrders/${order._id}`}>
+                            <button className="mr-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
+                              View
+                            </button>
+                          </Link>
+                          {!order.approved && (
+                            <button
+                              onClick={() => openConfirmModal(order._id)}
+                              className="mr-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                            >
+                              Confirm
+                            </button>
+                          )}
                           <button
-                            onClick={() => openConfirmModal(order._id)}
-                            className="mr-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                            onClick={() => openDeleteModal(order._id)}
+                            className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
                           >
-                            Confirm
+                            Delete
                           </button>
-                        )}
-                        <button
-                          onClick={() => openDeleteModal(order._id)}
-                          className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
+                        </td>
+                        {/* New Products Column */}
+                        <td className="py-2 px-4 border-b">
+                          {order.products && order.products.length > 1 ? (
+                            <button
+                              onClick={() => toggleExpandOrder(order._id)}
+                              className="flex items-center justify-center px-2 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                            >
+                              {isExpanded ? (
+                                <>
+                                  Hide Products <FaChevronUp className="ml-1" />
+                                </>
+                              ) : (
+                                <>
+                                  View Products <FaChevronDown className="ml-1" />
+                                </>
+                              )}
+                            </button>
+                          ) : (
+                            <span>N/A</span>
+                          )}
+                        </td>
+                      </tr>
+                      {/* Expanded Row for Products */}
+                      {isExpanded && (
+                        <tr>
+                          <td colSpan={10} className="bg-gray-100">
+                            <div className="p-4">
+                              <h2 className="text-lg font-semibold mb-2">
+                                Products
+                              </h2>
+                              <table className="min-w-full bg-white dark:bg-gray-700">
+                                <thead>
+                                  <tr>
+                                    <th className="py-2 px-4 border-b">Product Name</th>
+                                    <th className="py-2 px-4 border-b">Product Code</th>
+                                    <th className="py-2 px-4 border-b">Image</th>
+                                    <th className="py-2 px-4 border-b">Quantity</th>
+                                    <th className="py-2 px-4 border-b">Color</th>
+                                    <th className="py-2 px-4 border-b">Size</th>
+                                    <th className="py-2 px-4 border-b">Buying Price</th>
+                                    <th className="py-2 px-4 border-b">Offer Price</th>
+                                  </tr>
+                                </thead>
+                                <tbody>
+                                  {order.products.map((product) => (
+                                    <tr key={product._id} className="text-center">
+                                      <td className="py-2 px-4 border-b">
+                                        {product.productName}
+                                      </td>
+                                      <td className="py-2 px-4 border-b">
+                                        {product.productCode}
+                                      </td>
+                                      <td className="py-2 px-4 border-b">
+                                        {product.productImage ? (
+                                          <Image
+                                            src={product.productImage}
+                                            alt={product.productName}
+                                            width={50}
+                                            height={50}
+                                            className="mx-auto"
+                                          />
+                                        ) : (
+                                          "N/A"
+                                        )}
+                                      </td>
+                                      <td className="py-2 px-4 border-b">
+                                        {product.quantity}
+                                      </td>
+                                      <td className="py-2 px-4 border-b">
+                                        {product.color}
+                                      </td>
+                                      <td className="py-2 px-4 border-b">
+                                        {product.size}
+                                      </td>
+                                      <td className="py-2 px-4 border-b">
+                                        Tk. {product.buyingPrice.toFixed(2)}
+                                      </td>
+                                      <td className="py-2 px-4 border-b">
+                                        Tk. {product.offerPrice.toFixed(2)}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </tbody>
