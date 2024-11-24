@@ -73,10 +73,6 @@ const AdminOrdersPage: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
   const [orderToDelete, setOrderToDelete] = useState<string>("");
 
-  // Confirmation Modal state for Confirmation
-  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState<boolean>(false);
-  const [orderToConfirm, setOrderToConfirm] = useState<string>("");
-
   // State to manage visibility of sensitive information
   const [showSensitiveInfo, setShowSensitiveInfo] = useState<boolean>(false);
 
@@ -201,10 +197,7 @@ const AdminOrdersPage: React.FC = () => {
     setIsDeleteModalOpen(true);
   };
 
-  const openConfirmModal = (orderId: string) => {
-    setOrderToConfirm(orderId);
-    setIsConfirmModalOpen(true);
-  };
+  // Removed states and functions related to approval confirmation modal
 
   // Function to toggle visibility of Buying Price and Profit
   const toggleSensitiveInfo = () => {
@@ -400,7 +393,7 @@ const AdminOrdersPage: React.FC = () => {
                           </Link>
                           {!order.approved && (
                             <button
-                              onClick={() => openConfirmModal(order._id)}
+                              onClick={() => confirmOrder(order._id)}
                               className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600"
                             >
                               Approve
@@ -441,14 +434,7 @@ const AdminOrdersPage: React.FC = () => {
         onCancel={handleDeleteCancel}
       />
 
-      {/* Confirmation Modal for Approval */}
-      <ConfirmationModal
-        isOpen={isConfirmModalOpen}
-        title="Confirm Approval"
-        message="Are you sure you want to approve this order?"
-        onConfirm={() => confirmOrder(orderToConfirm)}
-        onCancel={() => setIsConfirmModalOpen(false)}
-      />
+      {/* Removed Confirmation Modal for Approval */}
     </AdminLayout>
   );
 };

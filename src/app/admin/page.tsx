@@ -114,12 +114,14 @@ const AdminDashboard: React.FC = () => {
                 title="Unseen Messages"
                 count={statsData.userSentMessagesNotSeen || 0}
               />
-              <StatsCard
-                title="Unapproved Orders"
-                count={unapprovedOrdersData?.unapprovedOrders || 0}
-                loading={!unapprovedOrdersData && !unapprovedOrdersError}
-                error={unapprovedOrdersError?.message}
-              />
+              <Link href="/admin/orders">
+                <div>
+                  <StatsCard
+                    title="New Orders"
+                    count={unapprovedOrdersData?.unapprovedOrders || 0}
+                  />
+                </div>
+              </Link>
             </>
           )}
         </div>
@@ -154,11 +156,10 @@ const AdminDashboard: React.FC = () => {
                       <td>{user.username}</td>
                       <td>{new Date(user.createdAt).toLocaleString()}</td>
                       <td
-                        className={`${
-                          user.sentStatsCount > 0
+                        className={`${user.sentStatsCount > 0
                             ? "bg-red-200 text-red-800 font-semibold"
                             : ""
-                        } px-4 py-2 rounded`}
+                          } px-4 py-2 rounded`}
                       >
                         {user.sentStatsCount}
                       </td>
