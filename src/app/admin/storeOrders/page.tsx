@@ -1,3 +1,5 @@
+// src/app/admin/storeOrders/page.tsx
+
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -98,9 +100,10 @@ const AdminStoreOrdersPage: React.FC = () => {
   const handleConfirm = async () => {
     try {
       const response = await axios.patch<IStoreOrder>(
-        `/api/storeOrders/${orderToConfirm}`,
+        `/api/storeOrders/${orderToConfirm}/confirm`,
         {
-          status: "Approved",
+          // If your API doesn't require a body, you can omit this object
+          // Or include any necessary data here
         }
       );
       // Update the specific order in the state
@@ -207,6 +210,7 @@ const AdminStoreOrdersPage: React.FC = () => {
   return (
     <AdminLayout>
       <div className="p-4">
+        {/* Header and Create Order Button */}
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold">Store Orders</h1>
           <button
@@ -217,6 +221,7 @@ const AdminStoreOrdersPage: React.FC = () => {
           </button>
         </div>
 
+        {/* Toast Notification */}
         {toastVisible && (
           <div className="fixed top-4 right-4 z-50">
             <Toast
@@ -227,6 +232,7 @@ const AdminStoreOrdersPage: React.FC = () => {
           </div>
         )}
 
+        {/* Orders Table */}
         {storeOrders.length === 0 ? (
           <p>No store orders found.</p>
         ) : (
@@ -245,8 +251,15 @@ const AdminStoreOrdersPage: React.FC = () => {
                     <div className="flex items-center justify-center">
                       Buying Price
                       <button
-                        onClick={() => setShowSensitiveInfo(!showSensitiveInfo)}
+                        onClick={() =>
+                          setShowSensitiveInfo(!showSensitiveInfo)
+                        }
                         className="ml-2 text-gray-600 hover:text-gray-800"
+                        aria-label={
+                          showSensitiveInfo
+                            ? "Hide sensitive information"
+                            : "Show sensitive information"
+                        }
                       >
                         {showSensitiveInfo ? <FaEyeSlash /> : <FaEye />}
                       </button>
@@ -276,14 +289,16 @@ const AdminStoreOrdersPage: React.FC = () => {
 
                   const isExpanded = expandedOrders.has(order._id);
 
-                  // Determine row background color based on status
-                  const rowBgColor = order.approved
-                    ? "bg-white dark:bg-gray-800"
-                    : "bg-yellow-100 dark:bg-gray-700"; // Light yellow for pending
+                  // Determine background color based on order status
+                  const rowClasses = `text-center ${
+                    order.approved
+                      ? "bg-white text-black"
+                      : "bg-yellow-100 text-gray-800"
+                  } hover:bg-gray-200 transition-colors duration-200`;
 
                   return (
                     <React.Fragment key={order._id}>
-                      <tr className={`text-center ${rowBgColor}`}>
+                      <tr className={rowClasses}>
                         {/* Removed Order ID Cell */}
                         <td className="py-2 px-4 border-b">{order.code}</td>
                         <td className="py-2 px-4 border-b">
@@ -351,6 +366,7 @@ const AdminStoreOrdersPage: React.FC = () => {
                             <button
                               onClick={() => openConfirmModal(order._id)}
                               className="mr-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                              aria-label={`Confirm order ${order.code}`}
                             >
                               Confirm
                             </button>
@@ -358,16 +374,22 @@ const AdminStoreOrdersPage: React.FC = () => {
                           <button
                             onClick={() => openDeleteModal(order._id)}
                             className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                            aria-label={`Delete order ${order.code}`}
                           >
                             Delete
                           </button>
                         </td>
-                        {/* New Products Column */}
+                        {/* Products Column */}
                         <td className="py-2 px-4 border-b">
                           {order.products && order.products.length > 1 ? (
                             <button
                               onClick={() => toggleExpandOrder(order._id)}
                               className="flex items-center justify-center px-2 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                              aria-label={
+                                isExpanded
+                                  ? `Hide products for order ${order.code}`
+                                  : `View products for order ${order.code}`
+                              }
                             >
                               {isExpanded ? (
                                 <>
@@ -387,7 +409,7 @@ const AdminStoreOrdersPage: React.FC = () => {
                       {/* Expanded Row for Products */}
                       {isExpanded && (
                         <tr>
-                          <td colSpan={10} className="bg-gray-100 dark:bg-gray-700">
+                          <td colSpan={10} className="bg-gray-100">
                             <div className="p-4">
                               <h2 className="text-lg font-semibold mb-2">
                                 Products
@@ -395,19 +417,32 @@ const AdminStoreOrdersPage: React.FC = () => {
                               <table className="min-w-full bg-white dark:bg-gray-700">
                                 <thead>
                                   <tr>
-                                    <th className="py-2 px-4 border-b">Product Name</th>
-                                    <th className="py-2 px-4 border-b">Product Code</th>
+                                    <th className="py-2 px-4 border-b">
+                                      Product Name
+                                    </th>
+                                    <th className="py-2 px-4 border-b">
+                                      Product Code
+                                    </th>
                                     <th className="py-2 px-4 border-b">Image</th>
-                                    <th className="py-2 px-4 border-b">Quantity</th>
+                                    <th className="py-2 px-4 border-b">
+                                      Quantity
+                                    </th>
                                     <th className="py-2 px-4 border-b">Color</th>
                                     <th className="py-2 px-4 border-b">Size</th>
-                                    <th className="py-2 px-4 border-b">Buying Price</th>
-                                    <th className="py-2 px-4 border-b">Offer Price</th>
+                                    <th className="py-2 px-4 border-b">
+                                      Buying Price
+                                    </th>
+                                    <th className="py-2 px-4 border-b">
+                                      Offer Price
+                                    </th>
                                   </tr>
                                 </thead>
                                 <tbody>
                                   {order.products.map((product) => (
-                                    <tr key={product._id} className="text-center">
+                                    <tr
+                                      key={product._id}
+                                      className="text-center hover:bg-gray-200 transition-colors duration-200"
+                                    >
                                       <td className="py-2 px-4 border-b">
                                         {product.productName}
                                       </td>
@@ -431,10 +466,10 @@ const AdminStoreOrdersPage: React.FC = () => {
                                         {product.quantity}
                                       </td>
                                       <td className="py-2 px-4 border-b">
-                                        {product.color}
+                                        {product.color || "N/A"}
                                       </td>
                                       <td className="py-2 px-4 border-b">
-                                        {product.size}
+                                        {product.size || "N/A"}
                                       </td>
                                       <td className="py-2 px-4 border-b">
                                         Tk. {product.buyingPrice.toFixed(2)}

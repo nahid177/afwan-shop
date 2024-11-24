@@ -1,3 +1,5 @@
+// src/pages/admin/dashboard.tsx
+
 "use client";
 
 import React from "react";
@@ -22,6 +24,10 @@ interface ApiAdminStatsResponse {
   userSentMessagesNotSeen: number;
 }
 
+interface ApiUnapprovedOrdersResponse {
+  unapprovedOrders: number;
+}
+
 const fetcher = (url: string, token: string | null) => {
   if (!token) {
     throw new Error("Unauthorized");
@@ -43,26 +49,41 @@ const AdminDashboard: React.FC = () => {
   const router = useRouter();
   const token = Cookies.get("token") || null;
 
+  // Fetching general stats
   const { data: statsData, error: statsError } = useSWR<ApiAdminStatsResponse>(
     token ? ["/api/admin/stats", token] : null,
     ([url, token]: [string, string | null]) => fetcher(url, token),
-    { refreshInterval: 1000, dedupingInterval: 1000 } // Increased interval for performance
+    { refreshInterval: 5000, dedupingInterval: 5000 } // Adjusted intervals for performance
   );
-  
+
+  // Fetching users data
   const { data: usersData, error: usersError } = useSWR<{ users: User[] }>(
     token ? ["/api/admin/users", token] : null,
     ([url, token]: [string, string | null]) => fetcher(url, token),
-    { refreshInterval: 1000, dedupingInterval: 1000 } // Increased interval for performance
+    { refreshInterval: 5000, dedupingInterval: 5000 } // Adjusted intervals for performance
+  );
+
+  // Fetching unapproved orders count
+  const { data: unapprovedOrdersData, error: unapprovedOrdersError } = useSWR<ApiUnapprovedOrdersResponse>(
+    token ? ["/api/admin/orders/unapproved/count", token] : null,
+    ([url, token]: [string, string | null]) => fetcher(url, token),
+    { refreshInterval: 5000, dedupingInterval: 5000 } // Adjusted intervals for performance
   );
 
   // Redirect to login if there's an authentication error
   if (
     statsError?.message === "Unauthorized" ||
-    usersError?.message === "Unauthorized"
+    usersError?.message === "Unauthorized" ||
+    unapprovedOrdersError?.message === "Unauthorized"
   ) {
+    console.warn("Authentication error. Redirecting to login.");
     router.push("/admin/login");
     return null;
   }
+
+  console.log("Stats Data:", statsData);
+  console.log("Users Data:", usersData);
+  console.log("Unapproved Orders Data:", unapprovedOrdersData);
 
   return (
     <AdminLayout>
@@ -72,7 +93,7 @@ const AdminDashboard: React.FC = () => {
         </h1>
 
         {/* Statistics Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 w-full max-w-4xl px-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-8 w-full max-w-5xl px-4">
           {!statsData ? (
             <p>Loading statistics...</p>
           ) : statsError ? (
@@ -85,20 +106,29 @@ const AdminDashboard: React.FC = () => {
                 title="Total Registrations"
                 count={statsData.totalRegistrations || 0}
               />
-              <StatsCard title="Total Logins" count={statsData.totalLogins || 0} />
+              <StatsCard
+                title="Total Logins"
+                count={statsData.totalLogins || 0}
+              />
               <StatsCard
                 title="Unseen Messages"
                 count={statsData.userSentMessagesNotSeen || 0}
+              />
+              <StatsCard
+                title="Unapproved Orders"
+                count={unapprovedOrdersData?.unapprovedOrders || 0}
+                loading={!unapprovedOrdersData && !unapprovedOrdersError}
+                error={unapprovedOrdersError?.message}
               />
             </>
           )}
         </div>
 
         {/* Divider */}
-        <div className="w-full max-w-4xl px-4 my-8 border-t border-gray-300"></div>
+        <div className="w-full max-w-5xl px-4 my-8 border-t border-gray-300"></div>
 
         {/* Users Management Section */}
-        <div className="w-full max-w-4xl px-4">
+        <div className="w-full max-w-5xl px-4">
           <h2 className="text-2xl font-semibold mb-4">User Management</h2>
 
           {!usersData ? (
@@ -125,7 +155,9 @@ const AdminDashboard: React.FC = () => {
                       <td>{new Date(user.createdAt).toLocaleString()}</td>
                       <td
                         className={`${
-                          user.sentStatsCount > 0 ? "bg-red-200 text-red-800 font-semibold" : ""
+                          user.sentStatsCount > 0
+                            ? "bg-red-200 text-red-800 font-semibold"
+                            : ""
                         } px-4 py-2 rounded`}
                       >
                         {user.sentStatsCount}
