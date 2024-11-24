@@ -47,6 +47,8 @@ export interface IProductType {
 }
 
 export interface IStoreOrderProduct {
+  productCode: ReactNode;
+  _id: Key | null | undefined;
   offerPrice: any;
   productName: string;
   productImage: string;
@@ -58,6 +60,7 @@ export interface IStoreOrderProduct {
 }
 
 export interface IStoreOrder {
+  code: ReactNode;
   image: string | StaticImport;
   buyingPrice: any;
   _id: string;

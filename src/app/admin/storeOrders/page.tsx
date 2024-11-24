@@ -276,9 +276,14 @@ const AdminStoreOrdersPage: React.FC = () => {
 
                   const isExpanded = expandedOrders.has(order._id);
 
+                  // Determine row background color based on status
+                  const rowBgColor = order.approved
+                    ? "bg-white dark:bg-gray-800"
+                    : "bg-yellow-100 dark:bg-gray-700"; // Light yellow for pending
+
                   return (
                     <React.Fragment key={order._id}>
-                      <tr className="text-center">
+                      <tr className={`text-center ${rowBgColor}`}>
                         {/* Removed Order ID Cell */}
                         <td className="py-2 px-4 border-b">{order.code}</td>
                         <td className="py-2 px-4 border-b">
@@ -382,7 +387,7 @@ const AdminStoreOrdersPage: React.FC = () => {
                       {/* Expanded Row for Products */}
                       {isExpanded && (
                         <tr>
-                          <td colSpan={10} className="bg-gray-100">
+                          <td colSpan={10} className="bg-gray-100 dark:bg-gray-700">
                             <div className="p-4">
                               <h2 className="text-lg font-semibold mb-2">
                                 Products
