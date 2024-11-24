@@ -2,11 +2,10 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
-import StoreOrder from '@/models/StoreOrder'; // Changed to default import
+import StoreOrder from '@/models/StoreOrder';
 import { ProductTypes } from '@/models/ProductTypes';
 import mongoose from 'mongoose';
 
-// Define necessary interfaces
 interface ISizeQuantity {
   size: string;
   quantity: number;
@@ -26,9 +25,9 @@ interface IProduct {
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } } // Changed 'orderId' to 'id'
+  { params }: { params: { id: string } }
 ) {
-  const { id } = params; // Changed from 'orderId' to 'id'
+  const { id } = params;
 
   // Validate the order ID
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -42,7 +41,7 @@ export async function PATCH(
     await dbConnect();
 
     // Find the order by ID within the session
-    const order = await StoreOrder.findById(id).session(session); // Changed 'orderId' to 'id'
+    const order = await StoreOrder.findById(id).session(session);
 
     if (!order) {
       await session.abortTransaction();
@@ -51,27 +50,25 @@ export async function PATCH(
     }
 
     // Check if the order is already approved
-    if (order.approved) { // Ensure 'approved' field exists in your schema
+    if (order.approved) {
       await session.abortTransaction();
       session.endSession();
       return NextResponse.json({ message: 'Order is already approved.' }, { status: 400 });
     }
 
     // Deduct quantities from product inventories
-    for (const item of order.products) { // Changed 'items' to 'products'
-      console.log(`Processing order item: product ID = ${item.product}, size = ${item.size}, color = ${item.color}, quantity = ${item.quantity}`);
+    for (const item of order.products) {
+      console.log(`Processing order item: productType ID = ${item.productType}, product ID = ${item.product}, size = ${item.size}, color = ${item.color}, quantity = ${item.quantity}`);
 
-      // Find the ProductType that contains this product
-      const productType = await ProductTypes.findOne({
-        'product_catagory.product._id': item.product
-      }).session(session);
+      // Find the ProductType by ID
+      const productType = await ProductTypes.findById(item.productType).session(session);
 
       if (!productType) {
-        console.log(`Product type not found for product ID: ${item.product}`);
+        console.log(`Product type not found for productType ID: ${item.productType}`);
         await session.abortTransaction();
         session.endSession();
         return NextResponse.json(
-          { message: `Product type containing product ID ${item.product} not found.` },
+          { message: `Product type with ID ${item.productType} not found.` },
           { status: 404 }
         );
       }
@@ -80,6 +77,7 @@ export async function PATCH(
 
       // Find the product within the product categories
       let productFound = false;
+      let targetProduct: IProduct | null = null;
       for (const category of productType.product_catagory) {
         console.log(`Checking category: ${category.catagory_name}`);
 
@@ -90,69 +88,12 @@ export async function PATCH(
         if (product) {
           console.log(`Found product: ${product.product_name}`);
           productFound = true;
-
-          // Find the size index
-          const sizeIndex = product.sizes.findIndex(
-            (size: ISizeQuantity) => size.size === item.size
-          );
-
-          if (sizeIndex === -1) {
-            console.log(`Size ${item.size} not found for product ${product.product_name}.`);
-            await session.abortTransaction();
-            session.endSession();
-            return NextResponse.json(
-              { message: `Size ${item.size} not found for product ${product.product_name}.` },
-              { status: 400 }
-            );
-          }
-
-          // Find the color index
-          const colorIndex = product.colors.findIndex(
-            (color: IColorQuantity) => color.color === item.color
-          );
-
-          if (colorIndex === -1) {
-            console.log(`Color ${item.color} not found for product ${product.product_name}.`);
-            await session.abortTransaction();
-            session.endSession();
-            return NextResponse.json(
-              { message: `Color ${item.color} not found for product ${product.product_name}.` },
-              { status: 400 }
-            );
-          }
-
-          // Check if sufficient quantity exists for size and color
-          if (product.sizes[sizeIndex].quantity < item.quantity) {
-            console.log(`Insufficient stock for product ${product.product_name}, size ${item.size}.`);
-            await session.abortTransaction();
-            session.endSession();
-            return NextResponse.json(
-              { message: `Insufficient stock for product ${product.product_name}, size ${item.size}.` },
-              { status: 400 }
-            );
-          }
-
-          if (product.colors[colorIndex].quantity < item.quantity) {
-            console.log(`Insufficient stock for product ${product.product_name}, color ${item.color}.`);
-            await session.abortTransaction();
-            session.endSession();
-            return NextResponse.json(
-              { message: `Insufficient stock for product ${product.product_name}, color ${item.color}.` },
-              { status: 400 }
-            );
-          }
-
-          // Deduct the quantity
-          product.sizes[sizeIndex].quantity -= item.quantity;
-          product.colors[colorIndex].quantity -= item.quantity;
-
-          await productType.save({ session });
-          console.log(`Deducted ${item.quantity} from product ${product.product_name}, size ${item.size}, color ${item.color}.`);
+          targetProduct = product;
           break;
         }
       }
 
-      if (!productFound) {
+      if (!productFound || !targetProduct) {
         console.log(`Product with ID ${item.product} not found in any category.`);
         await session.abortTransaction();
         session.endSession();
@@ -161,6 +102,65 @@ export async function PATCH(
           { status: 404 }
         );
       }
+
+      // Find the size index
+      const sizeIndex = targetProduct.sizes.findIndex(
+        (size: ISizeQuantity) => size.size === item.size
+      );
+
+      if (sizeIndex === -1) {
+        console.log(`Size ${item.size} not found for product ${targetProduct.product_name}.`);
+        await session.abortTransaction();
+        session.endSession();
+        return NextResponse.json(
+          { message: `Size ${item.size} not found for product ${targetProduct.product_name}.` },
+          { status: 400 }
+        );
+      }
+
+      // Find the color index
+      const colorIndex = targetProduct.colors.findIndex(
+        (color: IColorQuantity) => color.color === item.color
+      );
+
+      if (colorIndex === -1) {
+        console.log(`Color ${item.color} not found for product ${targetProduct.product_name}.`);
+        await session.abortTransaction();
+        session.endSession();
+        return NextResponse.json(
+          { message: `Color ${item.color} not found for product ${targetProduct.product_name}.` },
+          { status: 400 }
+        );
+      }
+
+      // Check if sufficient quantity exists for size and color
+      if (targetProduct.sizes[sizeIndex].quantity < item.quantity) {
+        console.log(`Insufficient stock for product ${targetProduct.product_name}, size ${item.size}.`);
+        await session.abortTransaction();
+        session.endSession();
+        return NextResponse.json(
+          { message: `Insufficient stock for product ${targetProduct.product_name}, size ${item.size}.` },
+          { status: 400 }
+        );
+      }
+
+      if (targetProduct.colors[colorIndex].quantity < item.quantity) {
+        console.log(`Insufficient stock for product ${targetProduct.product_name}, color ${item.color}.`);
+        await session.abortTransaction();
+        session.endSession();
+        return NextResponse.json(
+          { message: `Insufficient stock for product ${targetProduct.product_name}, color ${item.color}.` },
+          { status: 400 }
+        );
+      }
+
+      // Deduct the quantity
+      targetProduct.sizes[sizeIndex].quantity -= item.quantity;
+      targetProduct.colors[colorIndex].quantity -= item.quantity;
+
+      // Save the updated ProductTypes document within the session
+      await productType.save({ session });
+      console.log(`Deducted ${item.quantity} from product ${targetProduct.product_name}, size ${item.size}, color ${item.color}.`);
     }
 
     // Set the order as approved
@@ -172,7 +172,7 @@ export async function PATCH(
     session.endSession();
 
     return NextResponse.json(order, { status: 200 });
-  } catch (error: unknown) { // Changed from 'any' to 'unknown'
+  } catch (error: unknown) {
     await session.abortTransaction();
     session.endSession();
     console.error('Error confirming order:', error);

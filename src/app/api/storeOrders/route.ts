@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import StoreOrder from '@/models/StoreOrder';
 import mongoose from 'mongoose';
+import { v4 as uuidv4 } from 'uuid'; // Install uuid: npm install uuid
 
 // GET: Retrieve all store orders
 export async function GET() {
@@ -55,7 +56,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const newStoreOrder = new StoreOrder(data);
+    // Generate a unique code
+    const uniqueCode = uuidv4(); // Generates a unique UUID
+
+    const newStoreOrder = new StoreOrder({
+      ...data,
+      code: uniqueCode, // Assign the unique code
+    });
     const savedOrder = await newStoreOrder.save();
     return NextResponse.json(savedOrder, { status: 201 });
   } catch (error: unknown) {

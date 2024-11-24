@@ -3,8 +3,10 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
 export interface IStoreOrderProduct {
-  product: mongoose.Types.ObjectId;
+  productType: mongoose.Types.ObjectId; // Reference to ProductTypes
+  productId: mongoose.Types.ObjectId; // Reference to specific product within ProductTypes
   productName: string;
+  productCode: string; // Added productCode for better traceability
   productImage: string;
   quantity: number;
   color?: string;
@@ -21,13 +23,16 @@ export interface IStoreOrderDocument extends Document {
   totalBeforeDiscount: number;
   discount: number;
   approved: boolean;
+  code: string; // Unique order code
   createdAt?: Date;
   updatedAt?: Date;
 }
 
 const StoreOrderProductSchema = new Schema<IStoreOrderProduct>({
-  product: { type: Schema.Types.ObjectId, ref: 'ProductTypes', required: true },
+  productType: { type: Schema.Types.ObjectId, ref: 'ProductTypes', required: true },
+  productId: { type: Schema.Types.ObjectId, required: true }, // No ref since it's an embedded document
   productName: { type: String, required: true },
+  productCode: { type: String, required: true },
   productImage: { type: String, required: true },
   quantity: { type: Number, required: true },
   color: { type: String },
@@ -44,11 +49,12 @@ const StoreOrderSchema = new Schema<IStoreOrderDocument>({
   totalBeforeDiscount: { type: Number, required: true },
   discount: { type: Number, required: true },
   approved: { type: Boolean, default: false },
+  code: { type: String, unique: true, required: true }, // Ensure uniqueness for order codes
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
 
-// Ensure the model is properly redefined to avoid schema caching issues
+// Avoid schema caching issues in development
 if (mongoose.models.StoreOrder) {
   delete mongoose.models.StoreOrder;
 }

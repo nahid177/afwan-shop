@@ -82,8 +82,10 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
             customerName,
             customerPhone,
             products: selectedProducts.map((item) => ({
-                product: item.productId,
+                productType: item.productType, // Include productType
+                productId: item.productId, // Include productId
                 productName: item.productName,
+                productCode: item.productCode, // Include productCode
                 quantity: item.quantity,
                 color: item.color,
                 size: item.size,
@@ -156,6 +158,8 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
                                                     offerPrice: product.offerPrice,
                                                     buyingPrice: product.buyingPrice,
                                                     images: product.images,
+                                                    code: product.code[0] || '', // Assuming first code is primary
+                                                    productType: productType._id.toString(), // Include productType
                                                 }}
                                                 onSelect={handleProductSelection}
                                             />
@@ -182,9 +186,14 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
                                                 height={50}
                                                 className="w-12 h-12 object-cover rounded"
                                             />
-                                            <span className="text-gray-700 dark:text-gray-200">
-                                                {item.productName} - {item.color} - {item.size} x {item.quantity}
-                                            </span>
+                                            <div>
+                                                <span className="text-gray-700 dark:text-gray-200 font-medium">
+                                                    {item.productName}
+                                                </span>
+                                                <span className="text-gray-500 dark:text-gray-400 block">
+                                                    Code: {item.productCode} | {item.color} | {item.size} x {item.quantity}
+                                                </span>
+                                            </div>
                                         </div>
                                         <button
                                             type="button"
@@ -229,112 +238,116 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
             </div>
         </div>
     );
-};
-
-// Define the ProductSelectionCard component
-interface ProductSelectionCardProps {
-    product: {
-        _id: string;
-        product_name: string;
-        colors: Array<{ color: string; quantity: number }>;
-        sizes: Array<{ size: string; quantity: number }>;
-        offerPrice: number;
-        buyingPrice: number;
-        images: string[];
-    };
-    onSelect: (product: IOrderProduct) => void;
 }
+    // Define the ProductSelectionCard component
+    interface ProductSelectionCardProps {
+        product: {
+            _id: string;
+            product_name: string;
+            colors: Array<{ color: string; quantity: number }>;
+            sizes: Array<{ size: string; quantity: number }>;
+            offerPrice: number;
+            buyingPrice: number;
+            images: string[];
+            code: string;
+            productType: string; // Include productType
+        };
+        onSelect: (product: IOrderProduct) => void;
+    }
 
-const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({ product, onSelect }) => {
-    const [selectedColor, setSelectedColor] = useState<string>('');
-    const [selectedSize, setSelectedSize] = useState<string>('');
-    const [quantity, setQuantity] = useState<number>(1);
+    const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({ product, onSelect }) => {
+        const [selectedColor, setSelectedColor] = useState<string>('');
+        const [selectedSize, setSelectedSize] = useState<string>('');
+        const [quantity, setQuantity] = useState<number>(1);
 
-    const handleSelect = () => {
-        if (selectedColor && selectedSize && quantity > 0) {
-            onSelect({
-                productId: product._id,
-                productName: product.product_name,
-                color: selectedColor,
-                size: selectedSize,
-                quantity,
-                buyingPrice: product.buyingPrice,
-                offerPrice: product.offerPrice,
-                productImage: product.images[0] || '/placeholder.png',
-            });
-            // Reset selection
-            setSelectedColor('');
-            setSelectedSize('');
-            setQuantity(1);
-        } else {
-            alert('Please select color, size, and specify quantity.');
-        }
+        const handleSelect = () => {
+            if (selectedColor && selectedSize && quantity > 0) {
+                onSelect({
+                    productType: product.productType, // Include productType
+                    productId: product._id,
+                    productName: product.product_name,
+                    productCode: product.code,
+                    color: selectedColor,
+                    size: selectedSize,
+                    quantity,
+                    buyingPrice: product.buyingPrice,
+                    offerPrice: product.offerPrice,
+                    productImage: product.images[0] || '/placeholder.png',
+                });
+                // Reset selection
+                setSelectedColor('');
+                setSelectedSize('');
+                setQuantity(1);
+            } else {
+                alert('Please select color, size, and specify quantity.');
+            }
+        };
+
+        return (
+            <div className="border p-4 rounded-lg shadow-md">
+                {/* Product Image */}
+                <div className="mb-2">
+                    <Image
+                        src={product.images[0] || "/placeholder.png"}
+                        alt={product.product_name}
+                        width={200}
+                        height={200}
+                        className="w-full h-32 object-cover rounded"
+                    />
+                </div>
+                <h5 className="font-medium text-gray-700 dark:text-gray-200 mb-2">{product.product_name}</h5>
+                <p className="text-gray-500 dark:text-gray-400 mb-2">Code: {product.code}</p> {/* Display product code */}
+                <div className="mb-2">
+                    <label className="block text-sm text-gray-600 dark:text-gray-300">Color:</label>
+                    <select
+                        value={selectedColor}
+                        onChange={(e) => setSelectedColor(e.target.value)}
+                        className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        <option value="">Select Color</option>
+                        {product.colors.map((colorItem) => (
+                            <option key={colorItem.color} value={colorItem.color} disabled={colorItem.quantity === 0}>
+                                {colorItem.color} {colorItem.quantity === 0 && '(Out of Stock)'}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div className="mb-2">
+                    <label className="block text-sm text-gray-600 dark:text-gray-300">Size:</label>
+                    <select
+                        value={selectedSize}
+                        onChange={(e) => setSelectedSize(e.target.value)}
+                        className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        <option value="">Select Size</option>
+                        {product.sizes.map((sizeItem) => (
+                            <option key={sizeItem.size} value={sizeItem.size} disabled={sizeItem.quantity === 0}>
+                                {sizeItem.size} {sizeItem.quantity === 0 && '(Out of Stock)'}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+                <div className="mb-2">
+                    <label className="block text-sm text-gray-600 dark:text-gray-300">Quantity:</label>
+                    <input
+                        type="number"
+                        min={1}
+                        max={10}
+                        value={quantity}
+                        onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                        className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                </div>
+                <button
+                    type="button"
+                    onClick={handleSelect}
+                    className="w-full mt-3 px-3 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 shadow-md"
+                >
+                    Select
+                </button>
+            </div>
+        );
     };
 
-    return (
-        <div className="border p-4 rounded-lg shadow-md">
-            {/* Product Image */}
-            <div className="mb-2">
-                <Image
-                    src={product.images[0] || "/placeholder.png"}
-                    alt={product.product_name}
-                    width={200}
-                    height={200}
-                    className="w-full h-32 object-cover rounded"
-                />
-            </div>
-            <h5 className="font-medium text-gray-700 dark:text-gray-200 mb-2">{product.product_name}</h5>
-            <div className="mb-2">
-                <label className="block text-sm text-gray-600 dark:text-gray-300">Color:</label>
-                <select
-                    value={selectedColor}
-                    onChange={(e) => setSelectedColor(e.target.value)}
-                    className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                    <option value="">Select Color</option>
-                    {product.colors.map((colorItem) => (
-                        <option key={colorItem.color} value={colorItem.color} disabled={colorItem.quantity === 0}>
-                            {colorItem.color} {colorItem.quantity === 0 && '(Out of Stock)'}
-                        </option>
-                    ))}
-                </select>
-            </div>
-            <div className="mb-2">
-                <label className="block text-sm text-gray-600 dark:text-gray-300">Size:</label>
-                <select
-                    value={selectedSize}
-                    onChange={(e) => setSelectedSize(e.target.value)}
-                    className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                    <option value="">Select Size</option>
-                    {product.sizes.map((sizeItem) => (
-                        <option key={sizeItem.size} value={sizeItem.size} disabled={sizeItem.quantity === 0}>
-                            {sizeItem.size} {sizeItem.quantity === 0 && '(Out of Stock)'}
-                        </option>
-                    ))}
-                </select>
-            </div>
-            <div className="mb-2">
-                <label className="block text-sm text-gray-600 dark:text-gray-300">Quantity:</label>
-                <input
-                    type="number"
-                    min={1}
-                    max={10}
-                    value={quantity}
-                    onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                    className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-            </div>
-            <button
-                type="button"
-                onClick={handleSelect}
-                className="w-full mt-3 px-3 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 shadow-md"
-            >
-                Select
-            </button>
-        </div>
-    );
-};
-
-export default CreateOrderModal;
-export { ProductSelectionCard };
+    export default CreateOrderModal;
+    export { ProductSelectionCard };
