@@ -37,6 +37,52 @@ export async function GET(
   }
 }
 
+// PATCH: Update a specific store order by _id
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params;
+
+  // Validate the order ID
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return NextResponse.json({ message: 'Invalid order ID.' }, { status: 400 });
+  }
+
+  try {
+    await dbConnect();
+
+    const data = await request.json();
+
+    // Update the order
+    const updatedOrder = await StoreOrder.findByIdAndUpdate(id, data, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedOrder) {
+      return NextResponse.json({ message: 'Order not found.' }, { status: 404 });
+    }
+
+    return NextResponse.json(updatedOrder, { status: 200 });
+  } catch (error: unknown) {
+    console.error('Error updating store order:', error);
+
+    // If error is a Mongoose ValidationError, extract the message
+    if (error instanceof mongoose.Error.ValidationError) {
+      return NextResponse.json(
+        { message: error.message },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(
+      { message: 'Error updating store order.' },
+      { status: 500 }
+    );
+  }
+}
+
 // DELETE: Delete a specific store order by _id
 export async function DELETE(
   request: NextRequest,
@@ -52,17 +98,17 @@ export async function DELETE(
   try {
     await dbConnect();
 
-    // Find the order by ID
-    const order = await StoreOrder.findById(id);
+    // Find and delete the order
+    const deletedOrder = await StoreOrder.findByIdAndDelete(id);
 
-    if (!order) {
+    if (!deletedOrder) {
       return NextResponse.json({ message: 'Order not found.' }, { status: 404 });
     }
 
-    // Delete the order
-    await StoreOrder.findByIdAndDelete(id);
-
-    return NextResponse.json({ message: 'Order deleted successfully.' }, { status: 200 });
+    return NextResponse.json(
+      { message: 'Order deleted successfully.' },
+      { status: 200 }
+    );
   } catch (error: unknown) {
     console.error('Error deleting store order:', error);
     return NextResponse.json(

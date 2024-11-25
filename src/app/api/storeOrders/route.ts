@@ -6,13 +6,13 @@ import StoreOrder from '@/models/StoreOrder';
 import mongoose from 'mongoose';
 import { v4 as uuidv4 } from 'uuid'; // Install uuid: npm install uuid
 
-// GET: Retrieve all store orders
+// GET: Retrieve all store orders with status 'open'
 export async function GET() {
   await dbConnect();
 
   try {
-    // Fetch all store orders
-    const storeOrders = await StoreOrder.find()
+    // Fetch all store orders where status is 'open'
+    const storeOrders = await StoreOrder.find({ status: 'open' })
       .select('-__v'); // Exclude __v field if not needed
 
     return NextResponse.json(storeOrders, { status: 200 });
@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
     const newStoreOrder = new StoreOrder({
       ...data,
       code: uniqueCode, // Assign the unique code
+      status: 'open', // Ensure the default status is 'open'
     });
     const savedOrder = await newStoreOrder.save();
     return NextResponse.json(savedOrder, { status: 201 });

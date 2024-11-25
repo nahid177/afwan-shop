@@ -60,6 +60,7 @@ export interface IStoreOrderProduct {
 }
 
 export interface IStoreOrder {
+  status: string;
   code: ReactNode;
   image: string | StaticImport;
   buyingPrice: any;

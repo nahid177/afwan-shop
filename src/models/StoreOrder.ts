@@ -24,6 +24,7 @@ export interface IStoreOrderDocument extends Document {
   discount: number;
   approved: boolean;
   code: string; // Unique order code
+  status: 'open' | 'closed'; // Added status field
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -50,6 +51,7 @@ const StoreOrderSchema = new Schema<IStoreOrderDocument>({
   discount: { type: Number, required: true },
   approved: { type: Boolean, default: false },
   code: { type: String, unique: true, required: true }, // Ensure uniqueness for order codes
+  status: { type: String, enum: ['open', 'closed'], default: 'open' }, // Added status field
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
@@ -59,6 +61,9 @@ if (mongoose.models.StoreOrder) {
   delete mongoose.models.StoreOrder;
 }
 
-const StoreOrder: Model<IStoreOrderDocument> = mongoose.model<IStoreOrderDocument>('StoreOrder', StoreOrderSchema);
+const StoreOrder: Model<IStoreOrderDocument> = mongoose.model<IStoreOrderDocument>(
+  'StoreOrder',
+  StoreOrderSchema
+);
 
 export default StoreOrder;

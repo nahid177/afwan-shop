@@ -78,17 +78,22 @@ export async function PATCH(
       // Find the product within the product categories
       let productFound = false;
       let targetProduct: IProduct | null = null;
-      for (const category of productType.product_catagory) {
-        console.log(`Checking category: ${category.catagory_name}`);
+      let categoryIndex = -1;
+      let productIndexInCategory = -1;
 
-        const product = category.product.find(
+      for (let cIndex = 0; cIndex < productType.product_catagory.length; cIndex++) {
+        const category = productType.product_catagory[cIndex];
+
+        const pIndex = category.product.findIndex(
           (prod: IProduct) => prod._id.toString() === item.productId.toString()
         );
 
-        if (product) {
-          console.log(`Found product: ${product.product_name}`);
+        if (pIndex !== -1) {
+          // Found the product
+          targetProduct = category.product[pIndex];
+          categoryIndex = cIndex;
+          productIndexInCategory = pIndex;
           productFound = true;
-          targetProduct = product;
           break;
         }
       }
@@ -157,6 +162,9 @@ export async function PATCH(
       // Deduct the quantity
       targetProduct.sizes[sizeIndex].quantity -= item.quantity;
       targetProduct.colors[colorIndex].quantity -= item.quantity;
+
+      // Reassign the modified product back into the category's product array
+      productType.product_catagory[categoryIndex].product[productIndexInCategory] = targetProduct;
 
       // Save the updated ProductTypes document within the session
       await productType.save({ session });
