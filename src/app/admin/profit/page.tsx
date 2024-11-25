@@ -26,7 +26,7 @@ import {
 } from '@mui/material';
 import { Edit, Delete, Close, Add } from '@mui/icons-material';
 import axios from 'axios';
-import CloseAccountDialog from '@/components/CloseAccountDialog';
+import TripleConfirmDialog from '@/components/TripleConfirmDialog';
 
 // Interfaces
 interface IOtherCost {
@@ -69,6 +69,10 @@ const ProfitPage: React.FC = () => {
 
   const [openAddTitleDialog, setOpenAddTitleDialog] = useState(false); // Dialog for adding titles
   const [openCloseDialog, setOpenCloseDialog] = useState(false); // Dialog for closing account
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; profitId: string | null }>({
+    open: false,
+    profitId: null,
+  }); // Dialog for deleting previous profit accounts
 
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -81,6 +85,7 @@ const ProfitPage: React.FC = () => {
   });
 
   const [loading, setLoading] = useState(false); // Loading state for close account action
+  const [deleteLoading, setDeleteLoading] = useState(false); // Loading state for delete action
 
   // New States for All Profit Documents
   const [allProfits, setAllProfits] = useState<IProfit[]>([]);
@@ -365,6 +370,30 @@ const ProfitPage: React.FC = () => {
     setOpenViewDetailsDialog(true);
   };
 
+  // Handle deleting a previous Profit account
+  const handleDeletePreviousProfit = async () => {
+    if (!deleteDialog.profitId) return;
+
+    setDeleteLoading(true);
+    try {
+      const res = await axios.delete(`/api/profit/${deleteDialog.profitId}`);
+      console.log("DELETE /api/profit/:id response:", res.data); // Debugging line
+      if (res.data.success) {
+        setSnackbar({ open: true, message: 'Previous Profit account deleted successfully', severity: 'success' });
+        // Refresh allProfits to reflect the deletion
+        await fetchProfit();
+      } else {
+        throw new Error(res.data.error || 'Failed to delete Profit account');
+      }
+    } catch (error) {
+      console.error("Error deleting Profit account:", error);
+      setSnackbar({ open: true, message: 'Failed to delete Profit account', severity: 'error' });
+    } finally {
+      setDeleteLoading(false);
+      setDeleteDialog({ open: false, profitId: null });
+    }
+  };
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h4" gutterBottom>
@@ -561,11 +590,19 @@ const ProfitPage: React.FC = () => {
                     <TableCell>{new Date(p.updatedAt).toLocaleString()}</TableCell>
                     <TableCell align="right">
                       {p.status === 'closed' && (
-                        <Tooltip title="View Details">
-                          <IconButton onClick={() => handleViewDetails(p)}>
-                            <Edit />
-                          </IconButton>
-                        </Tooltip>
+                        <>
+                          <Tooltip title="View Details">
+                            <IconButton onClick={() => handleViewDetails(p)}>
+                              <Edit />
+                            </IconButton>
+                          </Tooltip>
+                          {/* Delete Action */}
+                          <Tooltip title="Delete Profit Account">
+                            <IconButton onClick={() => setDeleteDialog({ open: true, profitId: p._id })}>
+                              <Delete />
+                            </IconButton>
+                          </Tooltip>
+                        </>
                       )}
                     </TableCell>
                   </TableRow>
@@ -734,12 +771,24 @@ const ProfitPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
-      {/* Close Account Confirmation Dialog */}
-      <CloseAccountDialog
+      {/* Triple Confirmation Dialog for Close Account */}
+      <TripleConfirmDialog
         open={openCloseDialog}
         onClose={() => setOpenCloseDialog(false)}
         onConfirm={handleCloseAccount}
         loading={loading}
+        title="Close Profit Account"
+        content="Are you sure you want to close the current Profit account? This will finalize the current profit calculations and create a new account for future calculations."
+      />
+
+      {/* Triple Confirmation Dialog for Deleting Previous Profit Account */}
+      <TripleConfirmDialog
+        open={deleteDialog.open}
+        onClose={() => setDeleteDialog({ open: false, profitId: null })}
+        onConfirm={handleDeletePreviousProfit}
+        loading={deleteLoading}
+        title="Delete Profit Account"
+        content="Are you sure you want to delete this Profit account? This action cannot be undone."
       />
 
       {/* Snackbar for Notifications */}
