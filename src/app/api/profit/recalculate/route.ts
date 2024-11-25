@@ -3,71 +3,106 @@
 import { NextResponse, NextRequest } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Profit, { IOtherCost } from '@/models/Profit';
-import { Order, IOrderDocument } from '@/models/Order';
+import { Order, IOrder } from '@/models/Order';
 import StoreOrder, { IStoreOrderDocument } from '@/models/StoreOrder';
 
 /**
  * POST /api/profit/recalculate
- * Recalculate profit based on approved Orders and StoreOrders
+ * Recalculate profit based on approved and open Orders and StoreOrders
  */
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   try {
     await dbConnect();
 
-    // Fetch all approved Orders
-    const approvedOrders: IOrderDocument[] = await Order.find({ approved: true });
-    
-    // Fetch all approved StoreOrders
-    const approvedStoreOrders: IStoreOrderDocument[] = await StoreOrder.find({ approved: true });
+    // Fetch all approved and open Orders
+    const approvedOpenOrders: IOrder[] = await Order.find({
+      approved: true,
+      status: 'open', // Include only orders with status 'open'
+    });
+
+    // Fetch all approved and open StoreOrders
+    const approvedOpenStoreOrders: IStoreOrderDocument[] = await StoreOrder.find({
+      approved: true,
+      status: 'open', // Include only store orders with status 'open'
+    });
 
     // Function to calculate totals from orders
-    const calculateTotals = (orders: Array<IOrderDocument | IStoreOrderDocument>) => {
+    const calculateTotals = (
+      orders: Array<IOrder | IStoreOrderDocument>
+    ) => {
       let totalProductsSold = 0;
       let totalRevenue = 0;
       let totalCostOfGoodsSold = 0;
 
-      orders.forEach(order => {
-        let products: any[] = [];
+      orders.forEach((order) => {
         let orderTotal = 0;
-        let buyingPriceField: keyof any = 'buyingPrice'; // Adjusted to 'any' for flexibility
 
-        if ('products' in order) { // StoreOrder
-          products = order.products;
+        if ('products' in order) {
+          // StoreOrder
+          const products = order.products;
           orderTotal = order.totalAmount;
-        } else { // Order
-          products = order.items;
+
+          totalProductsSold += products.reduce(
+            (sum, product) => sum + product.quantity,
+            0
+          );
+
+          totalCostOfGoodsSold += products.reduce(
+            (sum, product) => sum + (product.buyingPrice || 0) * product.quantity,
+            0
+          );
+
+        } else {
+          // Order
+          const products = order.items;
           orderTotal = order.totalAmount;
-          buyingPriceField = 'buyingPrice';
+
+          totalProductsSold += products.reduce(
+            (sum, product) => sum + product.quantity,
+            0
+          );
+
+          totalCostOfGoodsSold += products.reduce(
+            (sum, product) => sum + (product.buyingPrice || 0) * product.quantity,
+            0
+          );
         }
 
-        totalProductsSold += products.reduce((sum, product) => sum + product.quantity, 0);
         totalRevenue += orderTotal;
-        totalCostOfGoodsSold += products.reduce((sum, product) => sum + (product[buyingPriceField] || 0) * product.quantity, 0);
+
       });
 
       return { totalProductsSold, totalRevenue, totalCostOfGoodsSold };
     };
 
     // Calculate totals for Orders
-    const orderTotals = calculateTotals(approvedOrders);
+    const orderTotals = calculateTotals(approvedOpenOrders);
 
     // Calculate totals for StoreOrders
-    const storeOrderTotals = calculateTotals(approvedStoreOrders);
+    const storeOrderTotals = calculateTotals(approvedOpenStoreOrders);
 
     // Aggregate totals from both models
-    const totalProductsSold = orderTotals.totalProductsSold + storeOrderTotals.totalProductsSold;
-    const totalRevenue = orderTotals.totalRevenue + storeOrderTotals.totalRevenue;
-    const totalCostOfGoodsSold = orderTotals.totalCostOfGoodsSold + storeOrderTotals.totalCostOfGoodsSold;
+    const totalProductsSold =
+      orderTotals.totalProductsSold + storeOrderTotals.totalProductsSold;
+    const totalRevenue =
+      orderTotals.totalRevenue + storeOrderTotals.totalRevenue;
+    const totalCostOfGoodsSold =
+      orderTotals.totalCostOfGoodsSold + storeOrderTotals.totalCostOfGoodsSold;
 
     // Fetch the latest open Profit document
-    const existingProfit = await Profit.findOne({ status: 'open' }).sort({ createdAt: -1 });
+    const existingProfit = await Profit.findOne({ status: 'open' }).sort({
+      createdAt: -1,
+    });
     let otherCosts: IOtherCost[] = [];
 
     if (existingProfit) {
       otherCosts = existingProfit.otherCosts;
     }
 
-    const totalOtherCosts = otherCosts.reduce((acc, cost) => acc + cost.amount, 0);
+    const totalOtherCosts = otherCosts.reduce(
+      (acc, cost) => acc + cost.amount,
+      0
+    );
 
     // Calculate ourProfit
     const ourProfit = totalRevenue - totalCostOfGoodsSold - totalOtherCosts;
@@ -96,7 +131,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true, data: profitDoc }, { status: 200 });
   } catch (error) {
-    console.error("Error recalculating profit:", error);
-    return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
+    console.error('Error recalculating profit:', error);
+    return NextResponse.json(
+      { success: false, error: (error as Error).message },
+      { status: 500 }
+    );
   }
 }
