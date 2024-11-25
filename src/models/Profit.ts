@@ -5,7 +5,7 @@ import mongoose, { Document, Model, Schema } from "mongoose";
 /**
  * Interface for the subdocument in titles array
  */
-interface ITitle {
+export interface ITitle { // Exported
   name: string;
   description?: string;
   // Add other relevant fields if necessary
@@ -14,7 +14,7 @@ interface ITitle {
 /**
  * Interface for the subdocument in otherCosts array
  */
-interface IOtherCost {
+export interface IOtherCost { // Exported
   name: string;
   amount: number;
   // Add other relevant fields if necessary
@@ -24,9 +24,9 @@ interface IOtherCost {
  * Interface for Profit document
  */
 export interface IProfit extends Document {
-  totalProductsSold: number; // Renamed from totalProductSold
-  totalRevenue: number;      // Renamed from totalAmount
-  ourProfit: number;         // Renamed from totalProfit
+  totalProductsSold: number; 
+  totalRevenue: number;    
+  ourProfit: number;      
   titles: ITitle[];
   otherCosts: IOtherCost[];
   createdAt: Date;
