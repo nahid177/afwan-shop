@@ -1,11 +1,15 @@
+// components/AdminNavbar.tsx
 "use client";
+
 import React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Cookies from "js-cookie";
+import { usePathname } from 'next/navigation'; // To determine the active route
 
 const AdminNavbar: React.FC = () => {
   const router = useRouter();
+  const pathname = usePathname(); // Current route path
 
   const handleLogout = async () => {
     const deviceId = localStorage.getItem("deviceId");
@@ -32,31 +36,60 @@ const AdminNavbar: React.FC = () => {
     }
   };
 
+  // Helper function to determine if a link is active
+  const isActive = (href: string) => pathname === href;
+
   return (
     <nav className="navbar bg-white shadow-md p-8">
+      {/* Navbar Start */}
       <div className="navbar-start">
-        <span className="text-2xl font-semibold hidden lg:inline-block">
+        <Link href="/admin" className="text-2xl font-semibold lg:inline-block">
           Admin Dashboard
-        </span>
+        </Link>
       </div>
 
+      {/* Navbar Center - Desktop Menu */}
       <div className="navbar-center hidden lg:flex">
         <ul className="menu menu-horizontal space-x-4">
-          <li>
-            <Link href="/admin/orders" className="text-lg hover:text-primary transition-all">
+          <li className={isActive("/admin") ? "active" : ""}>
+            <Link href="/admin" className="text-lg hover:text-primary transition-all">
+              Home
+            </Link>
+          </li>
+
+          {/* Orders Dropdown */}
+          <li tabIndex={0} className="relative group">
+            <Link href="#" className="text-lg hover:text-primary transition-all flex items-center">
               Orders
+              <svg
+                className="h-4 w-4 ml-1 transition-transform transform group-hover:rotate-180"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+              >
+                <path d="M7 10l5 5 5-5H7z" />
+              </svg>
             </Link>
+            <ul className="absolute hidden group-hover:flex flex-col mt-2 shadow-lg rounded-lg bg-white p-2 space-y-1">
+              <li>
+                <Link href="/admin/orders" className={`hover:text-primary ${isActive("/admin/orders") ? "font-bold" : ""}`}>
+                  View Orders
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin/storeOrders" className={`hover:text-primary ${isActive("/admin/storeOrders") ? "font-bold" : ""}`}>
+                  Store Orders
+                </Link>
+              </li>
+            </ul>
           </li>
+
           <li>
-            <Link href="/admin/storeOrders" className="text-lg hover:text-primary transition-all">
-              Store Orders
-            </Link>
-          </li>
-          <li>
-            <Link href="/admin/reviews" className="text-lg hover:text-primary transition-all">
+            <Link href="/admin/reviews" className={`text-lg hover:text-primary transition-all ${isActive("/admin/reviews") ? "active" : ""}`}>
               Reviews
             </Link>
           </li>
+
+          {/* Product Types Dropdown */}
           <li tabIndex={0} className="relative group">
             <Link href="#" className="text-lg hover:text-primary transition-all flex items-center">
               Product Types
@@ -70,36 +103,44 @@ const AdminNavbar: React.FC = () => {
             </Link>
             <ul className="absolute hidden group-hover:flex flex-col mt-2 shadow-lg rounded-lg bg-white p-2 space-y-1">
               <li>
-                <Link href="/admin/product-types" className="hover:text-primary">
+                <Link href="/admin/product-types" className={`hover:text-primary ${isActive("/admin/product-types") ? "font-bold" : ""}`}>
                   View All
                 </Link>
               </li>
               <li>
-                <Link href="/admin/product-types/create" className="hover:text-primary">
+                <Link href="/admin/product-types/create" className={`hover:text-primary ${isActive("/admin/product-types/create") ? "font-bold" : ""}`}>
                   Create New
                 </Link>
               </li>
             </ul>
           </li>
+
           <li>
-            <Link href="/admin/deliveryAreas" className="text-lg hover:text-primary transition-all">
+            <Link href="/admin/deliveryAreas" className={`text-lg hover:text-primary transition-all ${isActive("/admin/deliveryAreas") ? "active" : ""}`}>
               Delivery Areas
             </Link>
           </li>
           <li>
-            <Link href="/admin/offerEntries" className="text-lg hover:text-primary transition-all">
+            <Link href="/admin/offerEntries" className={`text-lg hover:text-primary transition-all ${isActive("/admin/offerEntries") ? "active" : ""}`}>
               Offer Entries
             </Link>
           </li>
           <li>
-            <Link href="/admin/promoCode" className="text-lg hover:text-primary transition-all">
+            <Link href="/admin/promoCode" className={`text-lg hover:text-primary transition-all ${isActive("/admin/promoCode") ? "active" : ""}`}>
               Promo Codes
+            </Link>
+          </li>
+          <li>
+            <Link href="/admin/profit" className={`text-lg hover:text-primary transition-all ${isActive("/admin/profit") ? "active" : ""}`}>
+              Account Calculation
             </Link>
           </li>
         </ul>
       </div>
 
+      {/* Navbar End */}
       <div className="navbar-end">
+        {/* Logout Button - Desktop */}
         <button
           className="btn btn-outline btn-primary hidden lg:inline-block"
           onClick={handleLogout}
@@ -107,6 +148,7 @@ const AdminNavbar: React.FC = () => {
           Logout
         </button>
 
+        {/* Mobile Menu Dropdown */}
         <div className="dropdown dropdown-end lg:hidden">
           <label tabIndex={0} className="btn btn-ghost btn-circle">
             <svg
@@ -129,47 +171,91 @@ const AdminNavbar: React.FC = () => {
             className="dropdown-content mt-2 p-3 shadow-lg bg-white rounded-lg w-52 space-y-1"
           >
             <li>
-              <Link href="/admin/orders" className="hover:text-primary">
-                Orders
+              <Link href="/admin" className={`hover:text-primary ${isActive("/admin") ? "font-bold" : ""}`}>
+                Home
               </Link>
             </li>
-            <li>
-              <Link href="/admin/storeOrders" className="hover:text-primary">
-                Store Orders
-              </Link>
+
+            {/* Orders Dropdown - Mobile */}
+            <li tabIndex={0} className="relative group">
+              <div className="flex items-center justify-between w-full hover:text-primary cursor-pointer">
+                <span>Orders</span>
+                <svg
+                  className="h-4 w-4 ml-1 transition-transform transform group-hover:rotate-180"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M7 10l5 5 5-5H7z" />
+                </svg>
+              </div>
+              <ul className="hidden group-hover:flex flex-col mt-2 ml-2 shadow-lg rounded-lg bg-white p-2 space-y-1">
+                <li>
+                  <Link href="/admin/orders" className={`hover:text-primary ${isActive("/admin/orders") ? "font-bold" : ""}`}>
+                    View Orders
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/admin/storeOrders" className={`hover:text-primary ${isActive("/admin/storeOrders") ? "font-bold" : ""}`}>
+                    Store Orders
+                  </Link>
+                </li>
+              </ul>
             </li>
+
             <li>
-              <Link href="/admin/reviews" className="hover:text-primary">
+              <Link href="/admin/reviews" className={`hover:text-primary ${isActive("/admin/reviews") ? "font-bold" : ""}`}>
                 Reviews
               </Link>
             </li>
-            <li>
-              <Link href="/admin/product-types" className="hover:text-primary">
-                Product Types
-              </Link>
+
+            {/* Product Types Dropdown - Mobile */}
+            <li tabIndex={0} className="relative group">
+              <div className="flex items-center justify-between w-full hover:text-primary cursor-pointer">
+                <span>Product Types</span>
+                <svg
+                  className="h-4 w-4 ml-1 transition-transform transform group-hover:rotate-180"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M7 10l5 5 5-5H7z" />
+                </svg>
+              </div>
+              <ul className="hidden group-hover:flex flex-col mt-2 ml-2 shadow-lg rounded-lg bg-white p-2 space-y-1">
+                <li>
+                  <Link href="/admin/product-types" className={`hover:text-primary ${isActive("/admin/product-types") ? "font-bold" : ""}`}>
+                    View All
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/admin/product-types/create" className={`hover:text-primary ${isActive("/admin/product-types/create") ? "font-bold" : ""}`}>
+                    Create New
+                  </Link>
+                </li>
+              </ul>
             </li>
+
             <li>
-              <Link href="/admin/product-types/create" className="hover:text-primary">
-                Create Product Type
-              </Link>
-            </li>
-            <li>
-              <Link href="/admin/deliveryAreas" className="hover:text-primary">
+              <Link href="/admin/deliveryAreas" className={`hover:text-primary ${isActive("/admin/deliveryAreas") ? "font-bold" : ""}`}>
                 Delivery Areas
               </Link>
             </li>
             <li>
-              <Link href="/admin/offerEntries" className="hover:text-primary">
+              <Link href="/admin/offerEntries" className={`hover:text-primary ${isActive("/admin/offerEntries") ? "font-bold" : ""}`}>
                 Offer Entries
               </Link>
             </li>
             <li>
-              <Link href="/admin/promoCode" className="hover:text-primary">
+              <Link href="/admin/promoCode" className={`hover:text-primary ${isActive("/admin/promoCode") ? "font-bold" : ""}`}>
                 Promo Codes
               </Link>
             </li>
             <li>
-              <button className="btn btn-outline btn-primary w-full" onClick={handleLogout}>
+              <Link href="/admin/profit" className={`hover:text-primary ${isActive("/admin/profit") ? "font-bold" : ""}`}>
+                Account Calculation
+              </Link>
+            </li>
+            <li>
+              <button className="btn btn-outline btn-primary w-full mt-2" onClick={handleLogout}>
                 Logout
               </button>
             </li>

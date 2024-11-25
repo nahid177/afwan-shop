@@ -27,6 +27,7 @@ import {
 import { Edit, Delete, Close, Add } from '@mui/icons-material';
 import axios from 'axios';
 import TripleConfirmDialog from '@/components/TripleConfirmDialog';
+import AdminLayout from '../AdminLayout';
 
 // Interfaces
 interface IOtherCost {
@@ -395,411 +396,414 @@ const ProfitPage: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      <Typography variant="h4" gutterBottom>
-        Profit Dashboard
-      </Typography>
+    <AdminLayout>
+      <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
+        <Typography variant="h4" gutterBottom>
+          Profit Dashboard
+        </Typography>
 
-      {/* Action Buttons */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={<Add />}
-          onClick={handleRecalculateProfit}
-        >
-          Recalculate Profit
-        </Button>
-
-        {/* Close Account Button - Visible only if there is an open Profit account */}
-        {profit && profit.status === 'open' && (
-          <Button
-            variant="outlined"
-            color="error"
-            startIcon={<Close />}
-            onClick={() => setOpenCloseDialog(true)}
-          >
-            Close Account
-          </Button>
-        )}
-
-        {/* Add Title Button */}
-        {profit && profit.status === 'open' && (
+        {/* Action Buttons */}
+        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
           <Button
             variant="contained"
-            color="secondary"
+            color="primary"
             startIcon={<Add />}
-            onClick={() => setOpenAddTitleDialog(true)}
+            onClick={handleRecalculateProfit}
           >
-            Add Title
+            Recalculate Profit
           </Button>
-        )}
-      </Box>
 
-      {/* Profit Details */}
-      {profit ? (
-        <>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            <Typography variant="h6">Total Products Sold: {profit.totalProductsSold}</Typography>
-            <Typography variant="h6">Total Revenue: ${profit.totalRevenue.toFixed(2)}</Typography>
-            <Typography variant="h6">Our Profit: ${profit.ourProfit.toFixed(2)}</Typography>
-            <Typography variant="h6">
-              Status: {profit.status ? profit.status.charAt(0).toUpperCase() + profit.status.slice(1) : 'Unknown'}
-            </Typography>
-          </Box>
-
-          {/* Other Costs Section */}
-          <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
-            Other Costs
-          </Typography>
-          <TableContainer component={Paper} sx={{ mb: 4 }}>
-            <Table aria-label="other costs table">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell align="right">Amount ($)</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {otherCosts.map((cost) => (
-                  <TableRow key={cost._id}>
-                    <TableCell>{cost.name}</TableCell>
-                    <TableCell align="right">{cost.amount.toFixed(2)}</TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="Edit">
-                        <IconButton onClick={() => handleEditOtherCost(cost)}>
-                          <Edit />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton onClick={() => handleDeleteOtherCost(cost._id!)}>
-                          <Delete />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                <TableRow>
-                  <TableCell>
-                    <TextField
-                      label="Name"
-                      value={newOtherCost.name}
-                      onChange={(e) => setNewOtherCost({ ...newOtherCost, name: e.target.value })}
-                      fullWidth
-                    />
-                  </TableCell>
-                  <TableCell align="right">
-                    <TextField
-                      label="Amount"
-                      type="number"
-                      value={newOtherCost.amount}
-                      onChange={(e) =>
-                        setNewOtherCost({ ...newOtherCost, amount: parseFloat(e.target.value) })
-                      }
-                      fullWidth
-                      inputProps={{ min: 0, step: '0.01' }}
-                    />
-                  </TableCell>
-                  <TableCell align="right">
-                    <Button variant="contained" color="success" onClick={handleAddOtherCost}>
-                      Add
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </TableContainer>
-
-          {/* Titles Section */}
-          <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
-            Titles
-          </Typography>
-          <TableContainer component={Paper}>
-            <Table aria-label="titles table">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Name</TableCell>
-                  <TableCell>Description</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {titles.map((title) => (
-                  <TableRow key={title._id}>
-                    <TableCell>{title.name}</TableCell>
-                    <TableCell>{title.description || '-'}</TableCell>
-                    <TableCell align="right">
-                      <Tooltip title="Edit">
-                        <IconButton onClick={() => handleEditTitle(title)}>
-                          <Edit />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton onClick={() => handleDeleteTitle(title._id!)}>
-                          <Delete />
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {/* No inline add row for Titles; use Dialog instead */}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </>
-      ) : (
-        <Typography variant="body1" sx={{ mt: 4 }}>
-          No Profit data available. Click on "Recalculate Profit" to generate Profit data based on approved Orders.
-        </Typography>
-      )}
-
-      {/* All Profit Accounts Section */}
-      {allProfits.length > 1 && (
-        <Box sx={{ mt: 6 }}>
-          <Typography variant="h5" gutterBottom>
-            Previous Profit Accounts
-          </Typography>
-          <TableContainer component={Paper} sx={{ mb: 4 }}>
-            <Table aria-label="all profits table">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Account ID</TableCell>
-                  <TableCell>Total Products Sold</TableCell>
-                  <TableCell>Total Revenue ($)</TableCell>
-                  <TableCell>Our Profit ($)</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell>Created At</TableCell>
-                  <TableCell>Updated At</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {allProfits.map((p) => (
-                  <TableRow key={p._id} sx={{ backgroundColor: p.status === 'closed' ? '#f0f0f0' : 'inherit' }}>
-                    <TableCell>{p._id}</TableCell>
-                    <TableCell>{p.totalProductsSold}</TableCell>
-                    <TableCell>{p.totalRevenue.toFixed(2)}</TableCell>
-                    <TableCell>{p.ourProfit.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <Typography color={p.status === 'open' ? 'green' : 'red'}>
-                        {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>{new Date(p.createdAt).toLocaleString()}</TableCell>
-                    <TableCell>{new Date(p.updatedAt).toLocaleString()}</TableCell>
-                    <TableCell align="right">
-                      {p.status === 'closed' && (
-                        <>
-                          <Tooltip title="View Details">
-                            <IconButton onClick={() => handleViewDetails(p)}>
-                              <Edit />
-                            </IconButton>
-                          </Tooltip>
-                          {/* Delete Action */}
-                          <Tooltip title="Delete Profit Account">
-                            <IconButton onClick={() => setDeleteDialog({ open: true, profitId: p._id })}>
-                              <Delete />
-                            </IconButton>
-                          </Tooltip>
-                        </>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Box>
-      )}
-
-      {/* View Details Dialog */}
-      <Dialog open={openViewDetailsDialog} onClose={() => setOpenViewDetailsDialog(false)}>
-        <DialogTitle>Profit Account Details</DialogTitle>
-        <DialogContent>
-          {viewDetailsProfit && (
-            <>
-              <Typography variant="subtitle1">Account ID: {viewDetailsProfit._id}</Typography>
-              <Typography variant="subtitle1">Total Products Sold: {viewDetailsProfit.totalProductsSold}</Typography>
-              <Typography variant="subtitle1">Total Revenue: ${viewDetailsProfit.totalRevenue.toFixed(2)}</Typography>
-              <Typography variant="subtitle1">Our Profit: ${viewDetailsProfit.ourProfit.toFixed(2)}</Typography>
-              <Typography variant="subtitle1">
-                Status: {viewDetailsProfit.status.charAt(0).toUpperCase() + viewDetailsProfit.status.slice(1)}
-              </Typography>
-              <Typography variant="subtitle1">Created At: {new Date(viewDetailsProfit.createdAt).toLocaleString()}</Typography>
-              <Typography variant="subtitle1">Updated At: {new Date(viewDetailsProfit.updatedAt).toLocaleString()}</Typography>
-
-              {/* Other Costs */}
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="h6">Other Costs</Typography>
-                <TableContainer component={Paper}>
-                  <Table aria-label="other costs table">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Name</TableCell>
-                        <TableCell align="right">Amount ($)</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {viewDetailsProfit.otherCosts.map((cost) => (
-                        <TableRow key={cost._id}>
-                          <TableCell>{cost.name}</TableCell>
-                          <TableCell align="right">{cost.amount.toFixed(2)}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Box>
-
-              {/* Titles */}
-              <Box sx={{ mt: 2 }}>
-                <Typography variant="h6">Titles</Typography>
-                <TableContainer component={Paper}>
-                  <Table aria-label="titles table">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell>Name</TableCell>
-                        <TableCell>Description</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {viewDetailsProfit.titles.map((title) => (
-                        <TableRow key={title._id}>
-                          <TableCell>{title.name}</TableCell>
-                          <TableCell>{title.description || '-'}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              </Box>
-            </>
+          {/* Close Account Button - Visible only if there is an open Profit account */}
+          {profit && profit.status === 'open' && (
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<Close />}
+              onClick={() => setOpenCloseDialog(true)}
+            >
+              Close Account
+            </Button>
           )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenViewDetailsDialog(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
 
-      {/* Edit Other Cost Dialog */}
-      <Dialog open={openEditOtherCostDialog} onClose={() => setOpenEditOtherCostDialog(false)}>
-        <DialogTitle>Edit Other Cost</DialogTitle>
-        <DialogContent>
-          <TextField
-            margin="dense"
-            label="Name"
-            fullWidth
-            value={editOtherCost?.name || ''}
-            onChange={(e) => setEditOtherCost({ ...editOtherCost!, name: e.target.value })}
-          />
-          <TextField
-            margin="dense"
-            label="Amount"
-            type="number"
-            fullWidth
-            value={editOtherCost?.amount || 0}
-            onChange={(e) =>
-              setEditOtherCost({ ...editOtherCost!, amount: parseFloat(e.target.value) })
-            }
-            inputProps={{ min: 0, step: '0.01' }}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenEditOtherCostDialog(false)}>Cancel</Button>
-          <Button onClick={handleUpdateOtherCost} variant="contained" color="primary">
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
+          {/* Add Title Button */}
+          {profit && profit.status === 'open' && (
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<Add />}
+              onClick={() => setOpenAddTitleDialog(true)}
+            >
+              Add Title
+            </Button>
+          )}
+        </Box>
 
-      {/* Add Title Dialog */}
-      <Dialog open={openAddTitleDialog} onClose={() => setOpenAddTitleDialog(false)}>
-        <DialogTitle>Add New Title</DialogTitle>
-        <DialogContent>
-          <TextField
-            margin="dense"
-            label="Title Name"
-            fullWidth
-            value={newTitle.name}
-            onChange={(e) => setNewTitle({ ...newTitle, name: e.target.value })}
-          />
-          <TextField
-            margin="dense"
-            label="Description"
-            fullWidth
-            multiline
-            rows={3}
-            value={newTitle.description}
-            onChange={(e) => setNewTitle({ ...newTitle, description: e.target.value })}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenAddTitleDialog(false)}>Cancel</Button>
-          <Button onClick={handleAddTitle} variant="contained" color="primary">
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
+        {/* Profit Details */}
+        {profit ? (
+          <>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <Typography variant="h6">Total Products Sold: {profit.totalProductsSold}</Typography>
+              <Typography variant="h6">Total Revenue: ${profit.totalRevenue.toFixed(2)}</Typography>
+              <Typography variant="h6">Our Profit: ${profit.ourProfit.toFixed(2)}</Typography>
+              <Typography variant="h6">
+                Status: {profit.status ? profit.status.charAt(0).toUpperCase() + profit.status.slice(1) : 'Unknown'}
+              </Typography>
+            </Box>
 
-      {/* Edit Title Dialog */}
-      <Dialog open={openEditTitleDialog} onClose={() => setOpenEditTitleDialog(false)}>
-        <DialogTitle>Edit Title</DialogTitle>
-        <DialogContent>
-          <TextField
-            margin="dense"
-            label="Title Name"
-            fullWidth
-            value={editTitle?.name || ''}
-            onChange={(e) => setEditTitle({ ...editTitle!, name: e.target.value })}
-          />
-          <TextField
-            margin="dense"
-            label="Description"
-            fullWidth
-            multiline
-            rows={3}
-            value={editTitle?.description || ''}
-            onChange={(e) => setEditTitle({ ...editTitle!, description: e.target.value })}
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenEditTitleDialog(false)}>Cancel</Button>
-          <Button onClick={handleUpdateTitle} variant="contained" color="primary">
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
+            {/* Other Costs Section */}
+            <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
+              Other Costs
+            </Typography>
+            <TableContainer component={Paper} sx={{ mb: 4 }}>
+              <Table aria-label="other costs table">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell align="right">Amount ($)</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {otherCosts.map((cost) => (
+                    <TableRow key={cost._id}>
+                      <TableCell>{cost.name}</TableCell>
+                      <TableCell align="right">{cost.amount.toFixed(2)}</TableCell>
+                      <TableCell align="right">
+                        <Tooltip title="Edit">
+                          <IconButton onClick={() => handleEditOtherCost(cost)}>
+                            <Edit />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <IconButton onClick={() => handleDeleteOtherCost(cost._id!)}>
+                            <Delete />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow>
+                    <TableCell>
+                      <TextField
+                        label="Name"
+                        value={newOtherCost.name}
+                        onChange={(e) => setNewOtherCost({ ...newOtherCost, name: e.target.value })}
+                        fullWidth
+                      />
+                    </TableCell>
+                    <TableCell align="right">
+                      <TextField
+                        label="Amount"
+                        type="number"
+                        value={newOtherCost.amount}
+                        onChange={(e) =>
+                          setNewOtherCost({ ...newOtherCost, amount: parseFloat(e.target.value) })
+                        }
+                        fullWidth
+                        inputProps={{ min: 0, step: '0.01' }}
+                      />
+                    </TableCell>
+                    <TableCell align="right">
+                      <Button variant="contained" color="success" onClick={handleAddOtherCost}>
+                        Add
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </TableContainer>
 
-      {/* Triple Confirmation Dialog for Close Account */}
-      <TripleConfirmDialog
-        open={openCloseDialog}
-        onClose={() => setOpenCloseDialog(false)}
-        onConfirm={handleCloseAccount}
-        loading={loading}
-        title="Close Profit Account"
-        content="Are you sure you want to close the current Profit account? This will finalize the current profit calculations and create a new account for future calculations."
-      />
+            {/* Titles Section */}
+            <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
+              Titles
+            </Typography>
+            <TableContainer component={Paper}>
+              <Table aria-label="titles table">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Description</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {titles.map((title) => (
+                    <TableRow key={title._id}>
+                      <TableCell>{title.name}</TableCell>
+                      <TableCell>{title.description || '-'}</TableCell>
+                      <TableCell align="right">
+                        <Tooltip title="Edit">
+                          <IconButton onClick={() => handleEditTitle(title)}>
+                            <Edit />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Delete">
+                          <IconButton onClick={() => handleDeleteTitle(title._id!)}>
+                            <Delete />
+                          </IconButton>
+                        </Tooltip>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {/* No inline add row for Titles; use Dialog instead */}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </>
+        ) : (
+          <Typography variant="body1" sx={{ mt: 4 }}>
+            No Profit data available. Click on "Recalculate Profit" to generate Profit data based on approved Orders.
+          </Typography>
+        )}
 
-      {/* Triple Confirmation Dialog for Deleting Previous Profit Account */}
-      <TripleConfirmDialog
-        open={deleteDialog.open}
-        onClose={() => setDeleteDialog({ open: false, profitId: null })}
-        onConfirm={handleDeletePreviousProfit}
-        loading={deleteLoading}
-        title="Delete Profit Account"
-        content="Are you sure you want to delete this Profit account? This action cannot be undone."
-      />
+        {/* All Profit Accounts Section */}
+        {allProfits.length > 1 && (
+          <Box sx={{ mt: 6 }}>
+            <Typography variant="h5" gutterBottom>
+              Previous Profit Accounts
+            </Typography>
+            <TableContainer component={Paper} sx={{ mb: 4 }}>
+              <Table aria-label="all profits table">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Account ID</TableCell>
+                    <TableCell>Total Products Sold</TableCell>
+                    <TableCell>Total Revenue ($)</TableCell>
+                    <TableCell>Our Profit ($)</TableCell>
+                    <TableCell>Status</TableCell>
+                    <TableCell>Created At</TableCell>
+                    <TableCell>Updated At</TableCell>
+                    <TableCell align="right">Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {allProfits.map((p) => (
+                    <TableRow key={p._id} sx={{ backgroundColor: p.status === 'closed' ? '#f0f0f0' : 'inherit' }}>
+                      <TableCell>{p._id}</TableCell>
+                      <TableCell>{p.totalProductsSold}</TableCell>
+                      <TableCell>{p.totalRevenue.toFixed(2)}</TableCell>
+                      <TableCell>{p.ourProfit.toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Typography color={p.status === 'open' ? 'green' : 'red'}>
+                          {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>{new Date(p.createdAt).toLocaleString()}</TableCell>
+                      <TableCell>{new Date(p.updatedAt).toLocaleString()}</TableCell>
+                      <TableCell align="right">
+                        {p.status === 'closed' && (
+                          <>
+                            <Tooltip title="View Details">
+                              <IconButton onClick={() => handleViewDetails(p)}>
+                                <Edit />
+                              </IconButton>
+                            </Tooltip>
+                            {/* Delete Action */}
+                            <Tooltip title="Delete Profit Account">
+                              <IconButton onClick={() => setDeleteDialog({ open: true, profitId: p._id })}>
+                                <Delete />
+                              </IconButton>
+                            </Tooltip>
+                          </>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </Box>
+        )}
 
-      {/* Snackbar for Notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        message={snackbar.message}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      />
-    </Container>
+        {/* View Details Dialog */}
+        <Dialog open={openViewDetailsDialog} onClose={() => setOpenViewDetailsDialog(false)}>
+          <DialogTitle>Profit Account Details</DialogTitle>
+          <DialogContent>
+            {viewDetailsProfit && (
+              <>
+                <Typography variant="subtitle1">Account ID: {viewDetailsProfit._id}</Typography>
+                <Typography variant="subtitle1">Total Products Sold: {viewDetailsProfit.totalProductsSold}</Typography>
+                <Typography variant="subtitle1">Total Revenue: ${viewDetailsProfit.totalRevenue.toFixed(2)}</Typography>
+                <Typography variant="subtitle1">Our Profit: ${viewDetailsProfit.ourProfit.toFixed(2)}</Typography>
+                <Typography variant="subtitle1">
+                  Status: {viewDetailsProfit.status.charAt(0).toUpperCase() + viewDetailsProfit.status.slice(1)}
+                </Typography>
+                <Typography variant="subtitle1">Created At: {new Date(viewDetailsProfit.createdAt).toLocaleString()}</Typography>
+                <Typography variant="subtitle1">Updated At: {new Date(viewDetailsProfit.updatedAt).toLocaleString()}</Typography>
+
+                {/* Other Costs */}
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="h6">Other Costs</Typography>
+                  <TableContainer component={Paper}>
+                    <Table aria-label="other costs table">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Name</TableCell>
+                          <TableCell align="right">Amount ($)</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {viewDetailsProfit.otherCosts.map((cost) => (
+                          <TableRow key={cost._id}>
+                            <TableCell>{cost.name}</TableCell>
+                            <TableCell align="right">{cost.amount.toFixed(2)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+
+                {/* Titles */}
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="h6">Titles</Typography>
+                  <TableContainer component={Paper}>
+                    <Table aria-label="titles table">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Name</TableCell>
+                          <TableCell>Description</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {viewDetailsProfit.titles.map((title) => (
+                          <TableRow key={title._id}>
+                            <TableCell>{title.name}</TableCell>
+                            <TableCell>{title.description || '-'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+              </>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenViewDetailsDialog(false)}>Close</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Edit Other Cost Dialog */}
+        <Dialog open={openEditOtherCostDialog} onClose={() => setOpenEditOtherCostDialog(false)}>
+          <DialogTitle>Edit Other Cost</DialogTitle>
+          <DialogContent>
+            <TextField
+              margin="dense"
+              label="Name"
+              fullWidth
+              value={editOtherCost?.name || ''}
+              onChange={(e) => setEditOtherCost({ ...editOtherCost!, name: e.target.value })}
+            />
+            <TextField
+              margin="dense"
+              label="Amount"
+              type="number"
+              fullWidth
+              value={editOtherCost?.amount || 0}
+              onChange={(e) =>
+                setEditOtherCost({ ...editOtherCost!, amount: parseFloat(e.target.value) })
+              }
+              inputProps={{ min: 0, step: '0.01' }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenEditOtherCostDialog(false)}>Cancel</Button>
+            <Button onClick={handleUpdateOtherCost} variant="contained" color="primary">
+              Save
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Add Title Dialog */}
+        <Dialog open={openAddTitleDialog} onClose={() => setOpenAddTitleDialog(false)}>
+          <DialogTitle>Add New Title</DialogTitle>
+          <DialogContent>
+            <TextField
+              margin="dense"
+              label="Title Name"
+              fullWidth
+              value={newTitle.name}
+              onChange={(e) => setNewTitle({ ...newTitle, name: e.target.value })}
+            />
+            <TextField
+              margin="dense"
+              label="Description"
+              fullWidth
+              multiline
+              rows={3}
+              value={newTitle.description}
+              onChange={(e) => setNewTitle({ ...newTitle, description: e.target.value })}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenAddTitleDialog(false)}>Cancel</Button>
+            <Button onClick={handleAddTitle} variant="contained" color="primary">
+              Save
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Edit Title Dialog */}
+        <Dialog open={openEditTitleDialog} onClose={() => setOpenEditTitleDialog(false)}>
+          <DialogTitle>Edit Title</DialogTitle>
+          <DialogContent>
+            <TextField
+              margin="dense"
+              label="Title Name"
+              fullWidth
+              value={editTitle?.name || ''}
+              onChange={(e) => setEditTitle({ ...editTitle!, name: e.target.value })}
+            />
+            <TextField
+              margin="dense"
+              label="Description"
+              fullWidth
+              multiline
+              rows={3}
+              value={editTitle?.description || ''}
+              onChange={(e) => setEditTitle({ ...editTitle!, description: e.target.value })}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenEditTitleDialog(false)}>Cancel</Button>
+            <Button onClick={handleUpdateTitle} variant="contained" color="primary">
+              Save
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Triple Confirmation Dialog for Close Account */}
+        <TripleConfirmDialog
+          open={openCloseDialog}
+          onClose={() => setOpenCloseDialog(false)}
+          onConfirm={handleCloseAccount}
+          loading={loading}
+          title="Close Profit Account"
+          content="Are you sure you want to close the current Profit account? This will finalize the current profit calculations and create a new account for future calculations."
+        />
+
+        {/* Triple Confirmation Dialog for Deleting Previous Profit Account */}
+        <TripleConfirmDialog
+          open={deleteDialog.open}
+          onClose={() => setDeleteDialog({ open: false, profitId: null })}
+          onConfirm={handleDeletePreviousProfit}
+          loading={deleteLoading}
+          title="Delete Profit Account"
+          content="Are you sure you want to delete this Profit account? This action cannot be undone."
+        />
+
+        {/* Snackbar for Notifications */}
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={6000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          message={snackbar.message}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        />
+      </Container>
+    </AdminLayout>
+
   );
 }
 
