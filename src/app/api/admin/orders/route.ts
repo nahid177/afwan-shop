@@ -137,60 +137,25 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// GET handler to fetch all orders
+// GET: Retrieve all open orders
 export async function GET() {
   try {
     await dbConnect();
 
-    // Fetch orders and manually populate items.product details
-    const orders = await Order.find()
+    // Fetch all orders where status is 'open' and use .lean()
+    const orders = await Order.find({ status: 'open' })
       .sort({ createdAt: -1 })
-      .lean<IOrder>()
-      .exec();
+      .lean();
 
-    // Manually populate items.product from ProductTypes
-    const populatedOrders = await Promise.all(orders.map(async (order): Promise<IOrder> => {
-      const populatedItems = await Promise.all(order.items.map(async (item): Promise<IOrderItem & { productDetails: IProduct | null }> => {
-        const productType = await ProductTypes.findOne<IProductType>({
-          'product_catagory.product._id': item.product
-        }).lean<IProductType>().exec();
-
-        if (!productType) {
-          return { ...item, productDetails: null };
-        }
-
-        let productDoc: IProduct | null = null;
-
-        for (const category of productType.product_catagory) {
-          const foundProduct = category.product.find((prod: IProduct) => prod._id.equals(item.product));
-          if (foundProduct) {
-            productDoc = foundProduct;
-            break;
-          }
-        }
-
-        return {
-          ...item,
-          productDetails: productDoc
-        };
-      }));
-
-      return {
-        ...order,
-        items: populatedItems
-      };
-    }));
-
-    return NextResponse.json(populatedOrders, { status: 200 });
-  } catch (error: unknown) {
-    console.error('Error fetching orders:', error);
+    return NextResponse.json(orders, { status: 200 });
+  } catch (error: any) {
+    console.error('Error fetching open orders:', error);
     return NextResponse.json(
-      { message: 'Internal Server Error', error: error instanceof Error ? error.message : 'Unknown Error' },
+      { message: 'Error fetching open orders.' },
       { status: 500 }
     );
   }
 }
-
 // DELETE /api/admin/orders/[orderId]
 export async function DELETE(req: NextRequest, { params }: { params: { orderId: string } }) {
   const { orderId } = params;
