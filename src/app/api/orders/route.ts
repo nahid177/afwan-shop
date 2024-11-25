@@ -60,6 +60,7 @@ interface IOrder {
   items: IOrderItem[];
   totalAmount: number;
   approved: boolean;
+  status: 'open' | 'close'; // New status field
   createdAt: Date;
   updatedAt: Date;
 }
@@ -149,7 +150,7 @@ export async function POST(req: NextRequest) {
       processedItems.push(processedItem);
     }
 
-    // Create the order
+    // Create the order with default status 'open'
     const newOrder = new Order({
       customerName,
       customerNumber,
@@ -158,12 +159,14 @@ export async function POST(req: NextRequest) {
       address2,
       items: processedItems,
       totalAmount,
-      approved: false
+      approved: false,
+      status: 'open' // Set default status to 'open'
     });
 
     await newOrder.save();
 
     console.log(`Order created successfully with ID: ${newOrder._id}`);
+    console.log('New Order:', newOrder); // Debugging: Log the entire order
 
     return NextResponse.json({ orderId: newOrder._id }, { status: 201 });
 

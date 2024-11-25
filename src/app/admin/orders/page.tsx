@@ -1,4 +1,4 @@
-// /src/app/admin/orders/page.tsx
+// src/app/admin/orders/page.tsx
 
 "use client";
 
@@ -72,6 +72,10 @@ const AdminOrdersPage: React.FC = () => {
   // Confirmation Modal state for Deletion
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState<boolean>(false);
   const [orderToDelete, setOrderToDelete] = useState<string>("");
+
+  // Confirmation Modal state for Closing
+  const [isCloseModalOpen, setIsCloseModalOpen] = useState<boolean>(false);
+  const [orderToClose, setOrderToClose] = useState<string>("");
 
   // State to manage visibility of sensitive information
   const [showSensitiveInfo, setShowSensitiveInfo] = useState<boolean>(false);
@@ -153,6 +157,41 @@ const AdminOrdersPage: React.FC = () => {
     }
   };
 
+  
+  const closeOrder = async (orderId: string) => {
+    try {
+      const response: AxiosResponse<{ message: string }> = await axios.patch(
+        `/api/admin/orders/${orderId}/close`
+      );
+  
+      setOrders((prevOrders) =>
+        prevOrders.map((order) =>
+          order._id === orderId
+            ? { ...order, status: "close" } as IOrder // Explicitly cast to IOrder
+            : order
+        )
+      );
+  
+      setToastMessage("Order closed successfully!");
+      setToastType("success");
+      setToastVisible(true);
+    } catch (error: unknown) {
+      if (axios.isAxiosError<ApiErrorResponse>(error)) {
+        const axiosError = error as AxiosError<ApiErrorResponse>;
+        setToastMessage(
+          axiosError.response?.data?.message || "Failed to close the order."
+        );
+      } else if (error instanceof Error) {
+        setToastMessage(error.message || "An unexpected error occurred.");
+      } else {
+        setToastMessage("An unexpected error occurred.");
+      }
+      console.error("Error closing order:", error);
+      setToastType("error");
+      setToastVisible(true);
+    }
+  };
+  
   const deleteOrder = async (orderId: string) => {
     try {
       await axios.delete(`/api/admin/orders/${orderId}`);
@@ -197,7 +236,24 @@ const AdminOrdersPage: React.FC = () => {
     setIsDeleteModalOpen(true);
   };
 
-  // Removed states and functions related to approval confirmation modal
+  // Handlers for Closing Orders
+  const handleCloseConfirm = () => {
+    if (orderToClose) {
+      closeOrder(orderToClose);
+      setOrderToClose("");
+      setIsCloseModalOpen(false);
+    }
+  };
+
+  const handleCloseCancel = () => {
+    setOrderToClose("");
+    setIsCloseModalOpen(false);
+  };
+
+  const openCloseModal = (orderId: string) => {
+    setOrderToClose(orderId);
+    setIsCloseModalOpen(true);
+  };
 
   // Function to toggle visibility of Buying Price and Profit
   const toggleSensitiveInfo = () => {
@@ -288,6 +344,7 @@ const AdminOrdersPage: React.FC = () => {
                     "Total Amount",
                     "Date",
                     "Approved",
+                    "Status", // New Status Column
                     "Codes",
                     "Image",
                     "Buying Price",
@@ -348,6 +405,18 @@ const AdminOrdersPage: React.FC = () => {
                           </span>
                         )}
                       </td>
+                      {/* Status Column */}
+                      <td className="py-2 px-4 border-b">
+                        <span
+                          className={`px-2 py-1 rounded ${
+                            order.status === 'open'
+                              ? 'bg-blue-200 text-blue-800'
+                              : 'bg-red-200 text-red-800'
+                          }`}
+                        >
+                          {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                        </span>
+                      </td>
                       <td className="py-2 px-4 border-b">{allCodes}</td>
                       <td className="py-2 px-4 border-b">
                         <button
@@ -399,6 +468,14 @@ const AdminOrdersPage: React.FC = () => {
                               Approve
                             </button>
                           )}
+                          {order.status === 'open' && (
+                            <button
+                              onClick={() => openCloseModal(order._id)}
+                              className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600"
+                            >
+                              Close
+                            </button>
+                          )}
                           <button
                             onClick={() => openDeleteModal(order._id)}
                             className="text-red-500 hover:text-red-700"
@@ -434,9 +511,17 @@ const AdminOrdersPage: React.FC = () => {
         onCancel={handleDeleteCancel}
       />
 
-      {/* Removed Confirmation Modal for Approval */}
+      {/* Confirmation Modal for Closing Orders */}
+      <ConfirmationModal
+        isOpen={isCloseModalOpen}
+        title="Confirm Closing Order"
+        message="Are you sure you want to close this order? This action cannot be undone."
+        onConfirm={handleCloseConfirm}
+        onCancel={handleCloseCancel}
+      />
     </AdminLayout>
   );
 };
 
 export default AdminOrdersPage;
+

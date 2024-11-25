@@ -25,6 +25,7 @@ export interface IOrder extends Document {
   items: IOrderItem[];
   totalAmount: number;
   approved: boolean;
+  status: 'open' | 'close'; // New status field
   createdAt: Date;
   updatedAt: Date;
 }
@@ -52,6 +53,7 @@ const OrderSchema = new Schema<IOrder>(
     items: { type: [OrderItemSchema], required: true },
     totalAmount: { type: Number, required: true },
     approved: { type: Boolean, required: true, default: false },
+    status: { type: String, enum: ['open', 'close'], default: 'open' }, // New status field
   },
   {
     timestamps: true,
