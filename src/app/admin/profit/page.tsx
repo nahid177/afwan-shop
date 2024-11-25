@@ -26,6 +26,7 @@ import {
 } from '@mui/material';
 import { Edit, Delete, Close, Add } from '@mui/icons-material';
 import axios from 'axios';
+import CloseAccountDialog from '@/components/CloseAccountDialog';
 
 // Interfaces
 interface IOtherCost {
@@ -81,12 +82,18 @@ const ProfitPage: React.FC = () => {
 
   const [loading, setLoading] = useState(false); // Loading state for close account action
 
+  // New States for All Profit Documents
+  const [allProfits, setAllProfits] = useState<IProfit[]>([]);
+  const [viewDetailsProfit, setViewDetailsProfit] = useState<IProfit | null>(null);
+  const [openViewDetailsDialog, setOpenViewDetailsDialog] = useState(false);
+
   // Fetch Profit data
   const fetchProfit = async () => {
     try {
       const res = await axios.get('/api/profit');
       console.log("GET /api/profit response:", res.data); // Debugging line
       if (res.data.success && res.data.data.length > 0) {
+        setAllProfits(res.data.data);
         const latestProfit = res.data.data.find((p: IProfit) => p.status === 'open');
         if (latestProfit) {
           console.log("Latest open Profit:", latestProfit); // Debugging
@@ -94,11 +101,21 @@ const ProfitPage: React.FC = () => {
           setOtherCosts(latestProfit.otherCosts || []);
           setTitles(latestProfit.titles || []);
         } else {
-          setProfit(null); // No open Profit account exists
-          setOtherCosts([]);
-          setTitles([]);
+          // Handle cases where 'status' might be missing
+          const fallbackProfit = res.data.data[0]; // Choose the most recent as fallback
+          if (fallbackProfit) {
+            console.warn("No open Profit account found. Falling back to the latest Profit account.");
+            setProfit(fallbackProfit);
+            setOtherCosts(fallbackProfit.otherCosts || []);
+            setTitles(fallbackProfit.titles || []);
+          } else {
+            setProfit(null); // No open Profit account exists
+            setOtherCosts([]);
+            setTitles([]);
+          }
         }
       } else {
+        setAllProfits([]);
         setProfit(null); // No Profit data exists
         setOtherCosts([]);
         setTitles([]);
@@ -115,6 +132,16 @@ const ProfitPage: React.FC = () => {
 
   // Handle adding a new other cost
   const handleAddOtherCost = async () => {
+    if (!profit) {
+      setSnackbar({ open: true, message: 'No active Profit account to add costs.', severity: 'error' });
+      return;
+    }
+
+    if (profit.status !== 'open') {
+      setSnackbar({ open: true, message: 'Cannot add costs to a closed Profit account.', severity: 'error' });
+      return;
+    }
+
     if (!newOtherCost.name.trim() || newOtherCost.amount < 0) {
       setSnackbar({ open: true, message: 'Please provide valid name and amount for Other Cost', severity: 'error' });
       return;
@@ -163,6 +190,16 @@ const ProfitPage: React.FC = () => {
 
   // Handle deleting an existing other cost
   const handleDeleteOtherCost = async (id: string) => {
+    if (!profit) {
+      setSnackbar({ open: true, message: 'No active Profit account found.', severity: 'error' });
+      return;
+    }
+
+    if (profit.status !== 'open') {
+      setSnackbar({ open: true, message: 'Cannot delete costs from a closed Profit account.', severity: 'error' });
+      return;
+    }
+
     try {
       const updatedOtherCosts = otherCosts.filter((cost) => cost._id !== id);
       await updateProfit({ otherCosts: updatedOtherCosts });
@@ -176,6 +213,16 @@ const ProfitPage: React.FC = () => {
 
   // Handle adding a new title
   const handleAddTitle = async () => {
+    if (!profit) {
+      setSnackbar({ open: true, message: 'No active Profit account to add titles.', severity: 'error' });
+      return;
+    }
+
+    if (profit.status !== 'open') {
+      setSnackbar({ open: true, message: 'Cannot add titles to a closed Profit account.', severity: 'error' });
+      return;
+    }
+
     if (!newTitle.name.trim()) {
       setSnackbar({ open: true, message: 'Title name is required', severity: 'error' });
       return;
@@ -225,6 +272,16 @@ const ProfitPage: React.FC = () => {
 
   // Handle deleting an existing title
   const handleDeleteTitle = async (id: string) => {
+    if (!profit) {
+      setSnackbar({ open: true, message: 'No active Profit account found.', severity: 'error' });
+      return;
+    }
+
+    if (profit.status !== 'open') {
+      setSnackbar({ open: true, message: 'Cannot delete titles from a closed Profit account.', severity: 'error' });
+      return;
+    }
+
     try {
       const updatedTitles = titles.filter((t) => t._id !== id);
       await updateProfit({ titles: updatedTitles });
@@ -266,6 +323,8 @@ const ProfitPage: React.FC = () => {
         setOtherCosts(res.data.data.otherCosts || []);
         setTitles(res.data.data.titles || []);
         setSnackbar({ open: true, message: 'Profit recalculated successfully', severity: 'success' });
+        // Refresh allProfits to include the updated document
+        await fetchProfit();
       } else {
         throw new Error(res.data.error || 'Failed to recalculate Profit');
       }
@@ -286,6 +345,8 @@ const ProfitPage: React.FC = () => {
         setOtherCosts(res.data.data.otherCosts || []);
         setTitles(res.data.data.titles || []);
         setSnackbar({ open: true, message: 'Account closed successfully and new Profit account created', severity: 'success' });
+        // Refresh allProfits to include the new Profit document
+        await fetchProfit();
       } else {
         throw new Error(res.data.error || 'Failed to close account');
       }
@@ -296,6 +357,12 @@ const ProfitPage: React.FC = () => {
       setLoading(false);
       setOpenCloseDialog(false);
     }
+  };
+
+  // Handle viewing details of a Profit account
+  const handleViewDetails = (profitData: IProfit) => {
+    setViewDetailsProfit(profitData);
+    setOpenViewDetailsDialog(true);
   };
 
   return (
@@ -458,6 +525,126 @@ const ProfitPage: React.FC = () => {
         </Typography>
       )}
 
+      {/* All Profit Accounts Section */}
+      {allProfits.length > 1 && (
+        <Box sx={{ mt: 6 }}>
+          <Typography variant="h5" gutterBottom>
+            Previous Profit Accounts
+          </Typography>
+          <TableContainer component={Paper} sx={{ mb: 4 }}>
+            <Table aria-label="all profits table">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Account ID</TableCell>
+                  <TableCell>Total Products Sold</TableCell>
+                  <TableCell>Total Revenue ($)</TableCell>
+                  <TableCell>Our Profit ($)</TableCell>
+                  <TableCell>Status</TableCell>
+                  <TableCell>Created At</TableCell>
+                  <TableCell>Updated At</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {allProfits.map((p) => (
+                  <TableRow key={p._id} sx={{ backgroundColor: p.status === 'closed' ? '#f0f0f0' : 'inherit' }}>
+                    <TableCell>{p._id}</TableCell>
+                    <TableCell>{p.totalProductsSold}</TableCell>
+                    <TableCell>{p.totalRevenue.toFixed(2)}</TableCell>
+                    <TableCell>{p.ourProfit.toFixed(2)}</TableCell>
+                    <TableCell>
+                      <Typography color={p.status === 'open' ? 'green' : 'red'}>
+                        {p.status.charAt(0).toUpperCase() + p.status.slice(1)}
+                      </Typography>
+                    </TableCell>
+                    <TableCell>{new Date(p.createdAt).toLocaleString()}</TableCell>
+                    <TableCell>{new Date(p.updatedAt).toLocaleString()}</TableCell>
+                    <TableCell align="right">
+                      {p.status === 'closed' && (
+                        <Tooltip title="View Details">
+                          <IconButton onClick={() => handleViewDetails(p)}>
+                            <Edit />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Box>
+      )}
+
+      {/* View Details Dialog */}
+      <Dialog open={openViewDetailsDialog} onClose={() => setOpenViewDetailsDialog(false)}>
+        <DialogTitle>Profit Account Details</DialogTitle>
+        <DialogContent>
+          {viewDetailsProfit && (
+            <>
+              <Typography variant="subtitle1">Account ID: {viewDetailsProfit._id}</Typography>
+              <Typography variant="subtitle1">Total Products Sold: {viewDetailsProfit.totalProductsSold}</Typography>
+              <Typography variant="subtitle1">Total Revenue: ${viewDetailsProfit.totalRevenue.toFixed(2)}</Typography>
+              <Typography variant="subtitle1">Our Profit: ${viewDetailsProfit.ourProfit.toFixed(2)}</Typography>
+              <Typography variant="subtitle1">
+                Status: {viewDetailsProfit.status.charAt(0).toUpperCase() + viewDetailsProfit.status.slice(1)}
+              </Typography>
+              <Typography variant="subtitle1">Created At: {new Date(viewDetailsProfit.createdAt).toLocaleString()}</Typography>
+              <Typography variant="subtitle1">Updated At: {new Date(viewDetailsProfit.updatedAt).toLocaleString()}</Typography>
+
+              {/* Other Costs */}
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="h6">Other Costs</Typography>
+                <TableContainer component={Paper}>
+                  <Table aria-label="other costs table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Name</TableCell>
+                        <TableCell align="right">Amount ($)</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {viewDetailsProfit.otherCosts.map((cost) => (
+                        <TableRow key={cost._id}>
+                          <TableCell>{cost.name}</TableCell>
+                          <TableCell align="right">{cost.amount.toFixed(2)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+
+              {/* Titles */}
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="h6">Titles</Typography>
+                <TableContainer component={Paper}>
+                  <Table aria-label="titles table">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Name</TableCell>
+                        <TableCell>Description</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {viewDetailsProfit.titles.map((title) => (
+                        <TableRow key={title._id}>
+                          <TableCell>{title.name}</TableCell>
+                          <TableCell>{title.description || '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenViewDetailsDialog(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Edit Other Cost Dialog */}
       <Dialog open={openEditOtherCostDialog} onClose={() => setOpenEditOtherCostDialog(false)}>
         <DialogTitle>Edit Other Cost</DialogTitle>
@@ -548,20 +735,12 @@ const ProfitPage: React.FC = () => {
       </Dialog>
 
       {/* Close Account Confirmation Dialog */}
-      <Dialog open={openCloseDialog} onClose={() => setOpenCloseDialog(false)}>
-        <DialogTitle>Close Profit Account</DialogTitle>
-        <DialogContent>
-          <Typography>
-            Are you sure you want to close the current Profit account? This will finalize the current profit calculations and create a new account for future calculations.
-          </Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenCloseDialog(false)}>Cancel</Button>
-          <Button onClick={handleCloseAccount} variant="contained" color="error" disabled={loading}>
-            {loading ? <CircularProgress size={24} /> : 'Close Account'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <CloseAccountDialog
+        open={openCloseDialog}
+        onClose={() => setOpenCloseDialog(false)}
+        onConfirm={handleCloseAccount}
+        loading={loading}
+      />
 
       {/* Snackbar for Notifications */}
       <Snackbar
