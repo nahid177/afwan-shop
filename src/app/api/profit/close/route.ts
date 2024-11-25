@@ -1,23 +1,31 @@
-// src/app/api/profit/recalculate/route.ts
+// src/app/api/profit/close/route.ts
 
-import { NextResponse, NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Profit, { IOtherCost } from '@/models/Profit';
 import { Order, IOrderDocument } from '@/models/Order';
 import StoreOrder, { IStoreOrderDocument } from '@/models/StoreOrder';
 
 /**
- * POST /api/profit/recalculate
- * Recalculate profit based on approved Orders and StoreOrders
+ * POST /api/profit/close
+ * Close the current Profit account and create a new one
  */
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     await dbConnect();
 
-    // Fetch all approved Orders
+    // Fetch the latest open Profit document
+    const currentProfit = await Profit.findOne({ status: 'open' }).sort({ createdAt: -1 });
+
+    if (!currentProfit) {
+      return NextResponse.json(
+        { success: false, error: 'No open Profit account found to close.' },
+        { status: 404 }
+      );
+    }
+
+    // Recalculate profits based on approved Orders and StoreOrders
     const approvedOrders: IOrderDocument[] = await Order.find({ approved: true });
-    
-    // Fetch all approved StoreOrders
     const approvedStoreOrders: IStoreOrderDocument[] = await StoreOrder.find({ approved: true });
 
     // Function to calculate totals from orders
@@ -59,44 +67,41 @@ export async function POST(request: NextRequest) {
     const totalRevenue = orderTotals.totalRevenue + storeOrderTotals.totalRevenue;
     const totalCostOfGoodsSold = orderTotals.totalCostOfGoodsSold + storeOrderTotals.totalCostOfGoodsSold;
 
-    // Fetch the latest open Profit document
-    const existingProfit = await Profit.findOne({ status: 'open' }).sort({ createdAt: -1 });
-    let otherCosts: IOtherCost[] = [];
-
-    if (existingProfit) {
-      otherCosts = existingProfit.otherCosts;
-    }
+    // Fetch otherCosts from the current Profit document
+    let otherCosts: IOtherCost[] = currentProfit.otherCosts || [];
 
     const totalOtherCosts = otherCosts.reduce((acc, cost) => acc + cost.amount, 0);
 
     // Calculate ourProfit
     const ourProfit = totalRevenue - totalCostOfGoodsSold - totalOtherCosts;
 
-    // Update or create a Profit document
-    let profitDoc = existingProfit;
+    // Finalize the current Profit document
+    currentProfit.totalProductsSold = totalProductsSold;
+    currentProfit.totalRevenue = totalRevenue;
+    currentProfit.ourProfit = ourProfit;
+    currentProfit.status = 'closed'; // Mark as closed
 
-    if (!profitDoc) {
-      // Create a new Profit document with status 'open' and empty titles
-      profitDoc = await Profit.create({
-        totalProductsSold,
-        totalRevenue,
-        ourProfit,
-        otherCosts,
-        titles: [], // Initialize titles as empty array
-        status: 'open',
-      });
-    } else {
-      profitDoc.totalProductsSold = totalProductsSold;
-      profitDoc.totalRevenue = totalRevenue;
-      profitDoc.ourProfit = ourProfit;
-      // Optionally, handle otherCosts updates
-      // For now, keep existing otherCosts
-      await profitDoc.save();
-    }
+    await currentProfit.save();
 
-    return NextResponse.json({ success: true, data: profitDoc }, { status: 200 });
+    // Create a new Profit document for ongoing calculations
+    const newProfit = await Profit.create({
+      totalProductsSold: 0,
+      totalRevenue: 0,
+      ourProfit: 0,
+      otherCosts: otherCosts, // Carry forward otherCosts if necessary
+      titles: currentProfit.titles || [], // Carry forward titles
+      status: 'open',
+    });
+
+    return NextResponse.json(
+      { success: true, message: 'Profit account closed and new account created.', data: newProfit },
+      { status: 200 }
+    );
   } catch (error) {
-    console.error("Error recalculating profit:", error);
-    return NextResponse.json({ success: false, error: (error as Error).message }, { status: 500 });
+    console.error("Error closing Profit account:", error);
+    return NextResponse.json(
+      { success: false, error: (error as Error).message },
+      { status: 500 }
+    );
   }
 }

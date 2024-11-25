@@ -5,7 +5,7 @@ import mongoose, { Document, Model, Schema } from "mongoose";
 /**
  * Interface for the subdocument in titles array
  */
-export interface ITitle { // Exported
+export interface ITitle {
   name: string;
   description?: string;
   // Add other relevant fields if necessary
@@ -14,7 +14,7 @@ export interface ITitle { // Exported
 /**
  * Interface for the subdocument in otherCosts array
  */
-export interface IOtherCost { // Exported
+export interface IOtherCost {
   name: string;
   amount: number;
   // Add other relevant fields if necessary
@@ -29,6 +29,7 @@ export interface IProfit extends Document {
   ourProfit: number;      
   titles: ITitle[];
   otherCosts: IOtherCost[];
+  status: 'open' | 'closed'; // New field to indicate status
   createdAt: Date;
   updatedAt: Date;
 }
@@ -99,6 +100,12 @@ const ProfitSchema: Schema<IProfit> = new Schema(
     otherCosts: {
       type: [OtherCostSchema],
       default: [],
+    },
+    status: {
+      type: String,
+      enum: ['open', 'closed'],
+      default: 'open',
+      required: true,
     },
   },
   {

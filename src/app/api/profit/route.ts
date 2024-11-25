@@ -39,7 +39,17 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    const profit = await Profit.create(body);
+    // Set default values for optional fields
+    const newProfitData: Partial<IProfit> = {
+      totalProductsSold: body.totalProductsSold,
+      totalRevenue: body.totalRevenue,
+      ourProfit: body.ourProfit,
+      otherCosts: body.otherCosts || [],
+      titles: body.titles || [],
+      status: body.status || 'open', // Ensure status is set
+    };
+    
+    const profit = await Profit.create(newProfitData);
     return NextResponse.json({ success: true, data: profit }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ success: false, error: (error as Error).message }, { status: 400 });

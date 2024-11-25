@@ -20,14 +20,24 @@ import {
   DialogContent,
   DialogActions,
   Snackbar,
+  CircularProgress,
+  Box,
+  Tooltip,
 } from '@mui/material';
-import { Edit, Delete } from '@mui/icons-material';
+import { Edit, Delete, Close, Add } from '@mui/icons-material';
 import axios from 'axios';
 
+// Interfaces
 interface IOtherCost {
   _id?: string;
   name: string;
   amount: number;
+}
+
+interface ITitle {
+  _id?: string;
+  name: string;
+  description?: string;
 }
 
 interface IProfit {
@@ -36,21 +46,40 @@ interface IProfit {
   totalRevenue: number;
   ourProfit: number;
   otherCosts: IOtherCost[];
+  titles: ITitle[];
+  status: 'open' | 'closed';
   createdAt: string;
   updatedAt: string;
 }
 
 const ProfitPage: React.FC = () => {
+  // State Variables
   const [profit, setProfit] = useState<IProfit | null>(null);
   const [otherCosts, setOtherCosts] = useState<IOtherCost[]>([]);
+  const [titles, setTitles] = useState<ITitle[]>([]); // State for Titles
+
   const [newOtherCost, setNewOtherCost] = useState<IOtherCost>({ name: '', amount: 0 });
   const [editOtherCost, setEditOtherCost] = useState<IOtherCost | null>(null);
-  const [openEditDialog, setOpenEditDialog] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
+  const [openEditOtherCostDialog, setOpenEditOtherCostDialog] = useState(false);
+
+  const [newTitle, setNewTitle] = useState<ITitle>({ name: '', description: '' });
+  const [editTitle, setEditTitle] = useState<ITitle | null>(null);
+  const [openEditTitleDialog, setOpenEditTitleDialog] = useState(false);
+
+  const [openAddTitleDialog, setOpenAddTitleDialog] = useState(false); // Dialog for adding titles
+  const [openCloseDialog, setOpenCloseDialog] = useState(false); // Dialog for closing account
+
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error';
+  }>({
     open: false,
     message: '',
     severity: 'success',
   });
+
+  const [loading, setLoading] = useState(false); // Loading state for close account action
 
   // Fetch Profit data
   const fetchProfit = async () => {
@@ -58,12 +87,21 @@ const ProfitPage: React.FC = () => {
       const res = await axios.get('/api/profit');
       console.log("GET /api/profit response:", res.data); // Debugging line
       if (res.data.success && res.data.data.length > 0) {
-        const latestProfit = res.data.data[0]; // Assuming the latest is first due to sorting
-        setProfit(latestProfit);
-        setOtherCosts(latestProfit.otherCosts);
+        const latestProfit = res.data.data.find((p: IProfit) => p.status === 'open');
+        if (latestProfit) {
+          console.log("Latest open Profit:", latestProfit); // Debugging
+          setProfit(latestProfit);
+          setOtherCosts(latestProfit.otherCosts || []);
+          setTitles(latestProfit.titles || []);
+        } else {
+          setProfit(null); // No open Profit account exists
+          setOtherCosts([]);
+          setTitles([]);
+        }
       } else {
         setProfit(null); // No Profit data exists
         setOtherCosts([]);
+        setTitles([]);
       }
     } catch (error) {
       console.error("Error fetching Profit data:", error);
@@ -78,7 +116,7 @@ const ProfitPage: React.FC = () => {
   // Handle adding a new other cost
   const handleAddOtherCost = async () => {
     if (!newOtherCost.name.trim() || newOtherCost.amount < 0) {
-      setSnackbar({ open: true, message: 'Please provide valid name and amount', severity: 'error' });
+      setSnackbar({ open: true, message: 'Please provide valid name and amount for Other Cost', severity: 'error' });
       return;
     }
 
@@ -87,24 +125,24 @@ const ProfitPage: React.FC = () => {
       await updateProfit({ otherCosts: updatedOtherCosts });
       setOtherCosts(updatedOtherCosts);
       setNewOtherCost({ name: '', amount: 0 });
-      setSnackbar({ open: true, message: 'Other cost added successfully', severity: 'success' });
+      setSnackbar({ open: true, message: 'Other Cost added successfully', severity: 'success' });
     } catch (error) {
       console.error(error);
-      setSnackbar({ open: true, message: 'Failed to add other cost', severity: 'error' });
+      setSnackbar({ open: true, message: 'Failed to add Other Cost', severity: 'error' });
     }
   };
 
   // Handle editing an existing other cost
   const handleEditOtherCost = (cost: IOtherCost) => {
     setEditOtherCost(cost);
-    setOpenEditDialog(true);
+    setOpenEditOtherCostDialog(true);
   };
 
   const handleUpdateOtherCost = async () => {
     if (!editOtherCost) return;
 
     if (!editOtherCost.name.trim() || editOtherCost.amount < 0) {
-      setSnackbar({ open: true, message: 'Please provide valid name and amount', severity: 'error' });
+      setSnackbar({ open: true, message: 'Please provide valid name and amount for Other Cost', severity: 'error' });
       return;
     }
 
@@ -115,11 +153,11 @@ const ProfitPage: React.FC = () => {
       await updateProfit({ otherCosts: updatedOtherCosts });
       setOtherCosts(updatedOtherCosts);
       setEditOtherCost(null);
-      setOpenEditDialog(false);
-      setSnackbar({ open: true, message: 'Other cost updated successfully', severity: 'success' });
+      setOpenEditOtherCostDialog(false);
+      setSnackbar({ open: true, message: 'Other Cost updated successfully', severity: 'success' });
     } catch (error) {
       console.error(error);
-      setSnackbar({ open: true, message: 'Failed to update other cost', severity: 'error' });
+      setSnackbar({ open: true, message: 'Failed to update Other Cost', severity: 'error' });
     }
   };
 
@@ -129,10 +167,72 @@ const ProfitPage: React.FC = () => {
       const updatedOtherCosts = otherCosts.filter((cost) => cost._id !== id);
       await updateProfit({ otherCosts: updatedOtherCosts });
       setOtherCosts(updatedOtherCosts);
-      setSnackbar({ open: true, message: 'Other cost deleted successfully', severity: 'success' });
+      setSnackbar({ open: true, message: 'Other Cost deleted successfully', severity: 'success' });
     } catch (error) {
       console.error(error);
-      setSnackbar({ open: true, message: 'Failed to delete other cost', severity: 'error' });
+      setSnackbar({ open: true, message: 'Failed to delete Other Cost', severity: 'error' });
+    }
+  };
+
+  // Handle adding a new title
+  const handleAddTitle = async () => {
+    if (!newTitle.name.trim()) {
+      setSnackbar({ open: true, message: 'Title name is required', severity: 'error' });
+      return;
+    }
+
+    try {
+      const updatedTitles = [...titles, newTitle];
+      await updateProfit({ titles: updatedTitles });
+      setTitles(updatedTitles);
+      setNewTitle({ name: '', description: '' });
+      setSnackbar({ open: true, message: 'Title added successfully', severity: 'success' });
+      setOpenAddTitleDialog(false);
+    } catch (error) {
+      console.error(error);
+      setSnackbar({ open: true, message: 'Failed to add Title', severity: 'error' });
+    }
+  };
+
+  // Handle editing an existing title
+  const handleEditTitle = (title: ITitle) => {
+    setEditTitle(title);
+    setOpenEditTitleDialog(true);
+  };
+
+  const handleUpdateTitle = async () => {
+    if (!editTitle) return;
+
+    if (!editTitle.name.trim()) {
+      setSnackbar({ open: true, message: 'Please provide a valid name for Title', severity: 'error' });
+      return;
+    }
+
+    try {
+      const updatedTitles = titles.map((t) =>
+        t._id === editTitle._id ? editTitle : t
+      );
+      await updateProfit({ titles: updatedTitles });
+      setTitles(updatedTitles);
+      setEditTitle(null);
+      setOpenEditTitleDialog(false);
+      setSnackbar({ open: true, message: 'Title updated successfully', severity: 'success' });
+    } catch (error) {
+      console.error(error);
+      setSnackbar({ open: true, message: 'Failed to update Title', severity: 'error' });
+    }
+  };
+
+  // Handle deleting an existing title
+  const handleDeleteTitle = async (id: string) => {
+    try {
+      const updatedTitles = titles.filter((t) => t._id !== id);
+      await updateProfit({ titles: updatedTitles });
+      setTitles(updatedTitles);
+      setSnackbar({ open: true, message: 'Title deleted successfully', severity: 'success' });
+    } catch (error) {
+      console.error(error);
+      setSnackbar({ open: true, message: 'Failed to delete Title', severity: 'error' });
     }
   };
 
@@ -145,6 +245,9 @@ const ProfitPage: React.FC = () => {
       console.log("PUT /api/profit/:id response:", res.data); // Debugging line
       if (res.data.success) {
         setProfit(res.data.data);
+        // Update otherCosts and titles if they are part of the updated data
+        if (res.data.data.otherCosts) setOtherCosts(res.data.data.otherCosts);
+        if (res.data.data.titles) setTitles(res.data.data.titles);
       } else {
         throw new Error(res.data.error || 'Failed to update Profit');
       }
@@ -160,7 +263,8 @@ const ProfitPage: React.FC = () => {
       console.log("POST /api/profit/recalculate response:", res.data); // Debugging line
       if (res.data.success) {
         setProfit(res.data.data);
-        setOtherCosts(res.data.data.otherCosts);
+        setOtherCosts(res.data.data.otherCosts || []);
+        setTitles(res.data.data.titles || []);
         setSnackbar({ open: true, message: 'Profit recalculated successfully', severity: 'success' });
       } else {
         throw new Error(res.data.error || 'Failed to recalculate Profit');
@@ -171,32 +275,88 @@ const ProfitPage: React.FC = () => {
     }
   };
 
+  // Handle Close Account
+  const handleCloseAccount = async () => {
+    setLoading(true);
+    try {
+      const res = await axios.post('/api/profit/close');
+      console.log("POST /api/profit/close response:", res.data); // Debugging line
+      if (res.data.success) {
+        setProfit(res.data.data);
+        setOtherCosts(res.data.data.otherCosts || []);
+        setTitles(res.data.data.titles || []);
+        setSnackbar({ open: true, message: 'Account closed successfully and new Profit account created', severity: 'success' });
+      } else {
+        throw new Error(res.data.error || 'Failed to close account');
+      }
+    } catch (error) {
+      console.error("Error closing account:", error);
+      setSnackbar({ open: true, message: 'Failed to close account', severity: 'error' });
+    } finally {
+      setLoading(false);
+      setOpenCloseDialog(false);
+    }
+  };
+
   return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
+    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h4" gutterBottom>
         Profit Dashboard
       </Typography>
 
-      {/* Recalculate Profit Button - Always Visible */}
-      <Button
-        variant="contained"
-        color="primary"
-        sx={{ mt: 2, mb: 2 }}
-        onClick={handleRecalculateProfit}
-      >
-        Recalculate Profit
-      </Button>
+      {/* Action Buttons */}
+      <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+        <Button
+          variant="contained"
+          color="primary"
+          startIcon={<Add />}
+          onClick={handleRecalculateProfit}
+        >
+          Recalculate Profit
+        </Button>
 
+        {/* Close Account Button - Visible only if there is an open Profit account */}
+        {profit && profit.status === 'open' && (
+          <Button
+            variant="outlined"
+            color="error"
+            startIcon={<Close />}
+            onClick={() => setOpenCloseDialog(true)}
+          >
+            Close Account
+          </Button>
+        )}
+
+        {/* Add Title Button */}
+        {profit && profit.status === 'open' && (
+          <Button
+            variant="contained"
+            color="secondary"
+            startIcon={<Add />}
+            onClick={() => setOpenAddTitleDialog(true)}
+          >
+            Add Title
+          </Button>
+        )}
+      </Box>
+
+      {/* Profit Details */}
       {profit ? (
         <>
-          <Typography variant="h6">Total Products Sold: {profit.totalProductsSold}</Typography>
-          <Typography variant="h6">Total Revenue: ${profit.totalRevenue.toFixed(2)}</Typography>
-          <Typography variant="h6">Our Profit: ${profit.ourProfit.toFixed(2)}</Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Typography variant="h6">Total Products Sold: {profit.totalProductsSold}</Typography>
+            <Typography variant="h6">Total Revenue: ${profit.totalRevenue.toFixed(2)}</Typography>
+            <Typography variant="h6">Our Profit: ${profit.ourProfit.toFixed(2)}</Typography>
+            <Typography variant="h6">
+              Status: {profit.status ? profit.status.charAt(0).toUpperCase() + profit.status.slice(1) : 'Unknown'}
+            </Typography>
+          </Box>
 
+          {/* Other Costs Section */}
           <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
             Other Costs
           </Typography>
-          <TableContainer component={Paper}>
+          <TableContainer component={Paper} sx={{ mb: 4 }}>
             <Table aria-label="other costs table">
               <TableHead>
                 <TableRow>
@@ -211,12 +371,16 @@ const ProfitPage: React.FC = () => {
                     <TableCell>{cost.name}</TableCell>
                     <TableCell align="right">{cost.amount.toFixed(2)}</TableCell>
                     <TableCell align="right">
-                      <IconButton onClick={() => handleEditOtherCost(cost)}>
-                        <Edit />
-                      </IconButton>
-                      <IconButton onClick={() => handleDeleteOtherCost(cost._id!)}>
-                        <Delete />
-                      </IconButton>
+                      <Tooltip title="Edit">
+                        <IconButton onClick={() => handleEditOtherCost(cost)}>
+                          <Edit />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton onClick={() => handleDeleteOtherCost(cost._id!)}>
+                          <Delete />
+                        </IconButton>
+                      </Tooltip>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -250,6 +414,43 @@ const ProfitPage: React.FC = () => {
               </TableBody>
             </Table>
           </TableContainer>
+
+          {/* Titles Section */}
+          <Typography variant="h5" gutterBottom sx={{ mt: 4 }}>
+            Titles
+          </Typography>
+          <TableContainer component={Paper}>
+            <Table aria-label="titles table">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Description</TableCell>
+                  <TableCell align="right">Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {titles.map((title) => (
+                  <TableRow key={title._id}>
+                    <TableCell>{title.name}</TableCell>
+                    <TableCell>{title.description || '-'}</TableCell>
+                    <TableCell align="right">
+                      <Tooltip title="Edit">
+                        <IconButton onClick={() => handleEditTitle(title)}>
+                          <Edit />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Delete">
+                        <IconButton onClick={() => handleDeleteTitle(title._id!)}>
+                          <Delete />
+                        </IconButton>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {/* No inline add row for Titles; use Dialog instead */}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </>
       ) : (
         <Typography variant="body1" sx={{ mt: 4 }}>
@@ -257,8 +458,8 @@ const ProfitPage: React.FC = () => {
         </Typography>
       )}
 
-      {/* Edit Dialog */}
-      <Dialog open={openEditDialog} onClose={() => setOpenEditDialog(false)}>
+      {/* Edit Other Cost Dialog */}
+      <Dialog open={openEditOtherCostDialog} onClose={() => setOpenEditOtherCostDialog(false)}>
         <DialogTitle>Edit Other Cost</DialogTitle>
         <DialogContent>
           <TextField
@@ -281,9 +482,83 @@ const ProfitPage: React.FC = () => {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setOpenEditDialog(false)}>Cancel</Button>
+          <Button onClick={() => setOpenEditOtherCostDialog(false)}>Cancel</Button>
           <Button onClick={handleUpdateOtherCost} variant="contained" color="primary">
             Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Add Title Dialog */}
+      <Dialog open={openAddTitleDialog} onClose={() => setOpenAddTitleDialog(false)}>
+        <DialogTitle>Add New Title</DialogTitle>
+        <DialogContent>
+          <TextField
+            margin="dense"
+            label="Title Name"
+            fullWidth
+            value={newTitle.name}
+            onChange={(e) => setNewTitle({ ...newTitle, name: e.target.value })}
+          />
+          <TextField
+            margin="dense"
+            label="Description"
+            fullWidth
+            multiline
+            rows={3}
+            value={newTitle.description}
+            onChange={(e) => setNewTitle({ ...newTitle, description: e.target.value })}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenAddTitleDialog(false)}>Cancel</Button>
+          <Button onClick={handleAddTitle} variant="contained" color="primary">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Edit Title Dialog */}
+      <Dialog open={openEditTitleDialog} onClose={() => setOpenEditTitleDialog(false)}>
+        <DialogTitle>Edit Title</DialogTitle>
+        <DialogContent>
+          <TextField
+            margin="dense"
+            label="Title Name"
+            fullWidth
+            value={editTitle?.name || ''}
+            onChange={(e) => setEditTitle({ ...editTitle!, name: e.target.value })}
+          />
+          <TextField
+            margin="dense"
+            label="Description"
+            fullWidth
+            multiline
+            rows={3}
+            value={editTitle?.description || ''}
+            onChange={(e) => setEditTitle({ ...editTitle!, description: e.target.value })}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenEditTitleDialog(false)}>Cancel</Button>
+          <Button onClick={handleUpdateTitle} variant="contained" color="primary">
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Close Account Confirmation Dialog */}
+      <Dialog open={openCloseDialog} onClose={() => setOpenCloseDialog(false)}>
+        <DialogTitle>Close Profit Account</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Are you sure you want to close the current Profit account? This will finalize the current profit calculations and create a new account for future calculations.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenCloseDialog(false)}>Cancel</Button>
+          <Button onClick={handleCloseAccount} variant="contained" color="error" disabled={loading}>
+            {loading ? <CircularProgress size={24} /> : 'Close Account'}
           </Button>
         </DialogActions>
       </Dialog>

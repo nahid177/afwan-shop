@@ -39,6 +39,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     if (typeof body.ourProfit === 'number') updateData.ourProfit = body.ourProfit;
     if (Array.isArray(body.otherCosts)) updateData.otherCosts = body.otherCosts;
     if (Array.isArray(body.titles)) updateData.titles = body.titles;
+    if (body.status === 'open' || body.status === 'closed') updateData.status = body.status; // Allow status update
 
     const profit = await Profit.findByIdAndUpdate(id, updateData, { new: true, runValidators: true });
     if (!profit) {
