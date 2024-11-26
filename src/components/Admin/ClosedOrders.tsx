@@ -10,6 +10,20 @@ import { FaEye, FaEyeSlash, FaTimes } from "react-icons/fa";
 import Image from "next/image";
 import Link from "next/link";
 
+// Helper function to extract error message
+const getErrorMessage = (error: unknown, defaultMessage: string): string => {
+  if (axios.isAxiosError(error)) {
+    if (
+      error.response &&
+      error.response.data &&
+      typeof error.response.data.message === "string"
+    ) {
+      return error.response.data.message;
+    }
+  }
+  return defaultMessage;
+};
+
 // ImageModal Component
 interface ImageModalProps {
   isOpen: boolean;
@@ -32,10 +46,7 @@ const ImageModal: React.FC<ImageModalProps> = ({
       role="dialog"
       aria-labelledby="image-modal-title"
     >
-      <div
-        className="relative"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="relative" onClick={(e) => e.stopPropagation()}>
         <button
           onClick={onClose}
           className="absolute top-2 right-2 text-white text-2xl focus:outline-none"
@@ -73,25 +84,45 @@ const ClosedOrders: React.FC = () => {
   const [toastType, setToastType] =
     useState<"success" | "error" | "warning">("success");
 
-  // Helper function to extract error message
-  const getErrorMessage = (error: unknown, defaultMessage: string): string => {
-    if (axios.isAxiosError(error)) {
-      if (
-        error.response &&
-        error.response.data &&
-        typeof error.response.data.message === "string"
-      ) {
-        return error.response.data.message;
-      }
-    }
-    return defaultMessage;
-  };
+  // State for available years
+  const [years, setYears] = useState<number[]>([]);
+  const [yearsLoading, setYearsLoading] = useState<boolean>(true);
 
+  // State for selected year
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+
+  // Fetch available years
   useEffect(() => {
-    const fetchClosedOrders = async () => {
+    const fetchAvailableYears = async () => {
+      try {
+        const response = await axios.get<number[]>(
+          "/api/admin/orders/closed/years"
+        );
+        setYears(response.data);
+        if (response.data.length > 0) {
+          setSelectedYear(response.data[0]); // Set the first available year
+        }
+      } catch (error: unknown) {
+        console.error("Error fetching available years:", error);
+        const message = getErrorMessage(error, "Failed to load available years.");
+        setToastMessage(message);
+        setToastType("error");
+        setToastVisible(true);
+      } finally {
+        setYearsLoading(false);
+      }
+    };
+
+    fetchAvailableYears();
+  }, []);
+
+  // Fetch closed orders when selectedYear changes
+  useEffect(() => {
+    const fetchClosedOrders = async (year: number) => {
+      setLoading(true);
       try {
         const response = await axios.get<IOrderClient[]>(
-          "/api/admin/orders/closed"
+          `/api/admin/orders/closed?year=${year}`
         );
         setOrders(response.data);
       } catch (error: unknown) {
@@ -107,8 +138,10 @@ const ClosedOrders: React.FC = () => {
       }
     };
 
-    fetchClosedOrders();
-  }, []);
+    if (selectedYear !== null) {
+      fetchClosedOrders(selectedYear);
+    }
+  }, [selectedYear]);
 
   // Function to toggle visibility of Buying Price and Profit
   const toggleSensitiveInfo = () => {
@@ -126,6 +159,20 @@ const ClosedOrders: React.FC = () => {
     setSelectedImage("");
     setIsImageModalOpen(false);
   };
+
+  // Function to handle year change
+  const handleYearChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const year = parseInt(event.target.value, 10);
+    setSelectedYear(year);
+  };
+
+  if (yearsLoading) {
+    return (
+      <div className="flex justify-center items-center h-16">
+        <p>Loading available years...</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -150,6 +197,24 @@ const ClosedOrders: React.FC = () => {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Closed Orders</h1>
         <div className="flex items-center space-x-2">
+          {/* Year Selector */}
+          {years.length > 0 ? (
+            <select
+              value={selectedYear || ""}
+              onChange={handleYearChange}
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg focus:outline-none"
+              aria-label="Select Year"
+              title="Select Year"
+            >
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <p>No data available</p>
+          )}
           {/* Toggle Button for Sensitive Information */}
           <button
             onClick={toggleSensitiveInfo}
@@ -190,7 +255,7 @@ const ClosedOrders: React.FC = () => {
       )}
 
       {orders.length === 0 ? (
-        <p>No closed orders found.</p>
+        <p>No closed orders found for {selectedYear}.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white dark:bg-gray-800">

@@ -12,8 +12,65 @@ import {
   FaEyeSlash,
   FaChevronDown,
   FaChevronUp,
+  FaTimes,
 } from "react-icons/fa";
 import Toast from "@/components/Toast/Toast";
+
+// Helper function to extract error message
+const getErrorMessage = (error: unknown, defaultMessage: string): string => {
+  if (axios.isAxiosError(error)) {
+    if (
+      error.response &&
+      error.response.data &&
+      typeof error.response.data.message === "string"
+    ) {
+      return error.response.data.message;
+    }
+  }
+  return defaultMessage;
+};
+
+// ImageModal Component
+interface ImageModalProps {
+  isOpen: boolean;
+  imageUrl: string;
+  onClose: () => void;
+}
+
+const ImageModal: React.FC<ImageModalProps> = ({
+  isOpen,
+  imageUrl,
+  onClose,
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
+      onClick={onClose}
+      aria-modal="true"
+      role="dialog"
+      aria-labelledby="image-modal-title"
+    >
+      <div className="relative" onClick={(e) => e.stopPropagation()}>
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-white text-2xl focus:outline-none"
+          aria-label="Close Image Modal"
+        >
+          <FaTimes />
+        </button>
+        <Image
+          src={imageUrl}
+          alt="Full Size Image"
+          width={800}
+          height={800}
+          className="rounded-lg"
+        />
+      </div>
+    </div>
+  );
+};
 
 const ClosedStoreOrders: React.FC = () => {
   const [storeOrders, setStoreOrders] = useState<IStoreOrder[]>([]);
@@ -21,17 +78,13 @@ const ClosedStoreOrders: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // State to manage visibility of sensitive information
-  const [showSensitiveInfo, setShowSensitiveInfo] =
-    useState<boolean>(false);
+  const [showSensitiveInfo, setShowSensitiveInfo] = useState<boolean>(false);
 
   // State to manage expanded rows
-  const [expandedOrders, setExpandedOrders] = useState<Set<string>>(
-    new Set()
-  );
+  const [expandedOrders, setExpandedOrders] = useState<Set<string>>(new Set());
 
   // State to manage image modal
-  const [isImageModalOpen, setIsImageModalOpen] =
-    useState<boolean>(false);
+  const [isImageModalOpen, setIsImageModalOpen] = useState<boolean>(false);
   const [selectedImage, setSelectedImage] = useState<string>("");
 
   // Toast state
@@ -40,25 +93,45 @@ const ClosedStoreOrders: React.FC = () => {
   const [toastType, setToastType] =
     useState<"success" | "error" | "warning">("success");
 
-  // Helper function to extract error message
-  const getErrorMessage = (error: unknown, defaultMessage: string): string => {
-    if (axios.isAxiosError(error)) {
-      if (
-        error.response &&
-        error.response.data &&
-        typeof error.response.data.message === "string"
-      ) {
-        return error.response.data.message;
-      }
-    }
-    return defaultMessage;
-  };
+  // State for available years
+  const [years, setYears] = useState<number[]>([]);
+  const [yearsLoading, setYearsLoading] = useState<boolean>(true);
 
+  // State for selected year
+  const [selectedYear, setSelectedYear] = useState<number | null>(null);
+
+  // Fetch available years
   useEffect(() => {
-    const fetchStoreOrders = async () => {
+    const fetchAvailableYears = async () => {
+      try {
+        const response = await axios.get<number[]>(
+          "/api/storeOrders/closed/years"
+        );
+        setYears(response.data);
+        if (response.data.length > 0) {
+          setSelectedYear(response.data[0]); // Set the first available year
+        }
+      } catch (error: unknown) {
+        console.error("Error fetching available years:", error);
+        const message = getErrorMessage(error, "Failed to load available years.");
+        setToastMessage(message);
+        setToastType("error");
+        setToastVisible(true);
+      } finally {
+        setYearsLoading(false);
+      }
+    };
+
+    fetchAvailableYears();
+  }, []);
+
+  // Fetch closed store orders when selectedYear changes
+  useEffect(() => {
+    const fetchStoreOrders = async (year: number) => {
+      setLoading(true);
       try {
         const response = await axios.get<IStoreOrder[]>(
-          "/api/storeOrders/closed"
+          `/api/storeOrders/closed?year=${year}`
         );
         setStoreOrders(response.data);
       } catch (error: unknown) {
@@ -77,8 +150,10 @@ const ClosedStoreOrders: React.FC = () => {
       }
     };
 
-    fetchStoreOrders();
-  }, []);
+    if (selectedYear !== null) {
+      fetchStoreOrders(selectedYear);
+    }
+  }, [selectedYear]);
 
   const toggleExpandOrder = (orderId: string) => {
     const newExpandedOrders = new Set(expandedOrders);
@@ -101,6 +176,20 @@ const ClosedStoreOrders: React.FC = () => {
     setIsImageModalOpen(false);
     setSelectedImage("");
   };
+
+  // Function to handle year change
+  const handleYearChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const year = parseInt(event.target.value, 10);
+    setSelectedYear(year);
+  };
+
+  if (yearsLoading) {
+    return (
+      <div className="flex justify-center items-center h-16">
+        <p>Loading available years...</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
@@ -125,6 +214,48 @@ const ClosedStoreOrders: React.FC = () => {
       {/* Header */}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Closed Store Orders</h1>
+        <div className="flex items-center space-x-2">
+          {/* Year Selector */}
+          {years.length > 0 ? (
+            <select
+              value={selectedYear || ""}
+              onChange={handleYearChange}
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg focus:outline-none"
+              aria-label="Select Year"
+              title="Select Year"
+            >
+              {years.map((year) => (
+                <option key={year} value={year}>
+                  {year}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <p>No data available</p>
+          )}
+          {/* Toggle Button for Sensitive Information */}
+          <button
+            onClick={() => setShowSensitiveInfo(!showSensitiveInfo)}
+            className="flex items-center px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 focus:outline-none"
+            aria-label={
+              showSensitiveInfo
+                ? "Hide sensitive information"
+                : "Show sensitive information"
+            }
+          >
+            {showSensitiveInfo ? (
+              <>
+                <FaEyeSlash className="mr-2" />
+                Hide Info
+              </>
+            ) : (
+              <>
+                <FaEye className="mr-2" />
+                Show Info
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Toast Notification */}
@@ -139,33 +270,15 @@ const ClosedStoreOrders: React.FC = () => {
       )}
 
       {/* Image Modal */}
-      {isImageModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
-          onClick={closeImageModal}
-        >
-          <div className="relative">
-            <Image
-              src={selectedImage}
-              alt="Full Size Image"
-              width={800}
-              height={800}
-              className="max-w-full max-h-full"
-            />
-            <button
-              onClick={closeImageModal}
-              className="absolute top-2 right-2 text-white text-2xl font-bold"
-              aria-label="Close image"
-            >
-              &times;
-            </button>
-          </div>
-        </div>
-      )}
+      <ImageModal
+        isOpen={isImageModalOpen}
+        imageUrl={selectedImage}
+        onClose={closeImageModal}
+      />
 
       {/* Orders Table */}
       {storeOrders.length === 0 ? (
-        <p>No closed store orders found.</p>
+        <p>No closed store orders found for {selectedYear}.</p>
       ) : (
         <div className="overflow-x-auto">
           <table className="min-w-full bg-white dark:bg-gray-800">
@@ -177,24 +290,7 @@ const ClosedStoreOrders: React.FC = () => {
                 <th className="py-2 px-4 border-b">Phone</th>
                 <th className="py-2 px-4 border-b">Image</th>
                 <th className="py-2 px-4 border-b">Total Amount</th>
-                <th className="py-2 px-4 border-b">
-                  <div className="flex items-center justify-center">
-                    Buying Price
-                    <button
-                      onClick={() =>
-                        setShowSensitiveInfo(!showSensitiveInfo)
-                      }
-                      className="ml-2 text-gray-600 hover:text-gray-800"
-                      aria-label={
-                        showSensitiveInfo
-                          ? "Hide sensitive information"
-                          : "Show sensitive information"
-                      }
-                    >
-                      {showSensitiveInfo ? <FaEyeSlash /> : <FaEye />}
-                    </button>
-                  </div>
-                </th>
+                <th className="py-2 px-4 border-b">Buying Price</th>
                 <th className="py-2 px-4 border-b">Profit</th>
                 <th className="py-2 px-4 border-b">Status</th>
                 <th className="py-2 px-4 border-b">Products</th>
@@ -207,14 +303,12 @@ const ClosedStoreOrders: React.FC = () => {
                   ? order.products.reduce(
                       (sum, product) =>
                         sum +
-                        (product.buyingPrice || 0) *
-                          (product.quantity || 0),
+                        (product.buyingPrice || 0) * (product.quantity || 0),
                       0
                     )
                   : 0;
 
-                const profit =
-                  (order.totalAmount || 0) - totalBuyingPrice;
+                const profit = (order.totalAmount || 0) - totalBuyingPrice;
 
                 const isExpanded = expandedOrders.has(order._id);
 
@@ -236,9 +330,7 @@ const ClosedStoreOrders: React.FC = () => {
                         order.products[0].productImage ? (
                           <button
                             onClick={() =>
-                              openImageModal(
-                                order.products[0].productImage
-                              )
+                              openImageModal(order.products[0].productImage)
                             }
                             className="focus:outline-none"
                             aria-label="View full image"
@@ -293,13 +385,11 @@ const ClosedStoreOrders: React.FC = () => {
                           >
                             {isExpanded ? (
                               <>
-                                Hide Products{" "}
-                                <FaChevronUp className="ml-1" />
+                                Hide Products <FaChevronUp className="ml-1" />
                               </>
                             ) : (
                               <>
-                                View Products{" "}
-                                <FaChevronDown className="ml-1" />
+                                View Products <FaChevronDown className="ml-1" />
                               </>
                             )}
                           </button>
@@ -324,18 +414,12 @@ const ClosedStoreOrders: React.FC = () => {
                                   <th className="py-2 px-4 border-b">
                                     Product Code
                                   </th>
-                                  <th className="py-2 px-4 border-b">
-                                    Image
-                                  </th>
+                                  <th className="py-2 px-4 border-b">Image</th>
                                   <th className="py-2 px-4 border-b">
                                     Quantity
                                   </th>
-                                  <th className="py-2 px-4 border-b">
-                                    Color
-                                  </th>
-                                  <th className="py-2 px-4 border-b">
-                                    Size
-                                  </th>
+                                  <th className="py-2 px-4 border-b">Color</th>
+                                  <th className="py-2 px-4 border-b">Size</th>
                                   <th className="py-2 px-4 border-b">
                                     Buying Price
                                   </th>
