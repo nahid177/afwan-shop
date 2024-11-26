@@ -1,9 +1,10 @@
 // src/app/admin/product-types/page.tsx
- "use client";
+"use client";
 import React, { useEffect, useState } from 'react';
 import AdminLayout from '../AdminLayout';
 import ProductTypesNavbar from '@/components/Admin/product-types-page/ProductTypesNavbar';
 import axios from 'axios';
+import { FaBoxOpen, FaShoppingCart } from 'react-icons/fa';
 
 const Page = () => {
   const [totalProductQuantity, setTotalProductQuantity] = useState<number>(0);
@@ -54,21 +55,31 @@ const Page = () => {
 
   return (
     <AdminLayout>
-          {/* Include your existing ProductTypesNavbar component */}
-          <ProductTypesNavbar />
+      {/* Include your existing ProductTypesNavbar component */}
+      <ProductTypesNavbar />
       <div className="p-4">
-        <h1 className="text-2xl font-bold mb-4">Dashboard</h1>
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="bg-white p-4 rounded shadow">
-            <h2 className="text-lg font-semibold">Total Product Quantity</h2>
-            <p className="text-3xl">{totalProductQuantity}</p>
+        <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+          <div className="bg-white p-6 rounded-lg shadow flex items-center">
+            <div className="p-4 bg-blue-100 rounded-full">
+              <FaBoxOpen className="text-blue-500 text-4xl" />
+            </div>
+            <div className="ml-4">
+              <h2 className="text-lg font-semibold text-gray-700">Total Product Quantity</h2>
+              <p className="text-3xl font-bold">{totalProductQuantity}</p>
+            </div>
           </div>
-          <div className="bg-white p-4 rounded shadow">
-            <h2 className="text-lg font-semibold">Total Products Sold</h2>
-            <p className="text-3xl">{totalProductsSold}</p>
+          <div className="bg-white p-6 rounded-lg shadow flex items-center">
+            <div className="p-4 bg-green-100 rounded-full">
+              <FaShoppingCart className="text-green-500 text-4xl" />
+            </div>
+            <div className="ml-4">
+              <h2 className="text-lg font-semibold text-gray-700">Total Products Sold</h2>
+              <p className="text-3xl font-bold">{totalProductsSold}</p>
+            </div>
           </div>
         </div>
-      
+        {/* Additional dashboard content can be added here */}
       </div>
     </AdminLayout>
   );
