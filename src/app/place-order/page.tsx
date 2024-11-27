@@ -15,6 +15,7 @@ interface OrderFormData {
   address1: string;
   address2?: string;
   deliveryArea: string;
+  promoCode?: string;
 }
 
 const PlaceOrderPage: React.FC = () => {
@@ -27,13 +28,14 @@ const PlaceOrderPage: React.FC = () => {
     address1: "",
     address2: "",
     deliveryArea: "",
+    promoCode: "",
   });
   const [loading, setLoading] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error" | "warning">("success");
   const [deliveryAreas, setDeliveryAreas] = useState<{ area: string; price: number }[]>([]);
-
+  const [discount, setDiscount] = useState<number>(0); // Discount value
   const router = useRouter();
 
   useEffect(() => {
@@ -56,14 +58,38 @@ const PlaceOrderPage: React.FC = () => {
   };
 
   const calculateTotalAmount = () => {
-    // Calculate total based on cart items
     const cartTotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
-
-    // Find selected delivery area's price
     const deliveryArea = deliveryAreas.find((area) => area.area === formData.deliveryArea);
     const deliveryPrice = deliveryArea ? deliveryArea.price : 0;
+    const discountAmount = (cartTotal + deliveryPrice) * (discount / 100);
+    return cartTotal + deliveryPrice - discountAmount;
+  };
 
-    return cartTotal + deliveryPrice; // Add delivery price to cart total
+  const handlePromoCodeValidation = async () => {
+    if (!formData.promoCode) {
+      setToastMessage("Please enter a promo code.");
+      setToastType("warning");
+      setToastVisible(true);
+      return;
+    }
+
+    try {
+      const response = await axios.post("/api/validate-promo-code", { code: formData.promoCode });
+      if (response.status === 200 && response.data.isValid) {
+        setDiscount(response.data.discountValue);
+        setToastMessage(`Promo code applied! Discount: ${response.data.discountValue}%`);
+        setToastType("success");
+      } else {
+        setDiscount(0);
+        setToastMessage("Invalid promo code.");
+        setToastType("error");
+      }
+      setToastVisible(true);
+    } catch (error) {
+      setToastMessage("An error occurred while validating the promo code.");
+      setToastType("error");
+      setToastVisible(true);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -131,9 +157,8 @@ const PlaceOrderPage: React.FC = () => {
   return (
     <ThemeProvider>
       <div
-        className={`min-h-screen p-6 ${
-          theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
-        }`}
+        className={`min-h-screen p-6 ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
+          }`}
       >
         {toastVisible && (
           <div className="fixed top-4 right-4 z-50">
@@ -147,33 +172,7 @@ const PlaceOrderPage: React.FC = () => {
 
         <h1 className="text-2xl font-bold mb-6">Place Your Order</h1>
 
-        {/* Cart Items Display */}
-        <div className="bg-gray-200 p-4 rounded-md shadow-md mb-6">
-          <h2 className="text-lg font-semibold mb-4">Your Cart</h2>
-          <div className="space-y-4">
-            {cartItems.map((item) => (
-              <div key={item.id} className="flex items-center justify-between bg-white p-4 rounded-md shadow-sm">
-                <div className="flex items-center">
-                  <Image
-                    src={item.imageUrl}
-                    alt={item.name}
-                    width={80}
-                    height={80}
-                    className="object-cover mr-4"
-                  />
-                  <div>
-                    <p className="font-semibold text-sm">{item.name}</p>
-                    <p className="text-xs text-gray-500">{item.size} | {item.color}</p>
-                    <p className="text-sm text-gray-700">Qty: {item.quantity}</p>
-                  </div>
-                </div>
-                <div>
-                  <p className="font-semibold text-sm">${item.price * item.quantity}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+
 
         {/* Order Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -203,6 +202,22 @@ const PlaceOrderPage: React.FC = () => {
               value={formData.customerNumber}
               onChange={handleChange}
               required
+              pattern="[0-9]{10,15}"
+              className="mt-1 block w-full border rounded-md shadow-sm"
+            />
+          </div>
+
+          {/* Other Number */}
+          <div>
+            <label htmlFor="otherNumber" className="block text-sm font-medium">
+              Other Number (optional)
+            </label>
+            <input
+              type="tel"
+              id="otherNumber"
+              name="otherNumber"
+              value={formData.otherNumber || ""}
+              onChange={handleChange}
               pattern="[0-9]{10,15}"
               className="mt-1 block w-full border rounded-md shadow-sm"
             />
@@ -258,11 +273,69 @@ const PlaceOrderPage: React.FC = () => {
             </select>
           </div>
 
+          {/* Promo Code */}
+          <div>
+            <label htmlFor="promoCode" className="block text-sm font-medium">
+              Promo Code
+            </label>
+            <input
+              type="text"
+              id="promoCode"
+              name="promoCode"
+              value={formData.promoCode || ""}
+              onChange={handleChange}
+              className="mt-1 block w-full border rounded-md shadow-sm"
+            />
+            <button
+              type="button"
+              onClick={handlePromoCodeValidation}
+              className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md"
+            >
+              Apply Promo Code
+            </button>
+          </div>
+          {/* Cart Items Display */}
+          <div className="bg-gray-200 p-4 rounded-md shadow-md mb-6">
+            <h2 className="text-lg font-semibold mb-4">Your Cart</h2>
+            <div className="space-y-4">
+              {cartItems.map((item) => (
+                <div key={item.id} className="flex items-center justify-between bg-white p-4 rounded-md shadow-sm">
+                  <div className="flex items-center">
+                    <Image
+                      src={item.imageUrl}
+                      alt={item.name}
+                      width={80}
+                      height={80}
+                      className="object-cover mr-4"
+                    />
+                    <div>
+                      <p className="font-semibold text-sm">{item.name}</p>
+                      <p className="text-xs text-gray-500">{item.size} | {item.color}</p>
+                      <p className="text-sm text-gray-700">Qty: {item.quantity}</p>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="font-semibold text-sm">${item.price * item.quantity}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
           {/* Delivery Charge */}
           <div className="flex justify-between items-center mt-4">
             <p className="font-semibold text-lg">Delivery Charge</p>
-            <p className="font-semibold text-lg">${formData.deliveryArea ? deliveryAreas.find(area => area.area === formData.deliveryArea)?.price : 0}</p>
+            <p className="font-semibold text-lg">
+              ${formData.deliveryArea ? deliveryAreas.find(area => area.area === formData.deliveryArea)?.price : 0}
+            </p>
           </div>
+
+          {/* Discount Display */}
+          {discount > 0 && (
+            <div className="flex justify-between items-center mt-4">
+              <p className="font-semibold text-lg text-green-500">Discount</p>
+              <p className="font-semibold text-lg text-green-500">{discount}%</p>
+            </div>
+          )}
 
           {/* Total Amount */}
           <div className="flex justify-between items-center mt-4">
@@ -271,15 +344,14 @@ const PlaceOrderPage: React.FC = () => {
           </div>
 
           <div>
-  <button
-    type="submit"
-    disabled={loading}
-    className={`w-full py-2 px-4 rounded-md transition-transform disabled:opacity-50 btn-gradient-blue`}
-  >
-    {loading ? "Placing Order..." : "Place Order"}
-  </button>
-</div>
-
+            <button
+              type="submit"
+              disabled={loading}
+              className={`w-full py-2 px-4 rounded-md transition-transform disabled:opacity-50 btn-gradient-blue`}
+            >
+              {loading ? "Placing Order..." : "Place Order"}
+            </button>
+          </div>
         </form>
       </div>
     </ThemeProvider>
