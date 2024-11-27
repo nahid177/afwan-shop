@@ -22,7 +22,7 @@ const geistMono = localFont({
 
 export const metadata = {
   title: "Afwan Shop",
-  description: "Welcome to my shop",
+  description: "Welcome to my Afwan shop",
 };
 
 export default function RootLayout({

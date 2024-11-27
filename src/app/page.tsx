@@ -1,11 +1,18 @@
-import React from 'react';
+"use client";
 
-const page = () => {
+import React from 'react';
+import CarouselPage from '@/components/Admin/Carousel';
+import FeatureSection from '@/components/FeatureSection';
+
+const Page = () => {
   return (
-    <div>
-      hello
-    </div>
+   
+      <div className="w-full">
+        <CarouselPage />
+        <FeatureSection />
+      </div>
+   
   );
 };
 
-export default page;
+export default Page;
