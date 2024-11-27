@@ -1,13 +1,12 @@
-// src/app/place-order/page.tsx
-
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import axios from "axios";
 import Toast from "@/components/Toast/Toast";
 import { useRouter } from "next/navigation";
-import { useTheme, ThemeProvider } from "@/mode/ThemeContext"; // Import useTheme and ThemeProvider
+import { useTheme, ThemeProvider } from "@/mode/ThemeContext";
+import Image from "next/image";
 
 interface OrderFormData {
   customerName: string;
@@ -15,10 +14,11 @@ interface OrderFormData {
   otherNumber?: string;
   address1: string;
   address2?: string;
+  deliveryArea: string;
 }
 
 const PlaceOrderPage: React.FC = () => {
-  const { theme } = useTheme(); // Get the current theme
+  const { theme } = useTheme();
   const { cartItems, totalAmount, clearCart } = useCart();
   const [formData, setFormData] = useState<OrderFormData>({
     customerName: "",
@@ -26,26 +26,50 @@ const PlaceOrderPage: React.FC = () => {
     otherNumber: "",
     address1: "",
     address2: "",
+    deliveryArea: "",
   });
-
   const [loading, setLoading] = useState(false);
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
   const [toastType, setToastType] = useState<"success" | "error" | "warning">("success");
+  const [deliveryAreas, setDeliveryAreas] = useState<{ area: string; price: number }[]>([]);
 
   const router = useRouter();
 
+  useEffect(() => {
+    const fetchDeliveryAreas = async () => {
+      try {
+        const response = await axios.get("/api/delivery-areas");
+        setDeliveryAreas(response.data.deliveryAreas);
+      } catch (error) {
+        console.error("Error fetching delivery areas", error);
+      }
+    };
+    fetchDeliveryAreas();
+  }, []);
+
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const calculateTotalAmount = () => {
+    // Calculate total based on cart items
+    const cartTotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
+
+    // Find selected delivery area's price
+    const deliveryArea = deliveryAreas.find((area) => area.area === formData.deliveryArea);
+    const deliveryPrice = deliveryArea ? deliveryArea.price : 0;
+
+    return cartTotal + deliveryPrice; // Add delivery price to cart total
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.customerName || !formData.customerNumber || !formData.address1) {
+    if (!formData.customerName || !formData.customerNumber || !formData.address1 || !formData.deliveryArea) {
       setToastMessage("Please fill in all required fields.");
       setToastType("error");
       setToastVisible(true);
@@ -62,24 +86,18 @@ const PlaceOrderPage: React.FC = () => {
     setLoading(true);
 
     try {
-      // Add a console log to verify cart items
-      console.log("Cart Items Before Submission:", cartItems);
-
       const orderData = {
         ...formData,
         items: cartItems.map((item) => ({
           product: item.id,
-          name: item.name,              // Ensure name is included
+          name: item.name,
           color: item.color,
           size: item.size,
           quantity: item.quantity,
-          price: item.price,            // Ensure price is included
-          // Remove buyingPrice and imageUrl as backend handles them
+          price: item.price,
         })),
-        totalAmount,
+        totalAmount: calculateTotalAmount(),
       };
-
-      console.log("Submitting order data:", orderData); // Debugging
 
       const response = await axios.post("/api/orders", orderData);
 
@@ -97,9 +115,12 @@ const PlaceOrderPage: React.FC = () => {
         setToastType("error");
         setToastVisible(true);
       }
-    } catch (error: any) {
-      console.error("Error placing order:", error);
-      setToastMessage(error.response?.data?.message || "An unexpected error occurred.");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        setToastMessage(error.response?.data?.message || "An unexpected error occurred.");
+      } else {
+        setToastMessage("An unexpected error occurred.");
+      }
       setToastType("error");
       setToastVisible(true);
     } finally {
@@ -126,8 +147,36 @@ const PlaceOrderPage: React.FC = () => {
 
         <h1 className="text-2xl font-bold mb-6">Place Your Order</h1>
 
+        {/* Cart Items Display */}
+        <div className="bg-gray-200 p-4 rounded-md shadow-md mb-6">
+          <h2 className="text-lg font-semibold mb-4">Your Cart</h2>
+          <div className="space-y-4">
+            {cartItems.map((item) => (
+              <div key={item.id} className="flex items-center justify-between bg-white p-4 rounded-md shadow-sm">
+                <div className="flex items-center">
+                  <Image
+                    src={item.imageUrl}
+                    alt={item.name}
+                    width={80}
+                    height={80}
+                    className="object-cover mr-4"
+                  />
+                  <div>
+                    <p className="font-semibold text-sm">{item.name}</p>
+                    <p className="text-xs text-gray-500">{item.size} | {item.color}</p>
+                    <p className="text-sm text-gray-700">Qty: {item.quantity}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">${item.price * item.quantity}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Order Form */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Customer Name */}
           <div>
             <label htmlFor="customerName" className="block text-sm font-medium">
               Customer Name<span className="text-red-500">*</span>
@@ -139,15 +188,10 @@ const PlaceOrderPage: React.FC = () => {
               value={formData.customerName}
               onChange={handleChange}
               required
-              className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
-                theme === "light"
-                  ? "border-gray-300 bg-white text-black"
-                  : "border-gray-700 bg-gray-800 text-white"
-              }`}
+              className="mt-1 block w-full border rounded-md shadow-sm"
             />
           </div>
 
-          {/* Customer Number */}
           <div>
             <label htmlFor="customerNumber" className="block text-sm font-medium">
               Customer Number<span className="text-red-500">*</span>
@@ -160,37 +204,10 @@ const PlaceOrderPage: React.FC = () => {
               onChange={handleChange}
               required
               pattern="[0-9]{10,15}"
-              title="Please enter a valid phone number."
-              className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
-                theme === "light"
-                  ? "border-gray-300 bg-white text-black"
-                  : "border-gray-700 bg-gray-800 text-white"
-              }`}
+              className="mt-1 block w-full border rounded-md shadow-sm"
             />
           </div>
 
-          {/* Other Number */}
-          <div>
-            <label htmlFor="otherNumber" className="block text-sm font-medium">
-              Other Number
-            </label>
-            <input
-              type="tel"
-              id="otherNumber"
-              name="otherNumber"
-              value={formData.otherNumber}
-              onChange={handleChange}
-              pattern="[0-9]{10,15}"
-              title="Please enter a valid phone number."
-              className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
-                theme === "light"
-                  ? "border-gray-300 bg-white text-black"
-                  : "border-gray-700 bg-gray-800 text-white"
-              }`}
-            />
-          </div>
-
-          {/* Address Line 1 */}
           <div>
             <label htmlFor="address1" className="block text-sm font-medium">
               Address Line 1<span className="text-red-500">*</span>
@@ -202,15 +219,10 @@ const PlaceOrderPage: React.FC = () => {
               onChange={handleChange}
               required
               rows={3}
-              className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
-                theme === "light"
-                  ? "border-gray-300 bg-white text-black"
-                  : "border-gray-700 bg-gray-800 text-white"
-              }`}
+              className="mt-1 block w-full border rounded-md shadow-sm"
             ></textarea>
           </div>
 
-          {/* Address Line 2 */}
           <div>
             <label htmlFor="address2" className="block text-sm font-medium">
               Address Line 2
@@ -221,24 +233,53 @@ const PlaceOrderPage: React.FC = () => {
               value={formData.address2}
               onChange={handleChange}
               rows={3}
-              className={`mt-1 block w-full border rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 ${
-                theme === "light"
-                  ? "border-gray-300 bg-white text-black"
-                  : "border-gray-700 bg-gray-800 text-white"
-              }`}
+              className="mt-1 block w-full border rounded-md shadow-sm"
             ></textarea>
           </div>
 
-          {/* Submit Button */}
           <div>
-            <button
-              type="submit"
-              disabled={loading}
-              className={`w-full py-2 px-4 rounded-md transition-transform disabled:opacity-50 btn-gradient-blue`}
+            <label htmlFor="deliveryArea" className="block text-sm font-medium">
+              Delivery Area<span className="text-red-500">*</span>
+            </label>
+            <select
+              id="deliveryArea"
+              name="deliveryArea"
+              value={formData.deliveryArea}
+              onChange={handleChange}
+              required
+              className="mt-1 block w-full border rounded-md shadow-sm"
             >
-              {loading ? "Placing Order..." : "Place Order"}
-            </button>
+              <option value="">Select Delivery Area</option>
+              {deliveryAreas.map((area) => (
+                <option key={area.area} value={area.area}>
+                  {area.area} - ${area.price}
+                </option>
+              ))}
+            </select>
           </div>
+
+          {/* Delivery Charge */}
+          <div className="flex justify-between items-center mt-4">
+            <p className="font-semibold text-lg">Delivery Charge</p>
+            <p className="font-semibold text-lg">${formData.deliveryArea ? deliveryAreas.find(area => area.area === formData.deliveryArea)?.price : 0}</p>
+          </div>
+
+          {/* Total Amount */}
+          <div className="flex justify-between items-center mt-4">
+            <p className="font-semibold text-lg">Total Amount</p>
+            <p className="font-semibold text-lg">${calculateTotalAmount()}</p>
+          </div>
+
+          <div>
+  <button
+    type="submit"
+    disabled={loading}
+    className={`w-full py-2 px-4 rounded-md transition-transform disabled:opacity-50 btn-gradient-blue`}
+  >
+    {loading ? "Placing Order..." : "Place Order"}
+  </button>
+</div>
+
         </form>
       </div>
     </ThemeProvider>
