@@ -3,6 +3,7 @@
 import React from 'react';
 import CarouselPage from '@/components/Admin/Carousel';
 import FeatureSection from '@/components/FeatureSection';
+import ProductsPage from '@/components/ProductsPage';
 
 const Page = () => {
   return (
@@ -10,6 +11,7 @@ const Page = () => {
       <div className="w-full">
         <CarouselPage />
         <FeatureSection />
+        <ProductsPage />
       </div>
    
   );

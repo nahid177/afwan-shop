@@ -13,7 +13,7 @@ const FeatureSection: React.FC = () => {
           alt="Online Support"
           width={250}
           height={250}
-          className="mb-28"
+          className="mb-6"
         />
       </div>
       <div className="text-center flex-1 flex-shrink-0 w-full sm:w-1/2 md:w-1/4">
@@ -22,7 +22,7 @@ const FeatureSection: React.FC = () => {
           alt="Fastest Shipping"
           width={250}
           height={250}
-          className="mb-28"
+          className="mb-6"
         />
       </div>
       <div className="text-center flex-1 flex-shrink-0 w-full sm:w-1/2 md:w-1/4">
@@ -31,7 +31,7 @@ const FeatureSection: React.FC = () => {
           alt="Easy Return Policy"
           width={250}
           height={250}
-          className="mb-28"
+          className="mb-6"
         />
       </div>
       <div className="text-center flex-1 flex-shrink-0 w-full sm:w-1/2 md:w-1/4">
@@ -40,7 +40,7 @@ const FeatureSection: React.FC = () => {
           alt="Premium Quality"
           width={250}
           height={250}
-          className="mb-28"
+          className="mb-6"
         />
       </div>
     </div>
