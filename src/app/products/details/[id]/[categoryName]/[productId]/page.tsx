@@ -1,5 +1,3 @@
-// src/app/products/[id]/[categoryName]/products/[productId]/page.tsx
-
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -9,6 +7,8 @@ import Image from "next/image";
 import { useTheme } from "@/mode/ThemeContext"; // Import the theme context
 import { useCart } from "@/context/CartContext"; // Import the cart context
 import Toast from "@/components/Toast/Toast"; // Import Toast component
+import OtherProducts from "@/components/OtherProducts"; // Import the OtherProducts component
+import CategoryProductsPage from "@/app/products/[id]/[categoryName]/page";
 
 interface ColorQuantity {
   color: string;
@@ -69,6 +69,7 @@ const ProductDetailsPage: React.FC = () => {
 
   // State to control the visibility of the modal
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
   useEffect(() => {
     const fetchProductDetails = async () => {
       try {
@@ -434,6 +435,9 @@ const ProductDetailsPage: React.FC = () => {
           </div>
         </div>
       )}
+      
+      {/* Other Products Section */}
+      <OtherProducts categoryName={categoryName} id={id} />
     </div>
   );
 };
