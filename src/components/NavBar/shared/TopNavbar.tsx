@@ -201,8 +201,17 @@ const TopNavbar: React.FC = () => {
         </button>
 
         {/* Logo */}
-        <Link href="/">
-          <span className="text-lg font-bold cursor-pointer">Afwan Shop</span>
+              {/* Logo */}
+              <Link href="/">
+          <Image
+            src={theme === "light"
+              ? "https://afwanimage.s3.us-east-1.amazonaws.com/afwan+svg-01(1).svg"
+              : "https://afwanimage.s3.us-east-1.amazonaws.com/afwan+svg-02.svg"}
+            alt="Logo"
+            width={100}
+            height={40}
+            className="cursor-pointer"
+          />
         </Link>
 
         {/* Right Section */}
@@ -315,7 +324,7 @@ const TopNavbar: React.FC = () => {
 
       {/* Desktop Navbar */}
       <div
-        className={`navbar px-4 md:px-10 lg:px-20 ${
+        className={  `navbar px-4 md:px-10 lg:px-20 ${
           theme === "light" ? "bg-gray-50 text-gray-900" : "bg-gray-800 text-gray-100"
         } py-4 hidden lg:flex`}
       >
@@ -348,14 +357,18 @@ const TopNavbar: React.FC = () => {
           </div>
         </div>
 
-        {/* Navbar Center */}
-        <div className="navbar-center">
-          <Link href="/">
-            <span className="btn btn-ghost text-lg md:text-2xl font-bold cursor-pointer">
-              Afwan Shop
-            </span>
-          </Link>
-        </div>
+               {/* Logo */}
+               <Link href="/">
+          <Image
+            src={theme === "light"
+              ? "https://afwanimage.s3.us-east-1.amazonaws.com/afwan+svg-01(1).svg"
+              : "https://afwanimage.s3.us-east-1.amazonaws.com/afwan+svg-02.svg"}
+            alt="Logo"
+            width={100}
+            height={30}
+            className="cursor-pointer"
+          />
+        </Link>
 
         {/* Navbar End */}
         <div className="navbar-end flex items-center space-x-3 md:space-x-5">

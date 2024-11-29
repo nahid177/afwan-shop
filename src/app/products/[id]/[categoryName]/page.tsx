@@ -9,6 +9,7 @@ import { FaEye } from "react-icons/fa"; // Import icon for "See Details"
 import { useTheme } from "@/mode/ThemeContext"; // Import the theme context
 import { useCart } from "@/context/CartContext"; // Import the cart context
 import Toast from "@/components/Toast/Toast"; // Import Toast component
+import Footer from "@/components/Footer";
 
 interface Subtitle {
   title: string;
@@ -149,6 +150,7 @@ const CategoryProductsPage: React.FC = () => {
           />
         ))}
       </div>
+      <Footer />
     </div>
   );
 };
@@ -187,7 +189,7 @@ const CategoryProductCard: React.FC<CategoryProductCardProps> = ({
   return (
     <div
       className={`border lg:p-4 md:p-3 p-2 rounded-lg shadow-md hover:shadow-lg transition-shadow ${theme === "light" ? "bg-white text-black" : "bg-gray-800 text-white"
-        } relative`}
+        }  mb-10`}
     >
       <div className="mb-1">
         <Image

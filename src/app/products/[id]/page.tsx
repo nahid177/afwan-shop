@@ -11,6 +11,7 @@ import { FaEye } from "react-icons/fa"; // Icon for "See Details"
 import { useTheme } from "@/mode/ThemeContext"; // Use the theme context
 import { useCart } from "@/context/CartContext"; // Import the cart context
 import Toast from "@/components/Toast/Toast"; // Import Toast component
+import Footer from "@/components/Footer";
 
 // Define interfaces for type safety
 interface Product {
@@ -204,6 +205,7 @@ const ProductTypePage: React.FC = () => {
       ) : (
         <p className="text-gray-500">No product categories available.</p>
       )}
+      <Footer />
     </div>
   );
 };
@@ -235,7 +237,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, 
   return (
     <div
       className={`min-w-[200px] md:min-w-[250px] lg:min-w-[300px] border p-4 rounded-lg shadow-md hover:shadow-lg transition-shadow ${theme === "light" ? "bg-white text-black" : "bg-gray-800 text-white"
-        } relative`}
+        } `}
     >
       <div className="mb-2">
         <Image
@@ -379,6 +381,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, theme, 
           </div>
         </div>
       )}
+      
     </div>
   );
 };

@@ -56,7 +56,7 @@ const CarouselPage = () => {
   return (
     <div className={`p-4 sm:p-8 ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"}`}>
       {/* Carousel */}
-      <div className="carousel w-full max-w-full relative rounded-xl">
+      <div className="carousel w-full max-w-full  rounded-xl ">
         {carouselItems.map((item, index) => (
           <div
             id={`item${index + 1}`}

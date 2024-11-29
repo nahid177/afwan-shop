@@ -30,3 +30,71 @@ body {
   transform: scale(1.05);
   box-shadow: 0px 6px 20px rgba(0, 114, 255, 0.6);
 }
+@keyframes underlineAnimation {
+  0% {
+    transform: scaleX(0); /* Start with no underline */
+  }
+  50% {
+    transform: scaleX(1); /* Expand underline */
+  }
+  100% {
+    transform: scaleX(0); /* Shrink underline back to 0 */
+  }
+}
+
+.animation-underline {
+  animation: underlineAnimation 2s ease-in-out infinite; /* Runs continuously */
+}
+
+
+/* Scroll container setup */
+.scroll-container {
+  display: flex;
+  overflow-x: hidden; /* Hide excess overflow */
+  scroll-behavior: smooth;
+  position: relative;
+  padding-bottom: 20px; /* Ensure space for bottom padding */
+  gap: 16px;
+}
+
+.scroll-container.auto-scroll {
+  animation: scroll-left 20s linear infinite; /* Infinite scroll */
+}
+
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-100%); /* Full scroll across the container */
+  }
+}
+
+/* Product card entrance animation */
+@keyframes cardEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(50px); /* Start from below */
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.product-card {
+  opacity: 0; /* Start with invisible */
+  animation: cardEntrance 1s ease-out forwards; /* Smooth slide-in */
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Hover effect for product cards */
+.product-card:hover {
+  transform: translateY(-10px); /* Slight lift effect */
+  box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive scroll container */
+.scroll-container {
+  min-width: 100%;
+}
