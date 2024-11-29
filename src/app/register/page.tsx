@@ -4,6 +4,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import ChatIcon from '@/components/ChatIcon';
 
 const Register: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -43,6 +44,7 @@ const Register: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-base-200">
+                  <ChatIcon />
       <div className="card w-full max-w-sm shadow-2xl bg-base-100">
         <div className="card-body">
           <h2 className="card-title text-center">Register</h2>

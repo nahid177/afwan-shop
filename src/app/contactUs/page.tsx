@@ -28,7 +28,7 @@ const ContactUsPage: React.FC = () => {
 
          
 
-            <div className="p-4">
+            <div className="p-4 mb-12">
                 {isLoggedIn ? (
                     <ChatComponent />
                 ) : (

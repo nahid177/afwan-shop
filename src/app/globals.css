@@ -98,3 +98,25 @@ body {
 .scroll-container {
   min-width: 100%;
 }
+
+/* globals.css */
+@keyframes float {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+.chat-icon {
+  animation: float 1s ease-in-out infinite;
+}
+
+.chat-icon:hover {
+  transform: scale(1.1); /* Slightly scale up on hover */
+  transition: transform 0.2s ease;
+}

@@ -12,6 +12,7 @@ import { useTheme } from "@/mode/ThemeContext"; // Use the theme context
 import { useCart } from "@/context/CartContext"; // Import the cart context
 import Toast from "@/components/Toast/Toast"; // Import Toast component
 import Footer from "@/components/Footer";
+import ChatIcon from "@/components/ChatIcon";
 
 // Define interfaces for type safety
 interface Product {
@@ -161,6 +162,8 @@ const ProductTypePage: React.FC = () => {
 
   return (
     <div className={`w-full mx-auto px-4 py-6 ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"}`}>
+                  <ChatIcon />
+
       {toastVisible && (
         <div className="fixed top-4 right-4 z-50">
           <Toast type={toastType} message={toastMessage} onClose={() => setToastVisible(false)} />

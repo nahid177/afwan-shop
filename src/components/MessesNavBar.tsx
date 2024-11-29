@@ -105,10 +105,10 @@ const MessesNavBar: React.FC = () => {
           Destructure 'ref' and 'className' from the props and spread them onto the div.
         */}
         {(refProps) => (
-          <div className="md:hidden">
+          <div className="md:hidden ">
             <div
               {...refProps}
-              className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white"
+              className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white "
             >
               {username ? (
                 <div className="flex flex-col items-start space-y-4">

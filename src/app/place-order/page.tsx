@@ -7,6 +7,7 @@ import Toast from "@/components/Toast/Toast";
 import { useRouter } from "next/navigation";
 import { useTheme, ThemeProvider } from "@/mode/ThemeContext";
 import Image from "next/image";
+import ChatIcon from "@/components/ChatIcon";
 
 interface OrderFormData {
   customerName: string;
@@ -160,6 +161,7 @@ const PlaceOrderPage: React.FC = () => {
         className={`min-h-screen p-6 ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
           }`}
       >
+                    <ChatIcon />
         {toastVisible && (
           <div className="fixed top-4 right-4 z-50">
             <Toast

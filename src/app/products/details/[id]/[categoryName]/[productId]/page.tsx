@@ -8,7 +8,9 @@ import { useTheme } from "@/mode/ThemeContext"; // Import the theme context
 import { useCart } from "@/context/CartContext"; // Import the cart context
 import Toast from "@/components/Toast/Toast"; // Import Toast component
 import OtherProducts from "@/components/OtherProducts"; // Import the OtherProducts component
-import CategoryProductsPage from "@/app/products/[id]/[categoryName]/page";
+import { FaShareAlt } from "react-icons/fa"; // Import Share icon from react-icons
+import Link from "next/link";
+import ChatIcon from "@/components/ChatIcon";
 
 interface ColorQuantity {
   color: string;
@@ -171,11 +173,33 @@ const ProductDetailsPage: React.FC = () => {
     }
   };
 
+  // Function to handle product share
+  const handleShare = () => {
+    const productUrl = window.location.href; // Get the current product URL
+    if (navigator.share) {
+      navigator.share({
+        title: product.product_name,
+        text: product.description,
+        url: productUrl,
+      }).catch(console.error);
+    } else {
+      // If the Share API is not supported, show an alert with the link
+      navigator.clipboard.writeText(productUrl).then(() => {
+        setToastMessage("Product link copied to clipboard!");
+        setToastType("success");
+        setToastVisible(true);
+      });
+    }
+  };
+
   return (
     <div
+    
       className={`w-full mx-auto px-4 py-6 ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
         }`}
     >
+                  <ChatIcon />
+
       {/* Toast Notification */}
       {toastVisible && (
         <div className="fixed top-4 right-4 z-50">
@@ -263,8 +287,22 @@ const ProductDetailsPage: React.FC = () => {
             >
               Add to Cart
             </button>
+            <Link href={"/contactUs"}>
             <button className="bg-black text-white px-4 py-2 rounded-lg">
-              Buy Now
+              Chat With Admin
+            </button>
+            </Link>
+           
+          </div>
+
+          {/* Share Button */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleShare}
+              className="flex items-center gap-2 text-blue-500 hover:text-blue-700"
+            >
+              <FaShareAlt size={20} />
+              Share
             </button>
           </div>
 

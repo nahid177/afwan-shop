@@ -232,7 +232,7 @@ const ChatComponent: React.FC = () => {
 
   return (
     <PhotoProvider>
-      <div className="max-w-full sm:max-w-4xl mx-auto p-4 sm:p-6 space-y-6 bg-white rounded-lg shadow-md mt-16">
+      <div className=" max-w-full sm:max-w-4xl mx-auto p-4 sm:p-6 space-y-6 bg-white rounded-lg shadow-md mt-16">
         {/* Error Message */}
         {error && (
           <div className="p-4 bg-red-100 text-red-700 rounded-md">
@@ -241,7 +241,7 @@ const ChatComponent: React.FC = () => {
         )}
 
         {/* Chat Messages */}
-        <div className="flex flex-col space-y-4 overflow-y-auto max-h-80 sm:max-h-96 lg:max-h-[500px] px-2 sm:px-4">
+        <div className=" flex flex-col space-y-4 overflow-y-auto max-h-80 sm:max-h-96 lg:max-h-[500px] px-2 sm:px-4">
           {(!messages || messages.length === 0) && !error && (
             <div className="text-center text-gray-500">
               No messages yet. Start the conversation!
