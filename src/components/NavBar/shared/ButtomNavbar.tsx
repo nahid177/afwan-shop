@@ -46,6 +46,9 @@ const ButtomNavbar: React.FC = () => {
       <div className="container mx-auto px-4 py-3 flex items-center justify-between flex-col">
         {/* Desktop Menu */}
         <div className="flex space-x-6 items-center">
+         <Link href={"/"}>
+          <div className="font-medium hover:text-blue-500 cursor-pointer">Home</div>
+         </Link>
           {productTypes.map((type) => (
             <div key={type._id} className="group relative">
               <Link href={`/products/${type._id}`}>

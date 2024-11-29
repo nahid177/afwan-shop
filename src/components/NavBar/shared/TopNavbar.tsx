@@ -172,6 +172,9 @@ const TopNavbar: React.FC = () => {
 
   return (
     <>
+    <div>
+      
+    </div>
       {/* Toast Notification */}
       {toastVisible && (
         <div className="fixed top-4 right-4 z-50">
@@ -196,7 +199,7 @@ const TopNavbar: React.FC = () => {
         } py-4 lg:hidden flex justify-between px-4 items-center`}
       >
         {/* Menu Icon */}
-        <button className="btn btn-ghost" onClick={toggleMenuDrawer} aria-label="Open Menu">
+        <button className="btn btn-ghost " onClick={toggleMenuDrawer} aria-label="Open Menu">
           <FiMenu className="h-6 w-6" />
         </button>
 
@@ -254,7 +257,7 @@ const TopNavbar: React.FC = () => {
           theme === "light" ? "bg-white text-gray-900" : "bg-gray-800 text-gray-100"
         } shadow-lg transform ${
           menuDrawerOpen ? "translate-x-0" : "-translate-x-full"
-        } transition-transform duration-300 ease-in-out z-50`}
+        } transition-transform duration-300 ease-in-out z-50 `}
       >
         {/* Drawer content here */}
         <div className="p-4">
@@ -266,7 +269,9 @@ const TopNavbar: React.FC = () => {
             <FiX className="mr-2" />
             Close
           </button>
+          
           <ul className="menu space-y-2">
+            
             {/* Sidebar content here */}
             {productTypes.map((type) => (
               <li key={type._id} className="group">
@@ -345,30 +350,30 @@ const TopNavbar: React.FC = () => {
               }`}
             >
               <li>
-                <Link href="/">Homepage</Link>
+                <Link href="/">Home</Link>
               </li>
               <li>
-                <Link href="/portfolio">Portfolio</Link>
-              </li>
-              <li>
-                <Link href="/about">About</Link>
+                <Link href="/contactUs">Contact Us</Link>
               </li>
             </ul>
           </div>
         </div>
+        <div className="h-[60px]">
+          {/* Logo */}
+          <Link href="/">
+            <Image
+              src={theme === "light"
+                ? "https://afwanimage.s3.us-east-1.amazonaws.com/afwan+svg-01(1).svg"
+                : "https://afwanimage.s3.us-east-1.amazonaws.com/afwan+svg-02.svg"}
+              alt="Logo"
+              width={100}
+              height={30}
+              className="cursor-pointer"
+            />
+          </Link>
+        </div>
 
-               {/* Logo */}
-               <Link href="/">
-          <Image
-            src={theme === "light"
-              ? "https://afwanimage.s3.us-east-1.amazonaws.com/afwan+svg-01(1).svg"
-              : "https://afwanimage.s3.us-east-1.amazonaws.com/afwan+svg-02.svg"}
-            alt="Logo"
-            width={100}
-            height={30}
-            className="cursor-pointer"
-          />
-        </Link>
+      
 
         {/* Navbar End */}
         <div className="navbar-end flex items-center space-x-3 md:space-x-5">
@@ -529,6 +534,7 @@ const TopNavbar: React.FC = () => {
                     <div className="w-12 h-12 bg-gray-300 rounded-lg"></div>
                   )}
                   <div className="flex-1 ml-4">
+                    
                     <div className="text-md">{item.name}</div>
                     {item.size && (
                       <div className="text-xs text-gray-500 dark:text-gray-400">
