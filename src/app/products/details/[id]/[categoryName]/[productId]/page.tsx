@@ -292,6 +292,11 @@ const ProductDetailsPage: React.FC = () => {
               Chat With Admin
             </button>
             </Link>
+            <Link href={"/reviews"}>
+            <button className="bg-black text-white px-4 py-2 rounded-lg">
+            Add Review
+            </button>
+            </Link>
            
           </div>
 

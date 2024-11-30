@@ -1,4 +1,3 @@
-// components/AdminNavbar.tsx
 "use client";
 
 import React from "react";
@@ -115,16 +114,58 @@ const AdminNavbar: React.FC = () => {
             </ul>
           </li>
 
-          <li>
-            <Link href="/admin/deliveryAreas" className={`text-lg hover:text-primary transition-all ${isActive("/admin/deliveryAreas") ? "active" : ""}`}>
-              Delivery Areas
+          {/* Carousel Dropdown */}
+          <li tabIndex={0} className="relative group">
+            <Link href="#" className="text-lg hover:text-primary transition-all flex items-center">
+              Carousel
+              <svg
+                className="h-4 w-4 ml-1 transition-transform transform group-hover:rotate-180"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+              >
+                <path d="M7 10l5 5 5-5H7z" />
+              </svg>
             </Link>
+            <ul className="absolute hidden group-hover:flex flex-col mt-2 shadow-lg rounded-lg bg-white p-2 space-y-1">
+              <li>
+                <Link href="/admin/carousel" className={`hover:text-primary ${isActive("/admin/carousel") ? "font-bold" : ""}`}>
+                  View Carousel
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin/carousel/create" className={`hover:text-primary ${isActive("/admin/carousel/create") ? "font-bold" : ""}`}>
+                  Create Carousel
+                </Link>
+              </li>
+            </ul>
           </li>
-          <li>
-            <Link href="/admin/offerEntries" className={`text-lg hover:text-primary transition-all ${isActive("/admin/offerEntries") ? "active" : ""}`}>
-              Offer Entries
+
+          {/* Delivery Areas and Offer Entries Combined Dropdown */}
+          <li tabIndex={0} className="relative group">
+            <Link href="#" className="text-lg hover:text-primary transition-all flex items-center">
+              Delivery & Offers
+              <svg
+                className="h-4 w-4 ml-1 transition-transform transform group-hover:rotate-180"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+              >
+                <path d="M7 10l5 5 5-5H7z" />
+              </svg>
             </Link>
+            <ul className="absolute hidden group-hover:flex flex-col mt-2 shadow-lg rounded-lg bg-white p-2 space-y-1">
+              <li>
+                <Link href="/admin/deliveryAreas" className={`hover:text-primary ${isActive("/admin/deliveryAreas") ? "font-bold" : ""}`}>
+                  Delivery Areas
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin/offerEntries" className={`hover:text-primary ${isActive("/admin/offerEntries") ? "font-bold" : ""}`}>
+                  Offer Entries
+                </Link>
+              </li>
+            </ul>
           </li>
+
           <li>
             <Link href="/admin/promoCode" className={`text-lg hover:text-primary transition-all ${isActive("/admin/promoCode") ? "active" : ""}`}>
               Promo Codes
@@ -202,16 +243,10 @@ const AdminNavbar: React.FC = () => {
               </ul>
             </li>
 
-            <li>
-              <Link href="/admin/reviews" className={`hover:text-primary ${isActive("/admin/reviews") ? "font-bold" : ""}`}>
-                Reviews
-              </Link>
-            </li>
-
-            {/* Product Types Dropdown - Mobile */}
+            {/* Delivery & Offers Dropdown - Mobile */}
             <li tabIndex={0} className="relative group">
               <div className="flex items-center justify-between w-full hover:text-primary cursor-pointer">
-                <span>Product Types</span>
+                <span>Delivery & Offers</span>
                 <svg
                   className="h-4 w-4 ml-1 transition-transform transform group-hover:rotate-180"
                   xmlns="http://www.w3.org/2000/svg"
@@ -222,28 +257,18 @@ const AdminNavbar: React.FC = () => {
               </div>
               <ul className="hidden group-hover:flex flex-col mt-2 ml-2 shadow-lg rounded-lg bg-white p-2 space-y-1">
                 <li>
-                  <Link href="/admin/product-types" className={`hover:text-primary ${isActive("/admin/product-types") ? "font-bold" : ""}`}>
-                    View All
+                  <Link href="/admin/deliveryAreas" className={`hover:text-primary ${isActive("/admin/deliveryAreas") ? "font-bold" : ""}`}>
+                    Delivery Areas
                   </Link>
                 </li>
                 <li>
-                  <Link href="/admin/product-types/create" className={`hover:text-primary ${isActive("/admin/product-types/create") ? "font-bold" : ""}`}>
-                    Create New
+                  <Link href="/admin/offerEntries" className={`hover:text-primary ${isActive("/admin/offerEntries") ? "font-bold" : ""}`}>
+                    Offer Entries
                   </Link>
                 </li>
               </ul>
             </li>
 
-            <li>
-              <Link href="/admin/deliveryAreas" className={`hover:text-primary ${isActive("/admin/deliveryAreas") ? "font-bold" : ""}`}>
-                Delivery Areas
-              </Link>
-            </li>
-            <li>
-              <Link href="/admin/offerEntries" className={`hover:text-primary ${isActive("/admin/offerEntries") ? "font-bold" : ""}`}>
-                Offer Entries
-              </Link>
-            </li>
             <li>
               <Link href="/admin/promoCode" className={`hover:text-primary ${isActive("/admin/promoCode") ? "font-bold" : ""}`}>
                 Promo Codes

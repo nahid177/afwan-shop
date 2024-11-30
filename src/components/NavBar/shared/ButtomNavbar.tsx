@@ -50,7 +50,7 @@ const ButtomNavbar: React.FC = () => {
           <div className="font-medium hover:text-blue-500 cursor-pointer">Home</div>
          </Link>
           {productTypes.map((type) => (
-            <div key={type._id} className="group relative">
+            <div key={type._id} className="relative group">
               <Link href={`/products/${type._id}`}>
                 <h2 className="font-medium hover:text-blue-500 cursor-pointer">
                   {type.types_name}
@@ -58,7 +58,7 @@ const ButtomNavbar: React.FC = () => {
               </Link>
               {/* Dropdown Menu */}
               {type.product_catagory.length > 0 && (
-                <div className="absolute left-0 mt-2 w-48 bg-white dark:bg-gray-800 border rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                <div className="absolute hidden w-48 group-hover:flex flex-col mt-2 shadow-lg rounded-lg bg-white p-2 space-y-1">
                   <ul className="py-2">
                     {type.product_catagory.map((category) => (
                       <li key={category._id}>
