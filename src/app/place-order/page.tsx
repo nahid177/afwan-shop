@@ -158,7 +158,7 @@ const PlaceOrderPage: React.FC = () => {
   return (
     <ThemeProvider>
       <div
-        className={`min-h-screen p-6 ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
+        className={`lg:p-24 min-h-screen p-6 ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"
           }`}
       >
                     <ChatIcon />

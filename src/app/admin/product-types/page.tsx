@@ -6,6 +6,10 @@ import ProductTypesNavbar from '@/components/Admin/product-types-page/ProductTyp
 import axios from 'axios';
 import { FaBoxOpen, FaShoppingCart } from 'react-icons/fa';
 
+interface ApiTotalSoldResponse {
+  totalSold: number;
+}
+
 const Page = () => {
   const [totalProductQuantity, setTotalProductQuantity] = useState<number>(0);
   const [totalProductsSold, setTotalProductsSold] = useState<number>(0);
@@ -17,11 +21,11 @@ const Page = () => {
       try {
         const [quantityResponse, soldResponse] = await Promise.all([
           axios.get<number>('/api/products/total-quantity'),
-          axios.get<number>('/api/products/total-sold'),
+          axios.get<ApiTotalSoldResponse>('/api/products/total-sold'),
         ]);
 
         setTotalProductQuantity(quantityResponse.data);
-        setTotalProductsSold(soldResponse.data);
+        setTotalProductsSold(soldResponse.data.totalSold); // Access the `totalSold` property
       } catch (error) {
         console.error('Error fetching totals:', error);
         setError('Error fetching totals');
