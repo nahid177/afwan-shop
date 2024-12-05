@@ -17,6 +17,12 @@ const Page = () => {
         <FeatureSection />
         <div className='lg:px-20 md:px-8'>
           <ProductsPage />
+          <h2 className="text-2xl font-semibold text-center mb-4 relative">
+              <span className="relative inline-block">
+              CUSTOMER REVIEWS
+                <span className="absolute bottom-0 left-0 w-full h-[2px] bg-blue-500 transform scale-x-0 animation-underline transition-all duration-500 ease-in-out underline-offset-8" />
+              </span>
+              </h2>
         <CustomerReviews />
         </div>
         
