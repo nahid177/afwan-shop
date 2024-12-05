@@ -11,7 +11,6 @@ import AdminLayoutTypesName from "@/app/admin/product-types/AdminLayoutTypesName
 import AdminLayout from "@/app/admin/AdminLayout";
 import EditProductForm from "@/components/Admin/product-types-page/EditProduct";
 import { IProduct } from "@/types"; // Import interfaces
-import { FiTrash2 } from "react-icons/fi"; // Import Trash Icon
 import { FaTimes } from "react-icons/fa"; // Import Close Icon
 
 const CategoryPage: React.FC = () => {
