@@ -26,7 +26,7 @@ import {
 import { Edit, Delete, Close, Add } from '@mui/icons-material';
 import axios from 'axios';
 import TripleConfirmDialog from '@/components/TripleConfirmDialog';
-import AdminLayout from '../AdminLayout';
+import AdminLayout from '@/app/admin/AdminLayout';
 
 // Interfaces
 interface IOtherCost {
