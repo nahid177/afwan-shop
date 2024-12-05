@@ -1,5 +1,4 @@
 // /app/admin/promoCode/page.tsx
-'use client';
 import React from 'react';
 import AdminLayout from '../AdminLayout';
 import PromoCodeList from '@/components/Admin/Promocode/PromoCodeList';
