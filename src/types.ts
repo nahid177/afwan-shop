@@ -1,6 +1,7 @@
 // src/types.ts
 
 import mongoose from 'mongoose';
+import { StaticImageData } from 'next/image'; // Import StaticImageData
 
 export interface IColorQuantity {
   color: string;
@@ -18,10 +19,10 @@ export interface ISubtitle {
 }
 
 export interface IProduct {
-  imageFiles: never[];
+  imageFiles: File[]; // Changed from never[] to File[]
   _id?: mongoose.Types.ObjectId;
   product_name: string;
-  code: string[];
+  code: string[]; // Assuming multiple codes per product
   colors: IColorQuantity[];
   sizes: ISizeQuantity[];
   originalPrice: number;
@@ -32,24 +33,25 @@ export interface IProduct {
   description: string;
   images: string[];
   totalQuantity?: number; // Optional field for total quantity
-
 }
 
 export interface IProductCategory {
-  catagory_name: string;
+  category_name: string; // Corrected spelling from 'catagory_name' to 'category_name'
   product: IProduct[];
 }
 
 export interface IProductType {
   _id: string;
   types_name: string;
-  product_catagory: IProductCategory[];
+  product_category: IProductCategory[]; // Corrected spelling from 'product_catagory' to 'product_category'
 }
 
+export type OrderStatus = "Closed" | "Pending" | "Cancelled"; // Example enum for order status
+
 export interface IStoreOrderProduct {
-  productCode: ReactNode;
-  _id: Key | null | undefined;
-  offerPrice: any;
+  productCode: string; // Changed from ReactNode to string
+  _id: string; // Changed from Key | null | undefined to string
+  offerPrice: number; // Changed from any to number
   productName: string;
   productImage: string;
   product: mongoose.Types.ObjectId; // Reference to product ID
@@ -60,10 +62,10 @@ export interface IStoreOrderProduct {
 }
 
 export interface IStoreOrder {
-  status: string;
-  code: ReactNode;
-  image: string | StaticImport;
-  buyingPrice: any;
+  status: OrderStatus; // Using the OrderStatus type
+  code: string; // Changed from ReactNode to string
+  image: string | StaticImageData; // Changed from StaticImport to StaticImageData
+  buyingPrice: number; // Changed from any to number
   _id: string;
   customerName: string;
   customerEmail: string;

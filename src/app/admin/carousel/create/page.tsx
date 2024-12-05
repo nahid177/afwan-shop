@@ -5,6 +5,7 @@ import axios from 'axios';
 import { useRouter, useParams } from 'next/navigation';
 import { FaImage, FaLink } from 'react-icons/fa';
 import { toast } from 'react-toastify';
+import AdminLayout from '../../AdminLayout';
 
 const CreateOrUpdateCarousel: React.FC = () => {
   const [name, setName] = useState('');
@@ -100,7 +101,8 @@ const CreateOrUpdateCarousel: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <AdminLayout>
+       <div className="min-h-screen bg-gray-50 p-8">
       <h1 className="text-4xl font-bold mb-6 text-center">{id ? 'Update Carousel Item' : 'Create Carousel Item'}</h1>
 
       <form onSubmit={handleSubmit} className="max-w-lg mx-auto bg-white p-8 rounded-xl shadow-lg">
@@ -159,6 +161,8 @@ const CreateOrUpdateCarousel: React.FC = () => {
         </div>
       </form>
     </div>
+    </AdminLayout>
+   
   );
 };
 

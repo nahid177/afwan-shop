@@ -5,6 +5,7 @@ import axios from 'axios';
 import Image from 'next/image'; // Import Image from next/image
 import { FaEdit, FaTrash } from 'react-icons/fa'; // Icons for Edit and Delete
 import { toast } from 'react-toastify'; // Assuming you are using react-toastify for notifications
+import AdminLayout from '../AdminLayout';
 
 interface CarouselItem {
   _id: string;
@@ -87,7 +88,8 @@ const Page = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-8">
+    <AdminLayout>
+         <div className="min-h-screen bg-gray-50 p-8">
       <h1 className="text-4xl font-bold mb-6 text-center">Carousel Items</h1>
 
       {/* Display Carousel Items */}
@@ -145,6 +147,8 @@ const Page = () => {
         ))}
       </div>
     </div>
+    </AdminLayout>
+ 
   );
 };
 

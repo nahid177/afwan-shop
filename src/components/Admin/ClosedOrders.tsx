@@ -1,14 +1,14 @@
-// src/components/Admin/ClosedOrders.tsx
-
 "use client";
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { IOrderClient } from "@/interfaces/IOrderClient";
 import Toast from "@/components/Toast/Toast";
-import { FaEye, FaEyeSlash, FaTimes } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaTimes, FaDownload } from "react-icons/fa";
 import Image from "next/image";
 import Link from "next/link";
+import jsPDF from "jspdf";
+import "jspdf-autotable";
 
 // Helper function to extract error message
 const getErrorMessage = (error: unknown, defaultMessage: string): string => {
@@ -166,6 +166,96 @@ const ClosedOrders: React.FC = () => {
     setSelectedYear(year);
   };
 
+  // Function to generate and download PDF
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+
+    // Title
+    doc.setFontSize(18);
+    doc.text(`Closed Orders Report - ${selectedYear}`, 14, 22);
+
+    // Define table columns
+    const tableColumn = [
+      "Customer Name",
+      "Contact Number",
+      "Total Amount",
+      "Date",
+      "Approved",
+      "Status",
+      "Codes",
+      "Buying Price",
+      "Profit",
+    ];
+
+    // Define table rows
+    const tableRows: string[][] = [];
+
+    orders.forEach((order) => {
+      // Aggregate codes from all items
+      const allCodes = order.items
+        .map((item) => item.code.join(", "))
+        .join("; ");
+
+      // Aggregate buying prices from all items
+      const totalBuyingPrice = order.items.reduce(
+        (sum, item) => sum + (item.buyingPrice || 0) * (item.quantity || 0),
+        0
+      );
+
+      // Calculate profit
+      const profit = (order.totalAmount || 0) - totalBuyingPrice;
+
+      tableRows.push([
+        order.customerName,
+        order.customerNumber,
+        `Tk. ${order.totalAmount.toFixed(2)}`,
+        new Date(order.createdAt).toLocaleString(),
+        order.approved ? "Yes" : "No",
+        order.status.charAt(0).toUpperCase() + order.status.slice(1),
+        allCodes,
+        showSensitiveInfo ? `Tk. ${totalBuyingPrice.toFixed(2)}` : "•••••",
+        showSensitiveInfo ? `Tk. ${profit.toFixed(2)}` : "•••••",
+      ]);
+    });
+
+    // Add AutoTable
+    doc.autoTable({
+      startY: 30,
+      head: [tableColumn],
+      body: tableRows,
+      styles: {
+        fontSize: 10,
+        textColor: 0, // Black text
+        lineColor: 0, // Black lines
+        lineWidth: 0.1,
+      },
+      headStyles: {
+        fillColor: [255, 255, 255], // White background for headers
+        textColor: 0, // Black text
+        halign: "center",
+      },
+      theme: "striped",
+      didDrawPage: (data: jsPDF.AutoTable.HookData) => {
+        // Footer
+        const pageCount = doc.getNumberOfPages();
+        doc.setFontSize(10);
+        doc.text(
+          `Page ${data.pageNumber} of ${pageCount}`,
+          data.settings.margin.left,
+          doc.internal.pageSize.height - 10
+        );
+      },
+    });
+
+    // Save the PDF
+    doc.save(`Closed_Orders_${selectedYear}.pdf`);
+
+    // Show success toast
+    setToastMessage("PDF downloaded successfully!");
+    setToastType("success");
+    setToastVisible(true);
+  };
+
   if (yearsLoading) {
     return (
       <div className="flex justify-center items-center h-16">
@@ -194,9 +284,9 @@ const ClosedOrders: React.FC = () => {
 
   return (
     <div className="p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Closed Orders</h1>
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold mb-2 md:mb-0">Closed Orders</h1>
+        <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-2">
           {/* Year Selector */}
           {years.length > 0 ? (
             <select
@@ -239,6 +329,16 @@ const ClosedOrders: React.FC = () => {
                 Show Info
               </>
             )}
+          </button>
+          {/* PDF Download Button */}
+          <button
+            onClick={handleDownloadPDF}
+            className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none"
+            aria-label="Download PDF"
+            title="Download Closed Orders as PDF"
+          >
+            <FaDownload className="mr-2" />
+            Download PDF
           </button>
         </div>
       </div>
@@ -302,9 +402,7 @@ const ClosedOrders: React.FC = () => {
                 return (
                   <tr key={order._id}>
                     <td className="py-2 px-4 border-b">{order.customerName}</td>
-                    <td className="py-2 px-4 border-b">
-                      {order.customerNumber}
-                    </td>
+                    <td className="py-2 px-4 border-b">{order.customerNumber}</td>
                     <td className="py-2 px-4 border-b">
                       Tk. {order.totalAmount.toFixed(2)}
                     </td>

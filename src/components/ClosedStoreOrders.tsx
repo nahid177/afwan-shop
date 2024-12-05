@@ -5,19 +5,25 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { IStoreOrder } from "@/types";
-import Link from "next/link";
 import Image from "next/image";
+
 import {
   FaEye,
   FaEyeSlash,
   FaChevronDown,
   FaChevronUp,
   FaTimes,
+  FaDownload, // Import FaDownload icon
 } from "react-icons/fa";
 import Toast from "@/components/Toast/Toast";
+import { jsPDF } from "jspdf"; // Import jsPDF
+import autoTable, { UserOptions } from "jspdf-autotable"; // Correctly import autoTable and UserOptions
 
 // Helper function to extract error message
-const getErrorMessage = (error: unknown, defaultMessage: string): string => {
+const getErrorMessage = (
+  error: unknown,
+  defaultMessage: string
+): string => {
   if (axios.isAxiosError(error)) {
     if (
       error.response &&
@@ -72,6 +78,48 @@ const ImageModal: React.FC<ImageModalProps> = ({
   );
 };
 
+// Define types for table rows
+type MainTableRow = [
+  string, // Code
+  string, // Customer Name
+  string, // Phone
+  string, // Total Amount
+  string, // Buying Price or placeholder
+  string, // Profit or placeholder
+  string  // Status
+];
+
+type ProductTableRow = [
+  string, // Product Name
+  string, // Product Code
+  string, // Quantity
+  string, // Color
+  string, // Size
+  string, // Buying Price
+  string  // Offer Price
+];
+
+// Extend jsPDF interface to include lastAutoTable
+interface ExtendedjsPDF extends jsPDF {
+  lastAutoTable: {
+    finalY: number;
+  };
+}
+
+// Define a type for the didDrawPage hook parameter
+interface HookData {
+  pageNumber: number;
+  pageCount: number;
+  settings: {
+    margin: {
+      left: number;
+      right: number;
+      top: number;
+      bottom: number;
+    };
+  };
+}
+
 const ClosedStoreOrders: React.FC = () => {
   const [storeOrders, setStoreOrders] = useState<IStoreOrder[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -113,7 +161,10 @@ const ClosedStoreOrders: React.FC = () => {
         }
       } catch (error: unknown) {
         console.error("Error fetching available years:", error);
-        const message = getErrorMessage(error, "Failed to load available years.");
+        const message = getErrorMessage(
+          error,
+          "Failed to load available years."
+        );
         setToastMessage(message);
         setToastType("error");
         setToastVisible(true);
@@ -155,6 +206,7 @@ const ClosedStoreOrders: React.FC = () => {
     }
   }, [selectedYear]);
 
+  // Function to toggle expanded orders
   const toggleExpandOrder = (orderId: string) => {
     const newExpandedOrders = new Set(expandedOrders);
     if (expandedOrders.has(orderId)) {
@@ -178,11 +230,182 @@ const ClosedStoreOrders: React.FC = () => {
   };
 
   // Function to handle year change
-  const handleYearChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleYearChange = (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ) => {
     const year = parseInt(event.target.value, 10);
     setSelectedYear(year);
   };
 
+  // Function to generate and download PDF
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF() as ExtendedjsPDF;
+
+    // Title
+    doc.setFontSize(18);
+    doc.text(`Closed Store Orders Report - ${selectedYear}`, 14, 22);
+
+    // Define main table columns
+    const mainTableColumn: string[] = [
+      "Code",
+      "Customer Name",
+      "Phone",
+      "Total Amount",
+      "Buying Price",
+      "Profit",
+      "Status",
+    ];
+
+    // Prepare main table rows
+    const mainTableRows: MainTableRow[] = storeOrders.map((order) => {
+      // Calculate buying price and profit
+      const totalBuyingPrice = order.products
+        ? order.products.reduce(
+            (sum, product) =>
+              sum + (product.buyingPrice ?? 0) * (product.quantity ?? 0),
+            0
+          )
+        : 0;
+
+      const profit = (order.totalAmount ?? 0) - totalBuyingPrice;
+
+      return [
+        order.code,
+        order.customerName,
+        order.customerPhone,
+        `Tk. ${order.totalAmount ? order.totalAmount.toFixed(2) : "0.00"}`,
+        showSensitiveInfo
+          ? `Tk. ${totalBuyingPrice.toFixed(2)}`
+          : "•••••",
+        showSensitiveInfo ? `Tk. ${profit.toFixed(2)}` : "•••••",
+        "Closed", // Assuming all are closed
+      ];
+    });
+
+    // Define main AutoTable options
+    const mainTableOptions: UserOptions = {
+      startY: 30,
+      head: [mainTableColumn],
+      body: mainTableRows,
+      styles: {
+        fontSize: 10,
+        textColor: 0, // Black text
+        lineColor: 0, // Black lines
+        lineWidth: 0.1,
+      },
+      headStyles: {
+        fillColor: [255, 255, 255], // White background for headers
+        textColor: 0, // Black text
+        halign: 'center',
+      },
+      bodyStyles: {
+        halign: 'center',
+      },
+      alternateRowStyles: {
+        fillColor: [240, 240, 240], // Light grey for alternate rows
+      },
+      theme: "striped",
+      didDrawPage: (data: HookData) => {
+        // Footer
+        const pageCount = doc.getNumberOfPages();
+        doc.setFontSize(10);
+        doc.text(
+          `Page ${data.pageNumber} of ${pageCount}`,
+          data.settings.margin.left,
+          doc.internal.pageSize.height - 10
+        );
+      },
+    };
+
+    // Add main AutoTable
+    autoTable(doc, mainTableOptions);
+
+    // Starting Y position after the main table
+    let finalY = doc.lastAutoTable.finalY + 10;
+
+    // Iterate over each store order to add detailed product tables
+    storeOrders.forEach((order) => {
+      // Add order-specific heading
+      doc.setFontSize(14);
+      doc.text(`Order: ${order.code} - ${order.customerName}`, 14, finalY);
+      finalY += 6;
+
+      // Define product table columns
+      const productTableColumn: string[] = [
+        "Product Name",
+        "Product Code",
+        "Quantity",
+        "Color",
+        "Size",
+        "Buying Price",
+        "Offer Price",
+      ];
+
+      // Prepare product table rows
+      const productTableRows: ProductTableRow[] = order.products.map((product) => [
+        product.productName,
+        product.productCode,
+        product.quantity.toString(),
+        product.color || "N/A",
+        product.size || "N/A",
+        `Tk. ${product.buyingPrice?.toFixed(2) ?? "0.00"}`,
+        `Tk. ${product.offerPrice.toFixed(2)}`,
+      ]);
+
+      // Define product AutoTable options
+      const productTableOptions: UserOptions = {
+        startY: finalY,
+        head: [productTableColumn],
+        body: productTableRows,
+        styles: {
+          fontSize: 9,
+          textColor: 0, // Black text
+          lineColor: 0, // Black lines
+          lineWidth: 0.05,
+        },
+        headStyles: {
+          fillColor: [255, 255, 255], // White background for headers
+          textColor: 0, // Black text
+          halign: 'center',
+        },
+        bodyStyles: {
+          halign: 'center',
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245], // Slightly lighter grey for alternate rows
+        },
+        theme: "striped",
+        margin: { left: 14, right: 14 },
+        showHead: 'everyPage',
+        didDrawPage: (data: HookData) => {
+          // Footer
+          const pageCount = doc.getNumberOfPages();
+          doc.setFontSize(10);
+          doc.text(
+            `Page ${data.pageNumber} of ${pageCount}`,
+            data.settings.margin.left,
+            doc.internal.pageSize.height - 10
+          );
+        },
+      };
+
+      // Add product AutoTable
+      autoTable(doc, productTableOptions);
+
+      // Update finalY for the next table
+      finalY = doc.lastAutoTable.finalY + 10;
+    });
+
+    // Save the PDF
+    doc.save(`Closed_Store_Orders_${selectedYear}.pdf`);
+
+    // Show success toast
+    setToastMessage("PDF downloaded successfully!");
+    setToastType("success");
+    setToastVisible(true);
+  };
+
+  // Loading States
   if (yearsLoading) {
     return (
       <div className="flex justify-center items-center h-16">
@@ -199,6 +422,7 @@ const ClosedStoreOrders: React.FC = () => {
     );
   }
 
+  // Error State
   if (error) {
     const errorMessage =
       typeof error === "string" ? error : "An unexpected error occurred.";
@@ -212,13 +436,13 @@ const ClosedStoreOrders: React.FC = () => {
   return (
     <div className="p-4">
       {/* Header */}
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Closed Store Orders</h1>
-        <div className="flex items-center space-x-2">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-4">
+        <h1 className="text-2xl font-bold mb-2 md:mb-0">Closed Store Orders</h1>
+        <div className="flex flex-col md:flex-row items-center space-y-2 md:space-y-0 md:space-x-2">
           {/* Year Selector */}
           {years.length > 0 ? (
             <select
-              value={selectedYear || ""}
+              value={selectedYear ?? ""}
               onChange={handleYearChange}
               className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg focus:outline-none"
               aria-label="Select Year"
@@ -242,6 +466,11 @@ const ClosedStoreOrders: React.FC = () => {
                 ? "Hide sensitive information"
                 : "Show sensitive information"
             }
+            title={
+              showSensitiveInfo
+                ? "Hide Buying Price and Profit"
+                : "Show Buying Price and Profit"
+            }
           >
             {showSensitiveInfo ? (
               <>
@@ -254,6 +483,16 @@ const ClosedStoreOrders: React.FC = () => {
                 Show Info
               </>
             )}
+          </button>
+          {/* PDF Download Button */}
+          <button
+            onClick={handleDownloadPDF}
+            className="flex items-center px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 focus:outline-none"
+            aria-label="Download PDF"
+            title="Download Closed Store Orders as PDF"
+          >
+            <FaDownload className="mr-2" />
+            Download PDF
           </button>
         </div>
       </div>
@@ -298,20 +537,21 @@ const ClosedStoreOrders: React.FC = () => {
             </thead>
             <tbody>
               {storeOrders.map((order) => {
-                // Calculations and state
+                // Calculations
                 const totalBuyingPrice = order.products
                   ? order.products.reduce(
                       (sum, product) =>
                         sum +
-                        (product.buyingPrice || 0) * (product.quantity || 0),
+                        (product.buyingPrice ?? 0) * (product.quantity ?? 0),
                       0
                     )
                   : 0;
 
-                const profit = (order.totalAmount || 0) - totalBuyingPrice;
+                const profit = (order.totalAmount ?? 0) - totalBuyingPrice;
 
                 const isExpanded = expandedOrders.has(order._id);
 
+                // Table row styles
                 const rowClasses = `text-center bg-gray-300 text-gray-600 hover:bg-gray-200 transition-colors duration-200`;
 
                 return (
@@ -362,7 +602,15 @@ const ClosedStoreOrders: React.FC = () => {
                       </td>
                       <td className="py-2 px-4 border-b">
                         {showSensitiveInfo ? (
-                          `Tk. ${profit.toFixed(2)}`
+                          <span
+                            className={`${
+                              profit >= 0
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            Tk. {profit.toFixed(2)}
+                          </span>
                         ) : (
                           <span className="text-gray-500">•••••</span>
                         )}
@@ -473,7 +721,7 @@ const ClosedStoreOrders: React.FC = () => {
                                       {product.size || "N/A"}
                                     </td>
                                     <td className="py-2 px-4 border-b">
-                                      Tk. {product.buyingPrice.toFixed(2)}
+                                      Tk. {product.buyingPrice?.toFixed(2) ?? "0.00"}
                                     </td>
                                     <td className="py-2 px-4 border-b">
                                       Tk. {product.offerPrice.toFixed(2)}
