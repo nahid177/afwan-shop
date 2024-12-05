@@ -58,7 +58,7 @@ const ButtomNavbar: React.FC = () => {
               </Link>
               {/* Dropdown Menu */}
               {type.product_catagory.length > 0 && (
-                <div className="absolute hidden w-48 group-hover:flex flex-col mt-2 shadow-lg rounded-lg bg-white p-2 space-y-1">
+                <div className="absolute hidden w-48 group-hover:flex flex-col mt-0 shadow-lg rounded-lg bg-white p-2 space-y-1">
                   <ul className="py-2">
                     {type.product_catagory.map((category) => (
                       <li key={category._id}>
