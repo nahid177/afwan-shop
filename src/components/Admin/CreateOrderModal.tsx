@@ -152,9 +152,9 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
                         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">Select Products</h3>
                         <div className="space-y-4">
                             {productType.product_catagory.map((category: IProductCategory) => (
-                                <div key={category.category_name} className="mb-6">
+                                <div key={category.catagory_name} className="mb-6">
                                     <h4 className="text-md font-medium text-gray-600 dark:text-gray-300 mb-2">
-                                        {category.category_name}
+                                        {category.catagory_name}
                                     </h4>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                         {category.product.map((product: IProduct, prodIndex: number) => (

@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import Image from 'next/image';
 import { FiTrash2 } from 'react-icons/fi';
-import { IProduct, ISizeQuantity, ISubtitle, IColorQuantity, IProductCategory } from '@/types';
+import { IProduct, ISizeQuantity, IColorQuantity, IProductCategory } from '@/types';
 import { FaTimes } from 'react-icons/fa'; // Import Close Icon
 
 interface AddCategoryModalProps {

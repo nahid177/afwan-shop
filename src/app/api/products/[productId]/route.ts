@@ -5,7 +5,6 @@ import dbConnect from '@/lib/dbConnect';
 import { ProductTypes } from '@/models/ProductTypes';
 import { IProduct, IProductType } from '@/types'; // Import interfaces
 import mongoose from 'mongoose';
-import { NextApiRequest, NextApiResponse } from 'next';
 
 dbConnect();
 
@@ -55,56 +54,3 @@ export async function GET(
   }
 }
 
-export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { id, categoryName, productId } = req.query;
-
-  console.log('Received parameters:', { id, categoryName, productId });
-
-  // Ensure all required parameters are present
-  if (!id || !categoryName || !productId) {
-    console.log('Missing required parameters.');
-    return res.status(400).json({ message: 'Missing required parameters.' });
-  }
-
-  // Validate the productId
-  if (!mongoose.Types.ObjectId.isValid(productId as string)) {
-    console.log('Invalid product ID:', productId);
-    return res.status(400).json({ message: 'Invalid product ID.' });
-  }
-
-  try {
-    // Find the ProductType by id
-    const productType = await ProductTypes.findById(id as string).lean<IProductType>();
-
-    if (!productType) {
-      console.log('Product type not found for ID:', id);
-      return res.status(404).json({ message: 'Product type not found.' });
-    }
-
-    // Find the category by categoryName (case-insensitive)
-    const category = productType.product_catagory.find(
-      (cat) => cat.catagory_name.toLowerCase() === (categoryName as string).toLowerCase()
-    );
-
-    if (!category) {
-      console.log('Category not found:', categoryName);
-      return res.status(404).json({ message: 'Category not found.' });
-    }
-
-    // Find the product by productId within the category
-    const product = category.product.find(
-      (prod) => prod._id?.toString() === (productId as string)
-    );
-
-    if (!product) {
-      console.log('Product not found in category:', categoryName, 'for product ID:', productId);
-      return res.status(404).json({ message: 'Product not found in this category.' });
-    }
-
-    // Return the product
-    return res.status(200).json(product);
-  } catch (error) {
-    console.error('Error fetching product:', error);
-    return res.status(500).json({ message: 'Server error.' });
-  }
-}

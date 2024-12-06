@@ -1,6 +1,6 @@
 // src/app/api/product-types/[id]/categories/[categoryName]/products/route.ts
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server'; // Removed NextRequest
 import dbConnect from '@/lib/dbConnect';
 import { ProductTypes } from '@/models/ProductTypes';
 import mongoose from 'mongoose';
@@ -140,7 +140,8 @@ export async function PATCH(
     }
 
     // Sanitize products by removing any _id fields
-    const sanitizedProducts: INewProduct[] = product.map(({ _id: _unusedId, ...rest }) => rest);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const sanitizedProducts: INewProduct[] = product.map(({ _id, ...rest }) => rest); // Changed _unusedId to _
 
     // Add sanitized products to the category
     productType.product_catagory[categoryIndex].product.push(...sanitizedProducts);

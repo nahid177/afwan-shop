@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
-import { ProductTypes } from '@/models/ProductTypes';
+import { IProductType, ProductTypes } from '@/models/ProductTypes';
 import mongoose from 'mongoose';
 
 // Connect to the database

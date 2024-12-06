@@ -1,5 +1,3 @@
-// src/components/Admin/product-types-page/ProductTypesNavbar.tsx
-
 "use client";
 import React, { useEffect, useState, useRef } from "react";
 import axios from "axios";
@@ -7,7 +5,7 @@ import Link from "next/link";
 import { FiChevronDown, FiChevronUp } from "react-icons/fi";
 import EditProductTypeModal from "./EditProductTypeModal";
 import DeleteProductTypeModal from "./DeleteProductTypeModal";
-import { IProductType } from "@/types"; // Import interface from types.ts
+import { IProductType, IProductCategory } from "@/types"; // Import interface from types.ts
 
 const ProductTypesNavbar: React.FC = () => {
   const [productTypes, setProductTypes] = useState<IProductType[]>([]);
@@ -179,12 +177,12 @@ const ProductTypesNavbar: React.FC = () => {
                     {openDropdown[id] && type.product_catagory.length > 0 && (
                       <div className="absolute left-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
                         <ul className="py-1">
-                          {type.product_catagory.map((category) => (
+                          {type.product_catagory.map((category: IProductCategory) => (
                             <li key={category.catagory_name}>
                               <Link
                                 href={`/admin/product-types/${encodeURIComponent(
                                   id
-                                )}/${encodeURIComponent(category.catagory_name)}`}
+                                )}/${encodeURIComponent(category.catagory_name)}`} 
                                 className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
                               >
                                 {category.catagory_name}

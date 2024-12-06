@@ -8,8 +8,7 @@ import Image from "next/image";
 import { PhotoProvider, PhotoView } from "react-photo-view";
 import "react-photo-view/dist/react-photo-view.css"; // Import PhotoView styles
 import { TiUploadOutline } from "react-icons/ti"; // Import the TiUploadOutline icon
-import mongoose from "mongoose";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation"; // Import useRouter
 
 interface ChatMessage {
   id: string;
@@ -54,6 +53,9 @@ const ChatComponent: React.FC = () => {
   const [username, setUsername] = useState<string>("You");
   const [token, setToken] = useState<string | null>(null);
 
+  // Initialize router
+  const router = useRouter();
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       const storedUserId = localStorage.getItem("userId");
@@ -72,15 +74,18 @@ const ChatComponent: React.FC = () => {
     {
       refreshInterval: 1000, // Revalidate every 1 second
       dedupingInterval: 1000, // Deduplicate requests within 1 second
-      onError: (err) => {
+      onError: (err: unknown) => {
         console.error("Error fetching messages:", err);
-        if (error instanceof mongoose.Error && error.name === 'MongoNetworkError') {
-          // Redirect to the "Network Problem" page
-          redirect('/yournetworkproblem');
-        } else {
-          // Optionally, handle other types of errors or redirect to a generic error page
-          redirect('/yournetworkproblem');
+        // Optionally, you can perform type checking here
+        if (err instanceof Error) {
+          // Handle specific error messages if needed
+          // For example:
+          // if (err.message === "Failed to fetch") {
+          //   router.push('/yournetworkproblem');
+          // }
         }
+        // Redirect to the "Network Problem" page regardless of error type
+        router.push('/yournetworkproblem');
       },
     }
   );
@@ -382,7 +387,7 @@ const ChatComponent: React.FC = () => {
             {/* Send Button */}
             <button
               onClick={handleSendMessage}
-              className={`px-4 sm:px-5 py-2 sm:py-3 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors duration-200 flex-shrink-0 ${
+              className={`px-4 sm:px-5 py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 transition-colors duration-200 flex-shrink-0 ${
                 loading ? "opacity-50 cursor-not-allowed" : ""
               }`}
               disabled={loading || (input.trim() === "" && !imageFile)}

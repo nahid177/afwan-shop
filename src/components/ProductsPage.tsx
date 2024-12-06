@@ -1,34 +1,15 @@
+// src/components/ProductsPage.tsx
+
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import axios from "axios";
 import ProductCard from "@/components/ProductCard";
 import { useTheme } from "@/mode/ThemeContext";
 import { useCart } from "@/context/CartContext";
 import Toast from "@/components/Toast/Toast";
-
-interface Product {
-  _id: string;
-  product_name: string;
-  offerPrice: number;
-  originalPrice: number;
-  images: string[];
-  colors?: { color: string }[];
-  sizes?: { size: string; quantity: number }[];
-}
-
-interface ProductCategory {
-  _id: string;
-  catagory_name: string;
-  product: Product[];
-}
-
-interface ProductType {
-  _id: string;
-  types_name: string;
-  product_catagory: ProductCategory[];
-}
+import { IProductType } from "@/types";
 
 const ProductsPage: React.FC = () => {
-  const [productTypes, setProductTypes] = useState<ProductType[]>([]);
+  const [productTypes, setProductTypes] = useState<IProductType[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const { theme } = useTheme();
@@ -76,7 +57,7 @@ const ProductsPage: React.FC = () => {
   useEffect(() => {
     const fetchProductTypes = async () => {
       try {
-        const response = await axios.get("/api/product-types");
+        const response = await axios.get<IProductType[]>("/api/product-types");
         setProductTypes(response.data);
       } catch (error) {
         console.error("Error fetching product types:", error);
@@ -124,7 +105,7 @@ const ProductsPage: React.FC = () => {
       )}
 
       {productTypes.length > 0 ? (
-        productTypes.map((productType) => (
+        productTypes.map((productType, typeIndex) => (
           <div key={productType._id} className="mb-8">
             <h2 className="text-2xl font-semibold text-center mb-4 relative">
               <span className="relative inline-block">
@@ -133,18 +114,19 @@ const ProductsPage: React.FC = () => {
               </span>
             </h2>
             <div
-              ref={(el) => { if (el) scrollRefs.current.push(el); }}
+              ref={(el) => { if (el) scrollRefs.current[typeIndex] = el; }}
               className="flex overflow-x-auto gap-4 pb-4 scroll-smooth"
               onMouseEnter={handleUserInteraction} // Pause on interaction
               onTouchStart={handleUserInteraction} // Pause on touch
             >
               {productType.product_catagory.map((category) => (
-                <div key={category._id}>
+                <div key={category.catagory_name} className="flex flex-col">
+                  <h3 className="text-xl font-medium mb-2 text-center">{category.catagory_name}</h3>
                   <div className="flex overflow-x-auto gap-4 pb-4 scroll-smooth">
                     {category.product.length > 0 ? (
                       category.product.map((product) => (
                         <ProductCard
-                          key={product._id}
+                          key={product._id?.toString()} // Ensure _id is a string
                           product={product}
                           productType={productType}
                           category={category}

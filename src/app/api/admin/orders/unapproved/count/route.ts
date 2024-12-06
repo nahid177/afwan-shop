@@ -3,6 +3,8 @@ import dbConnect from '@/lib/dbConnect';
 import { Order } from '@/models/Order';
 import { verifyToken } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic'; // Mark the route as dynamic
+
 export async function GET(req: NextRequest) {
   console.log('Received GET request at /api/admin/orders/unapproved/count');
 

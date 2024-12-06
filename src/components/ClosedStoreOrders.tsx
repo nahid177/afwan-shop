@@ -17,7 +17,49 @@ import {
 } from "react-icons/fa";
 import Toast from "@/components/Toast/Toast";
 import { jsPDF } from "jspdf"; // Import jsPDF
-import autoTable, { UserOptions } from "jspdf-autotable"; // Correctly import autoTable and UserOptions
+import autoTable, { Options as AutoTableOptions } from "jspdf-autotable"; // Corrected import
+
+// Define types for table rows
+type MainTableRow = [
+  string, // Code
+  string, // Customer Name
+  string, // Phone
+  string, // Total Amount
+  string, // Buying Price or placeholder
+  string, // Profit or placeholder
+  string  // Status
+];
+
+type ProductTableRow = [
+  string, // Product Name
+  string, // Product Code
+  string, // Quantity
+  string, // Color
+  string, // Size
+  string, // Buying Price
+  string  // Offer Price
+];
+
+// Extend jsPDF interface to include lastAutoTable
+interface ExtendedjsPDF extends jsPDF {
+  lastAutoTable: {
+    finalY: number;
+  };
+}
+
+// Define a type for the didDrawPage hook parameter
+interface HookData {
+  pageNumber: number;
+  pageCount: number;
+  settings: {
+    margin: {
+      left: number;
+      right: number;
+      top: number;
+      bottom: number;
+    };
+  };
+}
 
 // Helper function to extract error message
 const getErrorMessage = (
@@ -77,48 +119,6 @@ const ImageModal: React.FC<ImageModalProps> = ({
     </div>
   );
 };
-
-// Define types for table rows
-type MainTableRow = [
-  string, // Code
-  string, // Customer Name
-  string, // Phone
-  string, // Total Amount
-  string, // Buying Price or placeholder
-  string, // Profit or placeholder
-  string  // Status
-];
-
-type ProductTableRow = [
-  string, // Product Name
-  string, // Product Code
-  string, // Quantity
-  string, // Color
-  string, // Size
-  string, // Buying Price
-  string  // Offer Price
-];
-
-// Extend jsPDF interface to include lastAutoTable
-interface ExtendedjsPDF extends jsPDF {
-  lastAutoTable: {
-    finalY: number;
-  };
-}
-
-// Define a type for the didDrawPage hook parameter
-interface HookData {
-  pageNumber: number;
-  pageCount: number;
-  settings: {
-    margin: {
-      left: number;
-      right: number;
-      top: number;
-      bottom: number;
-    };
-  };
-}
 
 const ClosedStoreOrders: React.FC = () => {
   const [storeOrders, setStoreOrders] = useState<IStoreOrder[]>([]);
@@ -283,7 +283,7 @@ const ClosedStoreOrders: React.FC = () => {
     });
 
     // Define main AutoTable options
-    const mainTableOptions: UserOptions = {
+    const mainTableOptions: AutoTableOptions = {
       startY: 30,
       head: [mainTableColumn],
       body: mainTableRows,
@@ -353,7 +353,7 @@ const ClosedStoreOrders: React.FC = () => {
       ]);
 
       // Define product AutoTable options
-      const productTableOptions: UserOptions = {
+      const productTableOptions: AutoTableOptions = {
         startY: finalY,
         head: [productTableColumn],
         body: productTableRows,

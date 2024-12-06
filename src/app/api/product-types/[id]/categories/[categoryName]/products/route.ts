@@ -20,7 +20,7 @@ export async function GET(req: Request, { params }: { params: { id: string, cate
   
       // Decode the categoryName and find the category in the productType
       const category = productType.product_catagory.find(
-        (cat) => cat.catagory_name === decodeURIComponent(categoryName)
+        (cat: { catagory_name: string; }) => cat.catagory_name === decodeURIComponent(categoryName)
       );
   
       // If the category is not found

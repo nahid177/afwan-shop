@@ -1,37 +1,16 @@
+// src/components/ProductCard.tsx
+
 import React, { useState } from "react";
 import Image from "next/image";
 import { useTheme } from "@/mode/ThemeContext";
-import { CartItem } from "@/types"; // Adjust import based on your CartItem type
+import { CartItem, IProduct, IProductType, IProductCategory } from "@/types";
 
 interface ProductCardProps {
-  product: Product;
-  productType: ProductType;
-  category: ProductCategory;
+  product: IProduct;
+  productType: IProductType;
+  category: IProductCategory;
   addToCart: (product: CartItem) => void;
   triggerToast: (message: string, type: "success" | "error" | "warning") => void;
-}
-
-// Define Product, ProductCategory, and ProductType interfaces if not already defined elsewhere
-export interface Product {
-  _id: string;
-  product_name: string;
-  offerPrice: number;
-  originalPrice: number;
-  images: string[];
-  colors?: { color: string }[];
-  sizes?: { size: string; quantity: number }[];
-}
-
-export interface ProductCategory {
-  _id: string;
-  catagory_name: string;
-  product: Product[];
-}
-
-export interface ProductType {
-  _id: string;
-  types_name: string;
-  product_catagory: ProductCategory[];
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, addToCart, triggerToast }) => {
@@ -56,15 +35,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, addToCart, triggerTo
 
   const handleAddToCart = () => {
     const cartItem: CartItem = {
-      id: product._id,
+      id: product._id!.toString(), // Ensure _id is a string
       name: product.product_name,
       price: product.offerPrice || product.originalPrice,
-      buyingPrice: product.offerPrice || product.originalPrice,
+      buyingPrice: product.buyingPrice,
       quantity,
       imageUrl: product.images[0] || "/placeholder.png",
       color: selectedColor,
       size: selectedSize,
-      code: [], // Add any additional properties like code if required
+      code: product.code, // 'code' is now required
     };
     
     addToCart(cartItem);
@@ -195,7 +174,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, addToCart, triggerTo
                   setIsModalOpen(false); // Close modal
                 }}
                 className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-                disabled={!selectedColor || !selectedSize || quantity < 1 || product.sizes?.find((size) => size.size === selectedSize)?.quantity === 0} // Disable if quantity is 0
+                disabled={!selectedColor || !selectedSize || quantity < 1 || (product.sizes?.find((size) => size.size === selectedSize)?.quantity || 0) === 0} // Disable if quantity is 0
               >
                 Add to Cart
               </button>
@@ -206,6 +185,5 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, addToCart, triggerTo
     </div>
   );
 };
-
 
 export default ProductCard;
