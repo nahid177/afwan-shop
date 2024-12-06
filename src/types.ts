@@ -41,6 +41,7 @@ export interface IProductCategory {
 }
 
 export interface IProductType {
+  product_catagory: any;
   _id: string;
   types_name: string;
   product_category: IProductCategory[]; // Corrected spelling from 'product_catagory' to 'product_category'
@@ -48,18 +49,23 @@ export interface IProductType {
 
 export type OrderStatus = "Closed" | "Pending" | "Cancelled"; // Example enum for order status
 
+// In src/types.ts
+
 export interface IStoreOrderProduct {
-  productCode: string; // Changed from ReactNode to string
-  _id: string; // Changed from Key | null | undefined to string
-  offerPrice: number; // Changed from any to number
+  productCode: string;
+  _id?: string; // Make optional for creation time
+  offerPrice: number;
   productName: string;
   productImage: string;
-  product: mongoose.Types.ObjectId; // Reference to product ID
+  product?: mongoose.Types.ObjectId; // Make optional
   quantity: number;
   color?: string;
   size?: string;
-  buyingPrice?: number; // Optional: Store buyingPrice at order time
+  buyingPrice?: number; 
+  productId?: string;    // Add this for creation
+  productType?: string;  // Add this for creation
 }
+
 
 export interface IStoreOrder {
   status: OrderStatus; // Using the OrderStatus type
@@ -75,4 +81,20 @@ export interface IStoreOrder {
   approved: boolean;
   createdAt?: Date;
   updatedAt?: Date;
+  totalBeforeDiscount?: number;  // Add this field if you want it optional
+
+}
+// In src/types.ts
+
+export interface IOrderProduct {
+  productType: string;
+  productId: string;
+  productName: string;
+  productCode: string;
+  quantity: number;
+  color?: string;
+  size?: string;
+  buyingPrice?: number;
+  offerPrice: number;
+  productImage: string;
 }

@@ -1,5 +1,3 @@
-// src/components/Admin/product-types-page/ProductCard.tsx
-
 "use client";
 
 import React, { useState } from "react";
@@ -50,7 +48,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   // Calculate total quantity if needed
   const calculateTotalQuantity = () => {
     // Assuming that the total quantity is the sum of quantities across all colors and sizes
-    // This can be adjusted based on your specific data structure and business logic
     const totalColors = product.colors.reduce(
       (acc, color) => acc + color.quantity,
       0
@@ -140,6 +137,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
         </p>
         <p className="text-gray-700 mb-2">
           <strong>Offer Price:</strong> ${product.offerPrice.toFixed(2)}
+        </p>
+
+        {/* Total Quantity */}
+        <p className="text-gray-700 mb-2">
+          <strong>Total Quantity:</strong> {totalQuantity}
         </p>
 
         {/* Available Colors */}

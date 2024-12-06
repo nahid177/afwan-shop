@@ -9,7 +9,7 @@ import AddCategoryModal from '@/components/Admin/product-types-page/AddCategoryM
 import RenameCategoryModal from '@/components/Admin/product-types-page/RenameCategoryModal';
 import DeleteCategoryModal from '@/components/Admin/product-types-page/DeleteCategoryModal';
 import { FaPlus, FaShoppingCart } from 'react-icons/fa';
-import { IProductType, IProductCategory, IStoreOrder } from '@/types';
+import { IProductType, IProductCategory, IStoreOrder, IProduct } from '@/types';
 import Toast from '@/components/Toast/Toast';
 import CreateOrderModal from '@/components/Admin/CreateOrderModal';
 import AdminLayout from '@/app/admin/AdminLayout';
@@ -73,7 +73,7 @@ const ProductTypePage = ({ params }: { params: { id: string } }) => {
       setProductType({
         ...productType,
         product_catagory: productType.product_catagory.filter(
-          (category) => category.catagory_name !== categoryName
+          (category: { catagory_name: string; }) => category.catagory_name !== categoryName
         ),
       });
       setToastMessage('Category deleted successfully.');
@@ -99,7 +99,7 @@ const ProductTypePage = ({ params }: { params: { id: string } }) => {
       // Update local state after renaming
       setProductType({
         ...productType,
-        product_catagory: productType.product_catagory.map((category) =>
+        product_catagory: productType.product_catagory.map((category: { catagory_name: string; }) =>
           category.catagory_name === oldName
             ? { ...category, catagory_name: newName }
             : category
@@ -219,7 +219,7 @@ const ProductTypePage = ({ params }: { params: { id: string } }) => {
                 </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                {category.product.map((product) => (
+                {category.product.map((product: IProduct) => (
                   <ProductCard
                     key={product._id ? product._id.toString() : product.product_name}
                     product={product}

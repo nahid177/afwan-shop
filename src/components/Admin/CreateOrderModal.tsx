@@ -6,8 +6,11 @@ import React, { useState, useEffect } from 'react';
 import {
     IStoreOrder,
     IProductType,
-    IOrderProduct
+    IOrderProduct,
+    IProductCategory,
+    IProduct
 } from '@/types';
+
 import { FaTimes } from 'react-icons/fa';
 import Image from 'next/image';
 
@@ -142,12 +145,13 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
                     <div>
                         <h3 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-2">Select Products</h3>
                         <div className="space-y-4">
-                            {productType.product_catagory.map((category) => (
-                                <div key={category.catagory_name} className="mb-6">
-                                    <h4 className="text-md font-medium text-gray-600 dark:text-gray-300 mb-2">{category.catagory_name}</h4>
-
+                            {productType.product_catagory.map((category: IProductCategory) => (
+                                <div key={category.category_name} className="mb-6">
+                                    <h4 className="text-md font-medium text-gray-600 dark:text-gray-300 mb-2">
+                                        {category.category_name}
+                                    </h4>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                                        {category.product.map((product, prodIndex) => (
+                                        {category.product.map((product: IProduct, prodIndex: number) => (
                                             <ProductSelectionCard
                                                 key={product._id ? product._id.toString() : `product-${prodIndex}`}
                                                 product={{
@@ -158,8 +162,8 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
                                                     offerPrice: product.offerPrice,
                                                     buyingPrice: product.buyingPrice,
                                                     images: product.images,
-                                                    code: product.code[0] || '', // Assuming first code is primary
-                                                    productType: productType._id.toString(), // Include productType
+                                                    code: product.code[0] || '',
+                                                    productType: productType._id.toString(),
                                                 }}
                                                 onSelect={handleProductSelection}
                                             />
@@ -167,6 +171,7 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
                                     </div>
                                 </div>
                             ))}
+
                         </div>
                     </div>
 
@@ -239,115 +244,115 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
         </div>
     );
 }
-    // Define the ProductSelectionCard component
-    interface ProductSelectionCardProps {
-        product: {
-            _id: string;
-            product_name: string;
-            colors: Array<{ color: string; quantity: number }>;
-            sizes: Array<{ size: string; quantity: number }>;
-            offerPrice: number;
-            buyingPrice: number;
-            images: string[];
-            code: string;
-            productType: string; // Include productType
-        };
-        onSelect: (product: IOrderProduct) => void;
-    }
+// Define the ProductSelectionCard component
+interface ProductSelectionCardProps {
+    product: {
+        _id: string;
+        product_name: string;
+        colors: Array<{ color: string; quantity: number }>;
+        sizes: Array<{ size: string; quantity: number }>;
+        offerPrice: number;
+        buyingPrice: number;
+        images: string[];
+        code: string;
+        productType: string; // Include productType
+    };
+    onSelect: (product: IOrderProduct) => void;
+}
 
-    const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({ product, onSelect }) => {
-        const [selectedColor, setSelectedColor] = useState<string>('');
-        const [selectedSize, setSelectedSize] = useState<string>('');
-        const [quantity, setQuantity] = useState<number>(1);
+const ProductSelectionCard: React.FC<ProductSelectionCardProps> = ({ product, onSelect }) => {
+    const [selectedColor, setSelectedColor] = useState<string>('');
+    const [selectedSize, setSelectedSize] = useState<string>('');
+    const [quantity, setQuantity] = useState<number>(1);
 
-        const handleSelect = () => {
-            if (selectedColor && selectedSize && quantity > 0) {
-                onSelect({
-                    productType: product.productType, // Include productType
-                    productId: product._id,
-                    productName: product.product_name,
-                    productCode: product.code,
-                    color: selectedColor,
-                    size: selectedSize,
-                    quantity,
-                    buyingPrice: product.buyingPrice,
-                    offerPrice: product.offerPrice,
-                    productImage: product.images[0] || '/placeholder.png',
-                });
-                // Reset selection
-                setSelectedColor('');
-                setSelectedSize('');
-                setQuantity(1);
-            } else {
-                alert('Please select color, size, and specify quantity.');
-            }
-        };
-
-        return (
-            <div className="border p-4 rounded-lg shadow-md">
-                {/* Product Image */}
-                <div className="mb-2">
-                    <Image
-                        src={product.images[0] || "/placeholder.png"}
-                        alt={product.product_name}
-                        width={200}
-                        height={200}
-                        className="w-full h-32 object-cover rounded"
-                    />
-                </div>
-                <h5 className="font-medium text-gray-700 dark:text-gray-200 mb-2">{product.product_name}</h5>
-                <p className="text-gray-500 dark:text-gray-400 mb-2">Code: {product.code}</p> {/* Display product code */}
-                <div className="mb-2">
-                    <label className="block text-sm text-gray-600 dark:text-gray-300">Color:</label>
-                    <select
-                        value={selectedColor}
-                        onChange={(e) => setSelectedColor(e.target.value)}
-                        className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                        <option value="">Select Color</option>
-                        {product.colors.map((colorItem) => (
-                            <option key={colorItem.color} value={colorItem.color} disabled={colorItem.quantity === 0}>
-                                {colorItem.color} {colorItem.quantity === 0 && '(Out of Stock)'}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                <div className="mb-2">
-                    <label className="block text-sm text-gray-600 dark:text-gray-300">Size:</label>
-                    <select
-                        value={selectedSize}
-                        onChange={(e) => setSelectedSize(e.target.value)}
-                        className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                        <option value="">Select Size</option>
-                        {product.sizes.map((sizeItem) => (
-                            <option key={sizeItem.size} value={sizeItem.size} disabled={sizeItem.quantity === 0}>
-                                {sizeItem.size} {sizeItem.quantity === 0 && '(Out of Stock)'}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-                <div className="mb-2">
-                    <label className="block text-sm text-gray-600 dark:text-gray-300">Quantity:</label>
-                    <input
-                        type="number"
-                        min={1}
-                        max={10}
-                        value={quantity}
-                        onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
-                        className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                </div>
-                <button
-                    type="button"
-                    onClick={handleSelect}
-                    className="w-full mt-3 px-3 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 shadow-md"
-                >
-                    Select
-                </button>
-            </div>
-        );
+    const handleSelect = () => {
+        if (selectedColor && selectedSize && quantity > 0) {
+            onSelect({
+                productType: product.productType, // Include productType
+                productId: product._id,
+                productName: product.product_name,
+                productCode: product.code,
+                color: selectedColor,
+                size: selectedSize,
+                quantity,
+                buyingPrice: product.buyingPrice,
+                offerPrice: product.offerPrice,
+                productImage: product.images[0] || '/placeholder.png',
+            });
+            // Reset selection
+            setSelectedColor('');
+            setSelectedSize('');
+            setQuantity(1);
+        } else {
+            alert('Please select color, size, and specify quantity.');
+        }
     };
 
-    export default CreateOrderModal;
-    export { ProductSelectionCard };
+    return (
+        <div className="border p-4 rounded-lg shadow-md">
+            {/* Product Image */}
+            <div className="mb-2">
+                <Image
+                    src={product.images[0] || "/placeholder.png"}
+                    alt={product.product_name}
+                    width={200}
+                    height={200}
+                    className="w-full h-32 object-cover rounded"
+                />
+            </div>
+            <h5 className="font-medium text-gray-700 dark:text-gray-200 mb-2">{product.product_name}</h5>
+            <p className="text-gray-500 dark:text-gray-400 mb-2">Code: {product.code}</p> {/* Display product code */}
+            <div className="mb-2">
+                <label className="block text-sm text-gray-600 dark:text-gray-300">Color:</label>
+                <select
+                    value={selectedColor}
+                    onChange={(e) => setSelectedColor(e.target.value)}
+                    className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                    <option value="">Select Color</option>
+                    {product.colors.map((colorItem) => (
+                        <option key={colorItem.color} value={colorItem.color} disabled={colorItem.quantity === 0}>
+                            {colorItem.color} {colorItem.quantity === 0 && '(Out of Stock)'}
+                        </option>
+                    ))}
+                </select>
+            </div>
+            <div className="mb-2">
+                <label className="block text-sm text-gray-600 dark:text-gray-300">Size:</label>
+                <select
+                    value={selectedSize}
+                    onChange={(e) => setSelectedSize(e.target.value)}
+                    className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                    <option value="">Select Size</option>
+                    {product.sizes.map((sizeItem) => (
+                        <option key={sizeItem.size} value={sizeItem.size} disabled={sizeItem.quantity === 0}>
+                            {sizeItem.size} {sizeItem.quantity === 0 && '(Out of Stock)'}
+                        </option>
+                    ))}
+                </select>
+            </div>
+            <div className="mb-2">
+                <label className="block text-sm text-gray-600 dark:text-gray-300">Quantity:</label>
+                <input
+                    type="number"
+                    min={1}
+                    max={10}
+                    value={quantity}
+                    onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                    className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+            </div>
+            <button
+                type="button"
+                onClick={handleSelect}
+                className="w-full mt-3 px-3 py-2 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 shadow-md"
+            >
+                Select
+            </button>
+        </div>
+    );
+};
+
+export default CreateOrderModal;
+export { ProductSelectionCard };
