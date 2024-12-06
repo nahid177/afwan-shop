@@ -5,6 +5,8 @@ import dbConnect from '@/lib/dbConnect';
 import Message from '@/models/Message';
 import { verifyToken } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic'; // Mark the route as dynamic
+
 export async function GET(req: Request) {
   await dbConnect();
 

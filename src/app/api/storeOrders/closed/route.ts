@@ -4,6 +4,8 @@ import { NextResponse, NextRequest } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import StoreOrder from '@/models/StoreOrder';
 
+export const dynamic = 'force-dynamic'; // Mark the route as dynamic
+
 export async function GET(request: NextRequest) {
   await dbConnect();
 
