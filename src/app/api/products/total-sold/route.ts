@@ -11,7 +11,7 @@ export async function GET() {
 
     // Aggregate total sold from Orders with status 'open' and approved: true
     const orderResult = await Order.aggregate([
-      { $match: { status: 'open', approved: true } }, // Updated match condition
+      { $match: { status: 'open', approved: true } },
       { $unwind: '$items' },
       {
         $group: {
@@ -25,7 +25,7 @@ export async function GET() {
 
     // Aggregate total sold from StoreOrders with status 'open' and approved: true
     const storeOrderResult = await StoreOrder.aggregate([
-      { $match: { status: 'open', approved: true } }, // Updated match condition
+      { $match: { status: 'open', approved: true } },
       { $unwind: '$products' },
       {
         $group: {
@@ -41,10 +41,16 @@ export async function GET() {
     const totalSold = totalOrderSold + totalStoreOrderSold;
 
     return NextResponse.json({ totalSold }, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching total products sold:', error);
+
+    let message = 'Error fetching total products sold';
+    if (error instanceof Error) {
+      message = error.message;
+    }
+
     return NextResponse.json(
-      { message: 'Error fetching total products sold' },
+      { message },
       { status: 500 }
     );
   }

@@ -18,6 +18,7 @@ export interface ISubtitle {
 }
 
 export interface IProduct extends Document {
+  _id: mongoose.Types.ObjectId;
   product_name: string;
   code: string[];
   colors: IColorQuantity[];

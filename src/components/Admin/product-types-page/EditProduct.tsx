@@ -7,7 +7,7 @@ import axios from 'axios';
 import { IProduct, ISubtitle, ISizeQuantity, IColorQuantity } from '@/types';
 import Image from 'next/image';
 import { FaTimes } from 'react-icons/fa';
-import { FiTrash2, FiPlus } from 'react-icons/fi';
+import { FiPlus } from 'react-icons/fi';
 
 interface EditProductFormProps {
   productTypeId: string;

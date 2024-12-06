@@ -28,10 +28,16 @@ export async function GET() {
     const yearList = years.map((item) => item.year);
 
     return NextResponse.json(yearList, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching years for closed orders:', error);
+
+    let errorMessage = 'Error fetching years.';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
     return NextResponse.json(
-      { message: 'Error fetching years.' },
+      { message: errorMessage },
       { status: 500 }
     );
   }

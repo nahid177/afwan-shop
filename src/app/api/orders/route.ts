@@ -18,13 +18,13 @@ interface IColorQuantity {
 }
 
 interface IProduct {
-  images: string[];               // Changed from any to string[]
+  images: string[];
   _id: mongoose.Types.ObjectId;
   product_name: string;
-  code: string[];                 // Added code field
+  code: string[];
   sizes: ISizeQuantity[];
   colors: IColorQuantity[];
-  buyingPrice: number;            // Ensure buyingPrice is part of the product
+  buyingPrice: number;
 }
 
 interface IProductCategory {
@@ -45,30 +45,13 @@ interface IOrderItem {
   size: string;
   quantity: number;
   price: number;
-  buyingPrice: number; // This will be set on the backend
-  image: string;       // This will be set on the backend
-  code: string[];      // New field to store product codes
-}
-
-interface IOrder {
-  _id: string;
-  customerName: string;
-  customerNumber: string;
-  otherNumber?: string;
-  address1: string;
-  address2?: string;
-  items: IOrderItem[];
-  totalAmount: number;
-  approved: boolean;
-  status: 'open' | 'close'; // New status field
-  createdAt: Date;
-  updatedAt: Date;
+  buyingPrice: number; 
+  image: string;       
+  code: string[];      
 }
 
 export async function POST(req: NextRequest) {
   await dbConnect();
-
-  // Removed session and transaction as we're not modifying inventory here
 
   try {
     const data = await req.json();
@@ -85,7 +68,7 @@ export async function POST(req: NextRequest) {
     const processedItems: IOrderItem[] = [];
 
     for (const item of items) {
-      const { product, color, size, quantity, price } = item; // Exclude buyingPrice, image, and code from frontend
+      const { product, color, size, quantity, price } = item;
 
       // Validate product ID
       if (!mongoose.Types.ObjectId.isValid(product)) {
@@ -118,23 +101,22 @@ export async function POST(req: NextRequest) {
         throw new Error(`Product with ID ${product} not found in the category.`);
       }
 
-      // Optional: You can still validate color and size existence without modifying stock
-      const colorObj = productDoc.colors.find((c: IColorQuantity) => c.color === color);
+      // Validate color existence
+      const colorObj = productDoc.colors.find((c) => c.color === color);
       if (!colorObj) {
         throw new Error(`Color ${color} not available for product ${productDoc.product_name}.`);
       }
 
-      const sizeObj = productDoc.sizes.find((s: ISizeQuantity) => s.size === size);
+      // Validate size existence
+      const sizeObj = productDoc.sizes.find((s) => s.size === size);
       if (!sizeObj) {
         throw new Error(`Size ${size} not available for product ${productDoc.product_name}.`);
       }
 
-      // Fetch buyingPrice, image, and code from productDoc
-      const buyingPrice = productDoc.buyingPrice;
-      const image = productDoc.images[0] || ''; // Default to empty string if no image
-      const code = productDoc.code;             // Fetch the code array
+      // Fetch buyingPrice, image, and code
+      const { buyingPrice, images, code } = productDoc;
+      const image = images[0] || ''; 
 
-      // Create the processed order item
       const processedItem: IOrderItem = {
         product: productId,
         name: productDoc.product_name,
@@ -144,7 +126,7 @@ export async function POST(req: NextRequest) {
         price,
         buyingPrice,
         image,
-        code, // Set the code array
+        code,
       };
 
       processedItems.push(processedItem);
@@ -160,18 +142,22 @@ export async function POST(req: NextRequest) {
       items: processedItems,
       totalAmount,
       approved: false,
-      status: 'open' // Set default status to 'open'
+      status: 'open'
     });
 
     await newOrder.save();
 
     console.log(`Order created successfully with ID: ${newOrder._id}`);
-    console.log('New Order:', newOrder); // Debugging: Log the entire order
+    console.log('New Order:', newOrder);
 
     return NextResponse.json({ orderId: newOrder._id }, { status: 201 });
 
-  } catch (error: any) {
-    console.error('Error placing order:', error.message);
-    return NextResponse.json({ message: error.message }, { status: 400 });
+  } catch (error: unknown) {
+    let errorMessage = 'Unknown error occurred.';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      console.error('Error placing order:', errorMessage);
+    }
+    return NextResponse.json({ message: errorMessage }, { status: 400 });
   }
 }

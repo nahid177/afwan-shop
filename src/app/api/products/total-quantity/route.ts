@@ -70,10 +70,16 @@ export async function GET() {
       result.length > 0 ? result[0].totalProductQuantity : 0;
 
     return NextResponse.json(totalProductQuantity, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching total product quantity:', error);
+
+    let message = 'Error fetching total product quantity';
+    if (error instanceof Error) {
+      message = error.message;
+    }
+
     return NextResponse.json(
-      { message: 'Error fetching total product quantity' },
+      { message },
       { status: 500 }
     );
   }

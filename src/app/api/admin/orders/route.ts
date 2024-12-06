@@ -86,9 +86,8 @@ export async function POST(req: NextRequest) {
       await productType.save({ session });
 
       // Fetch buyingPrice, image, and code from productDoc
-      const buyingPrice = productDoc.buyingPrice;
-      const image = productDoc.images[0] || ''; // Default to empty string if no image
-      const code = productDoc.code;             // Fetch the code array
+      const { buyingPrice, images, code } = productDoc;
+      const image = images[0] || ''; // Default to empty string if no image
 
       // Create the processed order item
       const processedItem: IOrderItem = {
@@ -104,7 +103,6 @@ export async function POST(req: NextRequest) {
       };
 
       console.log("Processed Order Item:", processedItem); // Debugging
-
       processedItems.push(processedItem);
     }
 
@@ -129,11 +127,15 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ orderId: newOrder._id }, { status: 201 });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     await session.abortTransaction();
     session.endSession();
-    console.error('Error placing order:', error.message);
-    return NextResponse.json({ message: error.message }, { status: 400 });
+    let errorMessage = 'Unknown error occurred while placing the order.';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      console.error('Error placing order:', errorMessage);
+    }
+    return NextResponse.json({ message: errorMessage }, { status: 400 });
   }
 }
 
@@ -148,14 +150,19 @@ export async function GET() {
       .lean();
 
     return NextResponse.json(orders, { status: 200 });
-  } catch (error: any) {
-    console.error('Error fetching open orders:', error);
+  } catch (error: unknown) {
+    let errorMessage = 'Error fetching open orders.';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    console.error('Error fetching open orders:', errorMessage);
     return NextResponse.json(
-      { message: 'Error fetching open orders.' },
+      { message: errorMessage },
       { status: 500 }
     );
   }
 }
+
 // DELETE /api/admin/orders/[orderId]
 export async function DELETE(req: NextRequest, { params }: { params: { orderId: string } }) {
   const { orderId } = params;
@@ -168,8 +175,12 @@ export async function DELETE(req: NextRequest, { params }: { params: { orderId: 
       return NextResponse.json({ message: 'Order not found.' }, { status: 404 });
     }
     return NextResponse.json({ message: 'Order deleted successfully.' }, { status: 200 });
-  } catch (error) {
-    console.error('Error deleting order:', error);
-    return NextResponse.json({ message: 'Internal server error.' }, { status: 500 });
+  } catch (error: unknown) {
+    let errorMessage = 'Internal server error.';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+    console.error('Error deleting order:', errorMessage);
+    return NextResponse.json({ message: errorMessage }, { status: 500 });
   }
 }

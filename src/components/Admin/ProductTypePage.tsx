@@ -191,15 +191,14 @@ const ProductTypePage = ({ params }: { params: { id: string } }) => {
           </div>
 
           {/* Display products under each category */}
-          {productType.product_catagory.map((category) => (
-            <div key={category.catagory_name} className="mb-8">
+          {productType.product_catagory.map((category: IProductCategory) => (            <div key={category.category_name} className="mb-8">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-semibold">{category.catagory_name}</h2>
+                <h2 className="text-2xl font-semibold">{category.category_name}</h2>
                 <div>
                   {/* Rename Category Button */}
                   <button
                     onClick={() => {
-                      setSelectedCategory(category.catagory_name);
+                      setSelectedCategory(category.category_name);
                       setIsRenameModalOpen(true);
                     }}
                     className="mr-2 px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
@@ -209,7 +208,7 @@ const ProductTypePage = ({ params }: { params: { id: string } }) => {
                   {/* Delete Category Button */}
                   <button
                     onClick={() => {
-                      setSelectedCategory(category.catagory_name);
+                      setSelectedCategory(category.category_name);
                       setIsDeleteModalOpen(true);
                     }}
                     className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"

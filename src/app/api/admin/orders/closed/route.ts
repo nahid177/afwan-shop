@@ -36,10 +36,16 @@ export async function GET(request: NextRequest) {
       .lean();
 
     return NextResponse.json(orders, { status: 200 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching closed orders:', error);
+
+    let errorMessage = 'Error fetching closed orders.';
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
     return NextResponse.json(
-      { message: 'Error fetching closed orders.' },
+      { message: errorMessage },
       { status: 500 }
     );
   }

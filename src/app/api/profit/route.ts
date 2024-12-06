@@ -8,7 +8,7 @@ import Profit, { IProfit } from '@/models/Profit';
  * GET /api/profit
  * Fetch all Profit documents
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     await dbConnect();
     const profits = await Profit.find({}).sort({ createdAt: -1 });
@@ -17,6 +17,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ success: false, error: (error as Error).message }, { status: 400 });
   }
 }
+
+
 
 /**
  * POST /api/profit

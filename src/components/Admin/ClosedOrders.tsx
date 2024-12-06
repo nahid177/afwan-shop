@@ -1,3 +1,5 @@
+// src/components/Admin/ClosedOrders.tsx
+
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -7,7 +9,7 @@ import Toast from "@/components/Toast/Toast";
 import { FaEye, FaEyeSlash, FaTimes, FaDownload } from "react-icons/fa";
 import Image from "next/image";
 import Link from "next/link";
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
 import "jspdf-autotable";
 
 // Helper function to extract error message
@@ -166,6 +168,20 @@ const ClosedOrders: React.FC = () => {
     setSelectedYear(year);
   };
 
+  // Define the HookData interface within the same file
+  interface HookData {
+    pageNumber: number;
+    settings: {
+      margin: {
+        left: number;
+        right: number;
+        top: number;
+        bottom: number;
+      };
+    };
+    doc: jsPDF;
+  }
+
   // Function to generate and download PDF
   const handleDownloadPDF = () => {
     const doc = new jsPDF();
@@ -235,14 +251,14 @@ const ClosedOrders: React.FC = () => {
         halign: "center",
       },
       theme: "striped",
-      didDrawPage: (data: jsPDF.AutoTable.HookData) => {
+      didDrawPage: (data: HookData) => { // Use HookData instead of any
         // Footer
-        const pageCount = doc.getNumberOfPages();
-        doc.setFontSize(10);
-        doc.text(
+        const pageCount = data.doc.getNumberOfPages();
+        data.doc.setFontSize(10);
+        data.doc.text(
           `Page ${data.pageNumber} of ${pageCount}`,
           data.settings.margin.left,
-          doc.internal.pageSize.height - 10
+          data.doc.internal.pageSize.height - 10
         );
       },
     });

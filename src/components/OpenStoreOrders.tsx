@@ -1,10 +1,7 @@
-// src/components/Admin/OpenStoreOrders.tsx
-
 "use client";
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { IStoreOrder } from "@/types";
 import Link from "next/link";
 import Toast from "@/components/Toast/Toast";
 import ConfirmationModal from "@/components/Admin/ConfirmationModal";
@@ -15,6 +12,101 @@ import {
   FaChevronDown,
   FaChevronUp,
 } from "react-icons/fa";
+import mongoose from 'mongoose';
+import { StaticImageData } from 'next/image';
+
+export interface IColorQuantity {
+  color: string;
+  quantity: number;
+}
+
+export interface ISizeQuantity {
+  size: string;
+  quantity: number;
+}
+
+export interface ISubtitle {
+  title: string;
+  titledetail: string;
+}
+
+export interface IProduct {
+  imageFiles?: File[]; 
+  _id?: mongoose.Types.ObjectId;
+  product_name: string;
+  code: string[];
+  colors: IColorQuantity[];
+  sizes: ISizeQuantity[];
+  originalPrice: number;
+  offerPrice: number;
+  buyingPrice: number;
+  title: string[];
+  subtitle: ISubtitle[];
+  description: string;
+  images: string[];
+  totalQuantity?: number;
+}
+
+export interface IProductCategory {
+  category_name: string; 
+  product: IProduct[];
+}
+
+export interface IProductType {
+  product_catagory: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  _id: string;
+  types_name: string;
+  product_category: IProductCategory[];
+}
+
+// Update this to match the backend schema ('open'|'closed')
+export type OrderStatus = "open" | "closed";
+
+// Interfaces for orders
+export interface IStoreOrderProduct {
+  productCode: string;
+  _id?: string;
+  offerPrice: number;
+  productName: string;
+  productImage: string;
+  product?: mongoose.Types.ObjectId; 
+  quantity: number;
+  color?: string;
+  size?: string;
+  buyingPrice?: number; 
+  productId?: string;
+  productType?: string; 
+}
+
+export interface IStoreOrder {
+  status: OrderStatus; 
+  code: string;
+  image: string | StaticImageData; 
+  buyingPrice: number; 
+  _id: string;
+  customerName: string;
+  customerEmail: string;
+  customerPhone: string;
+  products: IStoreOrderProduct[];
+  totalAmount: number;
+  approved: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
+  totalBeforeDiscount?: number;  
+}
+
+export interface IOrderProduct {
+  productType: string;
+  productId: string;
+  productName: string;
+  productCode: string;
+  quantity: number;
+  color?: string;
+  size?: string;
+  buyingPrice?: number;
+  offerPrice: number;
+  productImage: string;
+}
 
 const OpenStoreOrders: React.FC = () => {
   const [storeOrders, setStoreOrders] = useState<IStoreOrder[]>([]);
@@ -39,7 +131,7 @@ const OpenStoreOrders: React.FC = () => {
 
   // Confirmation Modal state for Closing
   const [isCloseModalOpen, setIsCloseModalOpen] = useState<boolean>(false);
-  const [orderToClose, setOrderToClose] = useState<string>("");
+  const [orderToClose] = useState<string>("");
 
   // Confirmation Modal state for Closing All Orders
   const [isCloseAllModalOpen, setIsCloseAllModalOpen] =
@@ -250,13 +342,9 @@ const OpenStoreOrders: React.FC = () => {
     setIsConfirmModalOpen(true);
   };
 
-  const openCloseModal = (orderId: string) => {
-    setOrderToClose(orderId);
-    setIsCloseModalOpen(true);
-  };
 
   const openCloseAllModal = () => {
-    setCloseAllConfirmationsLeft(3); // Set to 3 confirmations required
+    setCloseAllConfirmationsLeft(3); 
     setIsCloseAllModalOpen(true);
   };
 
@@ -379,9 +467,7 @@ const OpenStoreOrders: React.FC = () => {
                   <div className="flex items-center justify-center">
                     Buying Price
                     <button
-                      onClick={() =>
-                        setShowSensitiveInfo(!showSensitiveInfo)
-                      }
+                      onClick={() => setShowSensitiveInfo(!showSensitiveInfo)}
                       className="ml-2 text-gray-600 hover:text-gray-800"
                       aria-label={
                         showSensitiveInfo
@@ -401,13 +487,11 @@ const OpenStoreOrders: React.FC = () => {
             </thead>
             <tbody>
               {storeOrders.map((order) => {
-                // Calculations and state
                 const totalBuyingPrice = order.products
                   ? order.products.reduce(
                       (sum, product) =>
                         sum +
-                        (product.buyingPrice || 0) *
-                          (product.quantity || 0),
+                        ((product.buyingPrice || 0) * (product.quantity || 0)),
                       0
                     )
                   : 0;
@@ -429,21 +513,15 @@ const OpenStoreOrders: React.FC = () => {
                   <React.Fragment key={order._id}>
                     <tr className={rowClasses}>
                       <td className="py-2 px-4 border-b">{order.code}</td>
-                      <td className="py-2 px-4 border-b">
-                        {order.customerName}
-                      </td>
-                      <td className="py-2 px-4 border-b">
-                        {order.customerPhone}
-                      </td>
+                      <td className="py-2 px-4 border-b">{order.customerName}</td>
+                      <td className="py-2 px-4 border-b">{order.customerPhone}</td>
                       <td className="py-2 px-4 border-b">
                         {order.products &&
                         order.products.length > 0 &&
                         order.products[0].productImage ? (
                           <button
                             onClick={() =>
-                              openImageModal(
-                                order.products[0].productImage
-                              )
+                              openImageModal(order.products[0].productImage)
                             }
                             className="focus:outline-none"
                             aria-label="View full image"
@@ -461,38 +539,29 @@ const OpenStoreOrders: React.FC = () => {
                         )}
                       </td>
                       <td className="py-2 px-4 border-b">
-                        Tk.{" "}
-                        {order.totalAmount
-                          ? order.totalAmount.toFixed(2)
-                          : "0.00"}
+                        Tk. {order.totalAmount ? order.totalAmount.toFixed(2) : "0.00"}
                       </td>
                       <td className="py-2 px-4 border-b">
                         {showSensitiveInfo ? (
-                          `Tk. ${totalBuyingPrice.toFixed(2)}`
+                          <>Tk. {totalBuyingPrice.toFixed(2)}</>
                         ) : (
                           <span className="text-gray-500">•••••</span>
                         )}
                       </td>
                       <td className="py-2 px-4 border-b">
                         {showSensitiveInfo ? (
-                          `Tk. ${profit.toFixed(2)}`
+                          <>Tk. {profit.toFixed(2)}</>
                         ) : (
                           <span className="text-gray-500">•••••</span>
                         )}
                       </td>
                       <td className="py-2 px-4 border-b">
                         {order.status === "closed" ? (
-                          <span className="text-red-600 font-semibold">
-                            Closed
-                          </span>
+                          <span className="text-red-600 font-semibold">Closed</span>
                         ) : order.approved ? (
-                          <span className="text-green-600 font-semibold">
-                            Approved
-                          </span>
+                          <span className="text-green-600 font-semibold">Approved</span>
                         ) : (
-                          <span className="text-yellow-600 font-semibold">
-                            Pending
-                          </span>
+                          <span className="text-yellow-600 font-semibold">Pending</span>
                         )}
                       </td>
                       <td className="py-2 px-4 border-b">
@@ -501,16 +570,15 @@ const OpenStoreOrders: React.FC = () => {
                             View
                           </button>
                         </Link>
-                        {!order.approved &&
-                          order.status !== "closed" && (
-                            <button
-                              onClick={() => openConfirmModal(order._id)}
-                              className="mr-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-                              aria-label={`Confirm order ${order.code}`}
-                            >
-                              Confirm
-                            </button>
-                          )}
+                        {!order.approved && order.status !== "closed" && (
+                          <button
+                            onClick={() => openConfirmModal(order._id)}
+                            className="mr-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                            aria-label={`Confirm order ${order.code}`}
+                          >
+                            Confirm
+                          </button>
+                        )}
                         <button
                           onClick={() => openDeleteModal(order._id)}
                           className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
@@ -532,13 +600,11 @@ const OpenStoreOrders: React.FC = () => {
                           >
                             {isExpanded ? (
                               <>
-                                Hide Products{" "}
-                                <FaChevronUp className="ml-1" />
+                                Hide Products <FaChevronUp className="ml-1" />
                               </>
                             ) : (
                               <>
-                                View Products{" "}
-                                <FaChevronDown className="ml-1" />
+                                View Products <FaChevronDown className="ml-1" />
                               </>
                             )}
                           </button>
@@ -551,36 +617,18 @@ const OpenStoreOrders: React.FC = () => {
                       <tr>
                         <td colSpan={10} className="bg-gray-100">
                           <div className="p-4">
-                            <h2 className="text-lg font-semibold mb-2">
-                              Products
-                            </h2>
+                            <h2 className="text-lg font-semibold mb-2">Products</h2>
                             <table className="min-w-full bg-white dark:bg-gray-700">
                               <thead>
                                 <tr>
-                                  <th className="py-2 px-4 border-b">
-                                    Product Name
-                                  </th>
-                                  <th className="py-2 px-4 border-b">
-                                    Product Code
-                                  </th>
-                                  <th className="py-2 px-4 border-b">
-                                    Image
-                                  </th>
-                                  <th className="py-2 px-4 border-b">
-                                    Quantity
-                                  </th>
-                                  <th className="py-2 px-4 border-b">
-                                    Color
-                                  </th>
-                                  <th className="py-2 px-4 border-b">
-                                    Size
-                                  </th>
-                                  <th className="py-2 px-4 border-b">
-                                    Buying Price
-                                  </th>
-                                  <th className="py-2 px-4 border-b">
-                                    Offer Price
-                                  </th>
+                                  <th className="py-2 px-4 border-b">Product Name</th>
+                                  <th className="py-2 px-4 border-b">Product Code</th>
+                                  <th className="py-2 px-4 border-b">Image</th>
+                                  <th className="py-2 px-4 border-b">Quantity</th>
+                                  <th className="py-2 px-4 border-b">Color</th>
+                                  <th className="py-2 px-4 border-b">Size</th>
+                                  <th className="py-2 px-4 border-b">Buying Price</th>
+                                  <th className="py-2 px-4 border-b">Offer Price</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -589,20 +637,12 @@ const OpenStoreOrders: React.FC = () => {
                                     key={product._id}
                                     className="text-center hover:bg-gray-200 transition-colors duration-200"
                                   >
-                                    <td className="py-2 px-4 border-b">
-                                      {product.productName}
-                                    </td>
-                                    <td className="py-2 px-4 border-b">
-                                      {product.productCode}
-                                    </td>
+                                    <td className="py-2 px-4 border-b">{product.productName}</td>
+                                    <td className="py-2 px-4 border-b">{product.productCode}</td>
                                     <td className="py-2 px-4 border-b">
                                       {product.productImage ? (
                                         <button
-                                          onClick={() =>
-                                            openImageModal(
-                                              product.productImage
-                                            )
-                                          }
+                                          onClick={() => openImageModal(product.productImage)}
                                           className="focus:outline-none"
                                           aria-label="View full image"
                                         >
@@ -618,17 +658,11 @@ const OpenStoreOrders: React.FC = () => {
                                         "N/A"
                                       )}
                                     </td>
+                                    <td className="py-2 px-4 border-b">{product.quantity}</td>
+                                    <td className="py-2 px-4 border-b">{product.color || "N/A"}</td>
+                                    <td className="py-2 px-4 border-b">{product.size || "N/A"}</td>
                                     <td className="py-2 px-4 border-b">
-                                      {product.quantity}
-                                    </td>
-                                    <td className="py-2 px-4 border-b">
-                                      {product.color || "N/A"}
-                                    </td>
-                                    <td className="py-2 px-4 border-b">
-                                      {product.size || "N/A"}
-                                    </td>
-                                    <td className="py-2 px-4 border-b">
-                                      Tk. {product.buyingPrice.toFixed(2)}
+                                      Tk. {(product.buyingPrice?.toFixed(2) || "0.00")}
                                     </td>
                                     <td className="py-2 px-4 border-b">
                                       Tk. {product.offerPrice.toFixed(2)}

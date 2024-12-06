@@ -4,7 +4,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import StoreOrder from '@/models/StoreOrder';
 import mongoose from 'mongoose';
-import { v4 as uuidv4 } from 'uuid'; // Install uuid: npm install uuid
+import { v4 as uuidv4 } from 'uuid'; // Install uuid if not already done: npm install uuid
+
+interface IStoreOrderProductPayload {
+  buyingPrice: number;
+  offerPrice: number;
+  productImage: string;
+  productName: string;
+  // Add any other required product fields here
+}
+
+interface IStoreOrderPayload {
+  customerName: string;
+  customerPhone: string;
+  products: IStoreOrderProductPayload[];
+  totalAmount: number;
+  // Add any other required fields (if needed) such as customerEmail, status, etc.
+}
 
 // GET: Retrieve all store orders with status 'open'
 export async function GET() {
@@ -12,9 +28,7 @@ export async function GET() {
 
   try {
     // Fetch all store orders where status is 'open'
-    const storeOrders = await StoreOrder.find({ status: 'open' })
-      .select('-__v'); // Exclude __v field if not needed
-
+    const storeOrders = await StoreOrder.find({ status: 'open' }).select('-__v');
     return NextResponse.json(storeOrders, { status: 200 });
   } catch (error: unknown) {
     console.error('Error fetching store orders:', error);
@@ -30,7 +44,7 @@ export async function POST(request: NextRequest) {
   await dbConnect();
 
   try {
-    const data = await request.json();
+    const data = (await request.json()) as IStoreOrderPayload;
 
     // Basic Validation
     if (!data.customerName || !data.customerPhone || !data.products || !data.totalAmount) {
@@ -40,18 +54,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate each product has required fields
-    const isValid = data.products.every(
-      (product: any) =>
-        typeof product.buyingPrice === 'number' &&
-        typeof product.offerPrice === 'number' &&
-        typeof product.productImage === 'string' &&
-        typeof product.productName === 'string'
+    // Validate each product
+    const isValid = data.products.every((product: IStoreOrderProductPayload) =>
+      typeof product.buyingPrice === 'number' &&
+      typeof product.offerPrice === 'number' &&
+      typeof product.productImage === 'string' &&
+      typeof product.productName === 'string'
     );
 
     if (!isValid) {
       return NextResponse.json(
-        { message: 'Each product must have buyingPrice (number), offerPrice (number), productImage (string), and productName (string).' },
+        {
+          message:
+            'Each product must have buyingPrice (number), offerPrice (number), productImage (string), and productName (string).'
+        },
         { status: 400 }
       );
     }
@@ -64,17 +80,19 @@ export async function POST(request: NextRequest) {
       code: uniqueCode, // Assign the unique code
       status: 'open', // Ensure the default status is 'open'
     });
+
     const savedOrder = await newStoreOrder.save();
     return NextResponse.json(savedOrder, { status: 201 });
   } catch (error: unknown) {
     console.error('Error creating store order:', error);
-    // If error is a Mongoose ValidationError, extract the message
+
     if (error instanceof mongoose.Error.ValidationError) {
       return NextResponse.json(
         { message: error.message },
         { status: 400 }
       );
     }
+
     return NextResponse.json(
       { message: 'Error creating store order.' },
       { status: 500 }

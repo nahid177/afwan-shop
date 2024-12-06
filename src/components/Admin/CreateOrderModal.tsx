@@ -99,6 +99,12 @@ const CreateOrderModal: React.FC<CreateOrderModalProps> = ({ isOpen, onClose, pr
             totalAmount: finalAmount,
             totalBeforeDiscount: totalAmount,
             discount: discount,
+            status: 'Closed',
+            code: '',
+            buyingPrice: 0,
+            approved: false,
+            image: '',
+            customerEmail: ''
         };
 
         onCreateOrder(orderData);

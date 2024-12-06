@@ -30,11 +30,11 @@ const OtherProducts: React.FC<OtherProductsProps> = ({ categoryName, id }) => {
           `/api/product-types/${id}/categories/${categoryName}/products`
         );
         setOtherProducts(response.data);
-      } catch (error: any) {
-        if (axios.isAxiosError(error)) {
-          setError(error.response?.data?.message || "Failed to fetch other products.");
-        } else if (error instanceof Error) {
-          setError(error.message);
+      } catch (err: unknown) { // Use 'unknown' instead of 'any'
+        if (axios.isAxiosError(err)) {
+          setError(err.response?.data?.message || "Failed to fetch other products.");
+        } else if (err instanceof Error) {
+          setError(err.message);
         } else {
           setError("An unexpected error occurred.");
         }
@@ -42,9 +42,10 @@ const OtherProducts: React.FC<OtherProductsProps> = ({ categoryName, id }) => {
         setLoading(false);
       }
     };
-
+  
     fetchOtherProducts();
   }, [categoryName, id]);
+  
 
   if (loading) {
     return (

@@ -19,28 +19,29 @@ export interface ISubtitle {
 }
 
 export interface IProduct {
-  imageFiles: File[]; // Changed from never[] to File[]
+  imageFiles?: File[]; // Optional now
   _id?: mongoose.Types.ObjectId;
   product_name: string;
-  code: string[]; // Assuming multiple codes per product
+  code: string[];
   colors: IColorQuantity[];
   sizes: ISizeQuantity[];
   originalPrice: number;
   offerPrice: number;
-  buyingPrice: number; // New Field
+  buyingPrice: number;
   title: string[];
   subtitle: ISubtitle[];
   description: string;
   images: string[];
-  totalQuantity?: number; // Optional field for total quantity
+  totalQuantity?: number;
 }
 
 export interface IProductCategory {
-  category_name: string; // Corrected spelling from 'catagory_name' to 'category_name'
+  category_name: string; // Correct spelling
   product: IProduct[];
 }
 
 export interface IProductType {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   product_catagory: any;
   _id: string;
   types_name: string;
@@ -73,6 +74,7 @@ export interface IStoreOrder {
   image: string | StaticImageData; // Changed from StaticImport to StaticImageData
   buyingPrice: number; // Changed from any to number
   _id: string;
+  discount: number; // Add this line
   customerName: string;
   customerEmail: string;
   customerPhone: string;

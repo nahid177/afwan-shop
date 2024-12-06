@@ -3,8 +3,9 @@
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Profit, { IOtherCost } from '@/models/Profit';
-import { Order, IOrderDocument } from '@/models/Order';
-import StoreOrder, { IStoreOrderDocument } from '@/models/StoreOrder';
+import { Order, IOrder } from '@/models/Order';
+import StoreOrder, { IStoreOrderDocument, IStoreOrderProduct } from '@/models/StoreOrder';
+import { IOrderItem } from '@/models/Order';
 
 /**
  * POST /api/profit/close
@@ -24,34 +25,44 @@ export async function POST() {
       );
     }
 
-    // Recalculate profits based on approved Orders and StoreOrders
-    const approvedOrders: IOrderDocument[] = await Order.find({ approved: true });
+    // Fetch approved Orders and StoreOrders
+    const approvedOrders: IOrder[] = await Order.find({ approved: true });
     const approvedStoreOrders: IStoreOrderDocument[] = await StoreOrder.find({ approved: true });
 
     // Function to calculate totals from orders
-    const calculateTotals = (orders: Array<IOrderDocument | IStoreOrderDocument>) => {
+    const calculateTotals = (orders: Array<IOrder | IStoreOrderDocument>) => {
       let totalProductsSold = 0;
       let totalRevenue = 0;
       let totalCostOfGoodsSold = 0;
 
-      orders.forEach(order => {
-        let products: any[] = [];
+      for (const order of orders) {
         let orderTotal = 0;
-        let buyingPriceField: keyof any = 'buyingPrice'; // Adjusted to 'any' for flexibility
 
-        if ('products' in order) { // StoreOrder
-          products = order.products;
+        if ('products' in order) {
+          // It's a StoreOrder
+          const products: IStoreOrderProduct[] = order.products;
           orderTotal = order.totalAmount;
-        } else { // Order
-          products = order.items;
+
+          totalProductsSold += products.reduce((sum, product) => sum + product.quantity, 0);
+          totalRevenue += orderTotal;
+          totalCostOfGoodsSold += products.reduce(
+            (sum, product) => sum + (product.buyingPrice || 0) * product.quantity,
+            0
+          );
+
+        } else {
+          // It's a normal Order
+          const products: IOrderItem[] = order.items;
           orderTotal = order.totalAmount;
-          buyingPriceField = 'buyingPrice';
+
+          totalProductsSold += products.reduce((sum, product) => sum + product.quantity, 0);
+          totalRevenue += orderTotal;
+          totalCostOfGoodsSold += products.reduce(
+            (sum, product) => sum + (product.buyingPrice || 0) * product.quantity,
+            0
+          );
         }
-
-        totalProductsSold += products.reduce((sum, product) => sum + product.quantity, 0);
-        totalRevenue += orderTotal;
-        totalCostOfGoodsSold += products.reduce((sum, product) => sum + (product[buyingPriceField] || 0) * product.quantity, 0);
-      });
+      }
 
       return { totalProductsSold, totalRevenue, totalCostOfGoodsSold };
     };
@@ -62,14 +73,13 @@ export async function POST() {
     // Calculate totals for StoreOrders
     const storeOrderTotals = calculateTotals(approvedStoreOrders);
 
-    // Aggregate totals from both models
+    // Aggregate totals from both
     const totalProductsSold = orderTotals.totalProductsSold + storeOrderTotals.totalProductsSold;
     const totalRevenue = orderTotals.totalRevenue + storeOrderTotals.totalRevenue;
     const totalCostOfGoodsSold = orderTotals.totalCostOfGoodsSold + storeOrderTotals.totalCostOfGoodsSold;
 
     // Fetch otherCosts from the current Profit document
-    let otherCosts: IOtherCost[] = currentProfit.otherCosts || [];
-
+    const otherCosts: IOtherCost[] = currentProfit.otherCosts || [];
     const totalOtherCosts = otherCosts.reduce((acc, cost) => acc + cost.amount, 0);
 
     // Calculate ourProfit
@@ -79,8 +89,7 @@ export async function POST() {
     currentProfit.totalProductsSold = totalProductsSold;
     currentProfit.totalRevenue = totalRevenue;
     currentProfit.ourProfit = ourProfit;
-    currentProfit.status = 'closed'; // Mark as closed
-
+    currentProfit.status = 'closed'; 
     await currentProfit.save();
 
     // Create a new Profit document for ongoing calculations
@@ -88,8 +97,8 @@ export async function POST() {
       totalProductsSold: 0,
       totalRevenue: 0,
       ourProfit: 0,
-      otherCosts: otherCosts, // Carry forward otherCosts if necessary
-      titles: currentProfit.titles || [], // Carry forward titles
+      otherCosts: otherCosts,
+      titles: currentProfit.titles || [],
       status: 'open',
     });
 

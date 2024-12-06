@@ -1,6 +1,6 @@
 // src/app/api/profit/recalculate/route.ts
 
-import { NextResponse, NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import Profit, { IOtherCost } from '@/models/Profit';
 import { Order, IOrder } from '@/models/Order';
@@ -10,7 +10,7 @@ import StoreOrder, { IStoreOrderDocument } from '@/models/StoreOrder';
  * POST /api/profit/recalculate
  * Recalculate profit based on approved and open Orders and StoreOrders
  */
-export async function POST(_request: NextRequest) {
+export async function POST() {
   try {
     await dbConnect();
 

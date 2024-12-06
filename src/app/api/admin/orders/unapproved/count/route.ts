@@ -1,9 +1,7 @@
-// src/app/api/admin/orders/unapproved/count/route.ts
-
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import { Order } from '@/models/Order';
-import { verifyToken } from '@/lib/auth'; // Updated import
+import { verifyToken } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
   console.log('Received GET request at /api/admin/orders/unapproved/count');
@@ -12,6 +10,15 @@ export async function GET(req: NextRequest) {
     // Authenticate the request
     const authHeader = req.headers.get('Authorization');
     const token = authHeader?.split(' ')[1];
+
+    // Check if the token is available
+    if (!token) {
+      console.warn('Token is missing.');
+      return NextResponse.json(
+        { message: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     const decoded = verifyToken(token);
 
