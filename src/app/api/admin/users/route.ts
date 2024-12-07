@@ -4,11 +4,9 @@ import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import User from '@/models/User';
 import { verifyToken } from '@/lib/auth';
-import { IUser } from '@/interfaces/IUser';
+import { IUser } from '@/interfaces/IUser'; // Ensure this interface is correctly defined
 
-// Mark the route as dynamic
-export const dynamic = 'force-dynamic';
-
+// Define an interface that extends IUser and includes sentStatsCount
 interface UserWithSentStats extends Omit<IUser, 'id'> {
   sentStatsCount: number;
 }
@@ -34,16 +32,16 @@ export async function GET(req: Request) {
     const usersWithSentStats: UserWithSentStats[] = await User.aggregate([
       {
         $lookup: {
-          from: 'messages',
-          let: { userId: '$_id' },
+          from: 'messages', // Ensure this matches the actual collection name in MongoDB
+          let: { userId: '$_id' }, // Use ObjectId directly without converting to string
           pipeline: [
             {
               $match: {
                 $expr: {
                   $and: [
-                    { $eq: ['$userId', '$$userId'] },
+                    { $eq: ['$userId', '$$userId'] }, // Match ObjectId directly
                     { $eq: ['$sender', 'User'] },
-                    { $eq: ['$status', 'sent'] },
+                    { $eq: ['$status', 'sent'] }, // Add status filter
                   ],
                 },
               },

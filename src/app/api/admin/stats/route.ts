@@ -7,8 +7,6 @@ import Message from "@/models/Message";
 import { verifyToken } from "@/lib/auth";
 import { ApiAdminStatsResponse } from "@/interfaces/ApiAdminStatsResponse";
 
-export const dynamic = 'force-dynamic'; // Mark the route as dynamic
-
 export async function GET(req: Request) {
   await dbConnect();
 
@@ -25,18 +23,18 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: "Invalid token" }, { status: 403 });
     }
 
-    // Fetch total registrations
+    // Fetch total registrations from AdminUser model
     const totalRegistrations = await AdminUser.countDocuments();
 
     // Fetch total logins by counting all login events across AdminUser's devices
     const totalLoginsResult = await AdminUser.aggregate([
-      { $unwind: "$devices" },
-      { $count: "logins" },
+      { $unwind: "$devices" }, // Deconstruct the devices array
+      { $count: "logins" }, // Count total logins
     ]);
 
     const totalLogins = totalLoginsResult[0]?.logins || 0;
 
-    // Fetch user-sent messages not seen by admin
+    // Fetch user-sent messages not yet seen by admin
     const userSentMessagesNotSeen = await Message.countDocuments({
       status: "sent",
       sender: "User",
