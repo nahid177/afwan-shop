@@ -1,10 +1,10 @@
 // src/app/api/admin/users/route.ts
 
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import User from '@/models/User';
-import { verifyToken } from '@/lib/auth';
 import { IUser } from '@/interfaces/IUser'; // Ensure this interface is correctly defined
+import { jwtVerify } from "jose";
 
 // Add this line to force the route to be dynamic
 export const dynamic = 'force-dynamic';
@@ -14,22 +14,29 @@ interface UserWithSentStats extends Omit<IUser, 'id'> {
   sentStatsCount: number;
 }
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   await dbConnect();
 
   try {
-    // Extract the token from the Authorization header
-    const authHeader = req.headers.get('Authorization');
-    const token = authHeader?.split(' ')[1];
+    // Extract the token from the cookies
+    const token = req.cookies.get('token')?.value;
     if (!token) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
     // Verify the token
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return NextResponse.json({ message: 'Invalid token' }, { status: 403 });
+    const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "yourSuperSecretKeyHere");
+    let payload;
+    try {
+      const { payload: verifiedPayload } = await jwtVerify(token, JWT_SECRET);
+      payload = verifiedPayload;
+    } catch (error) {
+      console.error("Token verification failed:", error);
+      return NextResponse.json({ message: 'Invalid or expired token' }, { status: 403 });
     }
+
+    // **Utilize the payload** (e.g., log the user ID or enforce authorization)
+    console.log(`Authenticated user ID: ${payload.userId}`);
 
     // Fetch users along with the count of sent messages (status: "sent")
     const usersWithSentStats: UserWithSentStats[] = await User.aggregate([
@@ -68,6 +75,8 @@ export async function GET(req: Request) {
         },
       },
     ]);
+
+    // **Optional:** Further utilize `payload` for authorization (e.g., check user roles)
 
     return NextResponse.json({ users: usersWithSentStats }, { status: 200 });
   } catch (error) {

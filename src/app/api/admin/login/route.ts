@@ -1,58 +1,74 @@
-import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/dbConnect';
-import AdminUser from '@/models/AdminUser';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
+// src/app/api/admin/login/route.ts
 
-// Connect to the database
-dbConnect();
+import { NextResponse, NextRequest } from "next/server";
+import dbConnect from "@/lib/dbConnect";
+import AdminUser from "@/models/AdminUser";
+import bcrypt from "bcrypt";
+import { SignJWT } from "jose";
 
-// Secret key for JWT (should be stored in environment variables)
-const JWT_SECRET = process.env.JWT_SECRET || 'secret';
+export const dynamic = "force-dynamic"; // Mark the route as dynamic
 
-// Handle POST request for admin login
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  await dbConnect();
+
   try {
     const { username, password, deviceId } = await req.json();
 
     // Validate input
     if (!username || !password || !deviceId) {
-      return NextResponse.json({ message: 'Username, password, and device ID are required' }, { status: 400 });
+      return NextResponse.json(
+        { message: "Username, password, and device ID are required." },
+        { status: 400 }
+      );
     }
 
-    // Find the user by username
+    // Find user by username
     const adminUser = await AdminUser.findOne({ username });
     if (!adminUser) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 });
+      return NextResponse.json({ message: "User not found." }, { status: 404 });
     }
 
-    // Check if the password is correct
-    const isPasswordCorrect = await bcrypt.compare(password, adminUser.password);
-    if (!isPasswordCorrect) {
-      return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
+    // Check password
+    const isPasswordValid = await bcrypt.compare(password, adminUser.password);
+    if (!isPasswordValid) {
+      return NextResponse.json({ message: "Invalid credentials." }, { status: 401 });
     }
 
-    // Check if the device is already registered
-    if (adminUser.devices.includes(deviceId)) {
-      // Device is already registered, generate JWT
-      const token = jwt.sign({ userId: adminUser._id, deviceId }, JWT_SECRET, { expiresIn: '1h' });
-      return NextResponse.json({ message: 'Login successful', token }, { status: 200 });
+    // Check device limit
+    if (adminUser.devices.length >= 2 && !adminUser.devices.includes(deviceId)) {
+      return NextResponse.json(
+        { message: "Maximum devices reached. Cannot log in from this device." },
+        { status: 403 }
+      );
     }
 
-    // If there are already 2 devices registered, deny access
-    if (adminUser.devices.length >= 2) {
-      return NextResponse.json({ message: 'Maximum devices reached. Cannot log in from this device.' }, { status: 403 });
+    // Add deviceId if not already present
+    if (!adminUser.devices.includes(deviceId)) {
+      adminUser.devices.push(deviceId);
+      await adminUser.save();
     }
-
-    // Register the new device
-    adminUser.devices.push(deviceId);
-    await adminUser.save();
 
     // Generate JWT
-    const token = jwt.sign({ userId: adminUser._id, deviceId }, JWT_SECRET, { expiresIn: '1h' });
-    return NextResponse.json({ message: 'Login successful (new device registered)', token }, { status: 200 });
+    const JWT_SECRET = process.env.JWT_SECRET || "yourSuperSecretKeyHere";
+    const token = await new SignJWT({ userId: adminUser._id })
+      .setProtectedHeader({ alg: "HS256" })
+      .setIssuedAt()
+      .setExpirationTime("1h")
+      .sign(new TextEncoder().encode(JWT_SECRET));
+
+    // Set the token in an HttpOnly cookie
+    const response = NextResponse.json({ message: "Login successful." }, { status: 200 });
+    response.cookies.set("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 60 * 60, // 1 hour in seconds
+    });
+
+    return response;
   } catch (error) {
-    console.error('Error logging in admin:', error);
-    return NextResponse.json({ message: 'Error logging in admin' }, { status: 500 });
+    console.error("Error during login:", error);
+    return NextResponse.json({ message: "Internal Server Error during login." }, { status: 500 });
   }
 }

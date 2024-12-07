@@ -4,12 +4,12 @@
 
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Cookies from "js-cookie";
 import useSWR from "swr";
 import StatsCard from "@/components/StatsCard";
 import Link from "next/link";
 import AdminLayout from "@/app/admin/AdminLayout";
 
+// Define interfaces for data
 interface User {
   _id: string;
   username: string;
@@ -28,50 +28,45 @@ interface ApiUnapprovedOrdersResponse {
   unapprovedOrders: number;
 }
 
-const fetcher = (url: string, token: string | null) => {
-  if (!token) {
+// Define the fetcher function
+const fetcher = async (url: string) => {
+  const res = await fetch(url, {
+    method: "GET",
+    credentials: "include", // Include cookies in the request
+  });
+
+  if (res.status === 401) {
     throw new Error("Unauthorized");
   }
 
-  return fetch(url, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  }).then((res) => {
-    if (!res.ok) {
-      throw new Error("Failed to fetch data");
-    }
-    return res.json();
-  });
+  if (!res.ok) {
+    throw new Error("Failed to fetch data");
+  }
+
+  return res.json();
 };
 
 const AdminDashboard: React.FC = () => {
   const router = useRouter();
-  const token = Cookies.get("token") || null;
-
-  // Debug: Log the token
-  useEffect(() => {
-    console.log("Retrieved Token:", token);
-  }, [token]);
 
   // Fetching general stats
   const { data: statsData, error: statsError } = useSWR<ApiAdminStatsResponse>(
-    token ? ["/api/admin/stats", token] : null,
-    ([url, token]: [string, string | null]) => fetcher(url, token),
+    "/api/admin/stats",
+    fetcher,
     { refreshInterval: 5000, dedupingInterval: 5000 }
   );
 
   // Fetching users data
   const { data: usersData, error: usersError } = useSWR<{ users: User[] }>(
-    token ? ["/api/admin/users", token] : null,
-    ([url, token]: [string, string | null]) => fetcher(url, token),
+    "/api/admin/users",
+    fetcher,
     { refreshInterval: 5000, dedupingInterval: 5000 }
   );
 
   // Fetching unapproved orders count
   const { data: unapprovedOrdersData, error: unapprovedOrdersError } = useSWR<ApiUnapprovedOrdersResponse>(
-    token ? ["/api/admin/orders/unapproved/count", token] : null,
-    ([url, token]: [string, string | null]) => fetcher(url, token),
+    "/api/admin/orders/unapproved/count",
+    fetcher,
     { refreshInterval: 5000, dedupingInterval: 5000 }
   );
 
@@ -83,15 +78,15 @@ const AdminDashboard: React.FC = () => {
       unapprovedOrdersError?.message === "Unauthorized"
     ) {
       console.warn("Authentication error. Redirecting to login.");
-      router.push("/admin/login");
+      router.push("/login");
     }
   }, [statsError, usersError, unapprovedOrdersError, router]);
 
   // Debug: Log fetched data
   useEffect(() => {
-    console.log("Stats Data:", statsData);
-    console.log("Users Data:", usersData);
-    console.log("Unapproved Orders Data:", unapprovedOrdersData);
+    if (statsData) console.log("Stats Data:", statsData);
+    if (usersData) console.log("Users Data:", usersData);
+    if (unapprovedOrdersData) console.log("Unapproved Orders Data:", unapprovedOrdersData);
   }, [statsData, usersData, unapprovedOrdersData]);
 
   return (

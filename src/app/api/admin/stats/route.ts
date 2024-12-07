@@ -1,30 +1,38 @@
 // src/app/api/admin/stats/route.ts
 
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import AdminUser from "@/models/AdminUser";
 import Message from "@/models/Message";
-import { verifyToken } from "@/lib/auth";
 import { ApiAdminStatsResponse } from "@/interfaces/ApiAdminStatsResponse";
+import { jwtVerify } from "jose";
 
 // Add this line to force the route to be dynamic
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   await dbConnect();
 
   try {
-    // Extract and verify the token
-    const authHeader = req.headers.get("Authorization");
-    const token = authHeader?.split(" ")[1];
+    // Extract and verify the token from cookies
+    const token = req.cookies.get("token")?.value;
     if (!token) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    const decoded = verifyToken(token);
-    if (!decoded) {
-      return NextResponse.json({ message: "Invalid token" }, { status: 403 });
+    // Verify the JWT token
+    const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "yourSuperSecretKeyHere");
+    let payload;
+    try {
+      const { payload: verifiedPayload } = await jwtVerify(token, JWT_SECRET);
+      payload = verifiedPayload;
+    } catch (error) {
+      console.error("Token verification failed:", error);
+      return NextResponse.json({ message: "Invalid or expired token." }, { status: 401 });
     }
+
+    // **Utilize the payload** (e.g., log the user ID or enforce authorization)
+    console.log(`Authenticated user ID: ${payload.userId}`);
 
     // Fetch total registrations from AdminUser model
     const totalRegistrations = await AdminUser.countDocuments();

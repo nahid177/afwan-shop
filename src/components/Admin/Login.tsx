@@ -1,9 +1,11 @@
+// src/components/Login.tsx
+
 "use client";
+
 import React, { useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
 import { useTheme } from "@/mode/ThemeContext";
 import { useRouter } from "next/navigation";
-import Cookies from "js-cookie";
 import Link from "next/link";
 
 const Login: React.FC = () => {
@@ -32,13 +34,26 @@ const Login: React.FC = () => {
       console.log("Existing deviceId:", storedDeviceId);
     }
 
-    // Check if the user is already logged in
-    const token = Cookies.get("token");
-    console.log("Checking token in Login:", token);
+    // Check if the user is already logged in by attempting to access a protected route
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/admin/check-auth", {
+          method: "GET",
+          credentials: "include", // Include cookies in the request
+        });
 
-    if (token) {
-      router.push("/admin");
-    }
+        if (res.status === 200) {
+          const data = await res.json();
+          if (data.authenticated) {
+            router.push("/admin");
+          }
+        }
+      } catch (error) {
+        console.error("Authentication check error:", error);
+      }
+    };
+
+    checkAuth();
   }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,13 +73,13 @@ const Login: React.FC = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
+        credentials: "include", // Ensure cookies are included
       });
 
       const result = await res.json();
 
       if (res.status === 200) {
         setToast({ type: "success", message: "Login successful!" });
-        Cookies.set("token", result.token, { expires: 1 }); // Store token in cookies
         setLoading(false);
         router.push("/admin");
       } else {
@@ -180,7 +195,7 @@ const Login: React.FC = () => {
                       fill="currentColor"
                       viewBox="0 0 20 20"
                     >
-                      <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 11.793a1 1 0 1 1-1.414 1.414L10 11.414l-2.293 2.293a1 1 0 0 1-1.414-1.414L8.586 10 6.293 7.707a1 1 0 0 1 1.414-1.414L10 8.586l2.293-2.293a1 1 0 0 1 1.414 1.414L11.414 10l2.293 2.293Z" />
+                      <path d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 11.793a1 1 0 1 1-1.414 1.414L10 11.414l-2.293 2.293a1 1 0 0 1-1.414-1.414L8.586 10l-2.293-2.293a1 1 0 0 1 1.414-1.414L10 8.586l2.293-2.293a1 1 0 0 1 1.414 1.414L11.414 10l2.293 2.293Z" />
                     </svg>
                   </div>
                   <div className="ml-3 text-sm font-normal">

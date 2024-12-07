@@ -1,7 +1,9 @@
+// src/app/api/admin/orders/unapproved/count/route.ts
+
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import { Order } from '@/models/Order';
-import { verifyToken } from '@/lib/auth';
+import { jwtVerify } from "jose";
 
 export const dynamic = 'force-dynamic'; // Mark the route as dynamic
 
@@ -9,11 +11,9 @@ export async function GET(req: NextRequest) {
   console.log('Received GET request at /api/admin/orders/unapproved/count');
 
   try {
-    // Authenticate the request
-    const authHeader = req.headers.get('Authorization');
-    const token = authHeader?.split(' ')[1];
+    // Authenticate the request by reading the token from cookies
+    const token = req.cookies.get('token')?.value;
 
-    // Check if the token is available
     if (!token) {
       console.warn('Token is missing.');
       return NextResponse.json(
@@ -22,19 +22,29 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    const decoded = verifyToken(token);
-
-    if (!decoded) {
-      console.warn('Unauthorized access attempt.');
+    // Verify the JWT token
+    const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || "yourSuperSecretKeyHere");
+    let payload;
+    try {
+      const { payload: verifiedPayload } = await jwtVerify(token, JWT_SECRET);
+      payload = verifiedPayload;
+    } catch (error) {
+      console.error("Token verification failed:", error);
       return NextResponse.json(
         { message: 'Unauthorized' },
         { status: 401 }
       );
     }
 
+    // **Utilize the payload** (e.g., log the user ID or enforce authorization)
+    console.log(`Authenticated user ID: ${payload.userId}`);
+
     // Connect to the database
     await dbConnect();
     console.log('Database connected.');
+
+    // Optional: Verify if the user has the necessary permissions
+    // For example, check if payload.role === 'admin'
 
     // Count unapproved orders
     const unapprovedCount = await Order.countDocuments({ approved: false });
