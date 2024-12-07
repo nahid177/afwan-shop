@@ -1,5 +1,3 @@
-// src/pages/admin/dashboard.tsx
-
 "use client";
 
 import React, { useEffect } from "react";
@@ -8,6 +6,7 @@ import useSWR from "swr";
 import StatsCard from "@/components/StatsCard";
 import Link from "next/link";
 import AdminLayout from "@/app/admin/AdminLayout";
+import fetcher from "@/hooks/useFetcher"; // Import the fetcher
 
 // Define interfaces for data
 interface User {
@@ -27,24 +26,6 @@ interface ApiAdminStatsResponse {
 interface ApiUnapprovedOrdersResponse {
   unapprovedOrders: number;
 }
-
-// Define the fetcher function
-const fetcher = async (url: string) => {
-  const res = await fetch(url, {
-    method: "GET",
-    credentials: "include", // Include cookies in the request
-  });
-
-  if (res.status === 401) {
-    throw new Error("Unauthorized");
-  }
-
-  if (!res.ok) {
-    throw new Error("Failed to fetch data");
-  }
-
-  return res.json();
-};
 
 const AdminDashboard: React.FC = () => {
   const router = useRouter();
