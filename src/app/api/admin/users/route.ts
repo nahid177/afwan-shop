@@ -6,6 +6,9 @@ import User from '@/models/User';
 import { verifyToken } from '@/lib/auth';
 import { IUser } from '@/interfaces/IUser'; // Ensure this interface is correctly defined
 
+// Add this line to force the route to be dynamic
+export const dynamic = 'force-dynamic';
+
 // Define an interface that extends IUser and includes sentStatsCount
 interface UserWithSentStats extends Omit<IUser, 'id'> {
   sentStatsCount: number;

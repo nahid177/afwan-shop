@@ -7,6 +7,9 @@ import Message from "@/models/Message";
 import { verifyToken } from "@/lib/auth";
 import { ApiAdminStatsResponse } from "@/interfaces/ApiAdminStatsResponse";
 
+// Add this line to force the route to be dynamic
+export const dynamic = 'force-dynamic';
+
 export async function GET(req: Request) {
   await dbConnect();
 
