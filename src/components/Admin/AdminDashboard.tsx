@@ -2,7 +2,7 @@
 
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import useSWR from "swr";
@@ -49,41 +49,50 @@ const AdminDashboard: React.FC = () => {
   const router = useRouter();
   const token = Cookies.get("token") || null;
 
+  // Debug: Log the token
+  useEffect(() => {
+    console.log("Retrieved Token:", token);
+  }, [token]);
+
   // Fetching general stats
   const { data: statsData, error: statsError } = useSWR<ApiAdminStatsResponse>(
     token ? ["/api/admin/stats", token] : null,
     ([url, token]: [string, string | null]) => fetcher(url, token),
-    { refreshInterval: 5000, dedupingInterval: 5000 } // Adjusted intervals for performance
+    { refreshInterval: 5000, dedupingInterval: 5000 }
   );
 
   // Fetching users data
   const { data: usersData, error: usersError } = useSWR<{ users: User[] }>(
     token ? ["/api/admin/users", token] : null,
     ([url, token]: [string, string | null]) => fetcher(url, token),
-    { refreshInterval: 5000, dedupingInterval: 5000 } // Adjusted intervals for performance
+    { refreshInterval: 5000, dedupingInterval: 5000 }
   );
 
   // Fetching unapproved orders count
   const { data: unapprovedOrdersData, error: unapprovedOrdersError } = useSWR<ApiUnapprovedOrdersResponse>(
     token ? ["/api/admin/orders/unapproved/count", token] : null,
     ([url, token]: [string, string | null]) => fetcher(url, token),
-    { refreshInterval: 5000, dedupingInterval: 5000 } // Adjusted intervals for performance
+    { refreshInterval: 5000, dedupingInterval: 5000 }
   );
 
   // Redirect to login if there's an authentication error
-  if (
-    statsError?.message === "Unauthorized" ||
-    usersError?.message === "Unauthorized" ||
-    unapprovedOrdersError?.message === "Unauthorized"
-  ) {
-    console.warn("Authentication error. Redirecting to login.");
-    router.push("/admin/login");
-    return null;
-  }
+  useEffect(() => {
+    if (
+      statsError?.message === "Unauthorized" ||
+      usersError?.message === "Unauthorized" ||
+      unapprovedOrdersError?.message === "Unauthorized"
+    ) {
+      console.warn("Authentication error. Redirecting to login.");
+      router.push("/admin/login");
+    }
+  }, [statsError, usersError, unapprovedOrdersError, router]);
 
-  console.log("Stats Data:", statsData);
-  console.log("Users Data:", usersData);
-  console.log("Unapproved Orders Data:", unapprovedOrdersData);
+  // Debug: Log fetched data
+  useEffect(() => {
+    console.log("Stats Data:", statsData);
+    console.log("Users Data:", usersData);
+    console.log("Unapproved Orders Data:", unapprovedOrdersData);
+  }, [statsData, usersData, unapprovedOrdersData]);
 
   return (
     <AdminLayout>
@@ -156,10 +165,11 @@ const AdminDashboard: React.FC = () => {
                       <td>{user.username}</td>
                       <td>{new Date(user.createdAt).toLocaleString()}</td>
                       <td
-                        className={`${user.sentStatsCount > 0
+                        className={`${
+                          user.sentStatsCount > 0
                             ? "bg-red-200 text-red-800 font-semibold"
                             : ""
-                          } px-4 py-2 rounded`}
+                        } px-4 py-2 rounded`}
                       >
                         {user.sentStatsCount}
                       </td>
