@@ -13,8 +13,8 @@ export async function GET(req: NextRequest) {
     const authHeader = req.headers.get('Authorization');
     const token = authHeader?.split(' ')[1];
 
-    if (!token) { // Added check for undefined token
-      console.warn('No token provided.');
+    if (!token) {
+      console.warn('No token provided. Unauthorized access attempt.');
       return NextResponse.json(
         { message: 'Unauthorized' },
         { status: 401 }
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     const decoded = verifyToken(token);
 
     if (!decoded) {
-      console.warn('Unauthorized access attempt.');
+      console.warn('Invalid token. Unauthorized access attempt.');
       return NextResponse.json(
         { message: 'Unauthorized' },
         { status: 401 }
