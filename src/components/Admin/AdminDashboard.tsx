@@ -77,7 +77,7 @@ const AdminDashboard: React.FC = () => {
       unapprovedOrdersError?.message === "Unauthorized"
     ) {
       console.warn("Authentication error. Redirecting to login.");
-      router.push("/admin/login");
+      router.push("/login");
     }
   }, [statsError, usersError, unapprovedOrdersError, router]);
 
@@ -85,7 +85,7 @@ const AdminDashboard: React.FC = () => {
   useEffect(() => {
     if (!token) {
       console.warn("No token found, redirecting to /admin/login");
-      router.push("/admin/login");
+      router.push("/login");
     }
   }, [token, router]);
 
