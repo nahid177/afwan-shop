@@ -1,4 +1,3 @@
-// src/app/api/admin/logout/route.ts
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/dbConnect";
 import AdminUser from "@/models/AdminUser";
@@ -9,12 +8,10 @@ export async function POST(req: Request) {
   try {
     const { deviceId } = await req.json();
 
-    // Validate deviceId
     if (!deviceId) {
       return NextResponse.json({ message: "Device ID is required" }, { status: 400 });
     }
 
-    // Find user and remove deviceId
     const result = await AdminUser.updateOne(
       { devices: deviceId },
       { $pull: { devices: deviceId } }

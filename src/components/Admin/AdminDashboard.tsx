@@ -1,8 +1,7 @@
-// src/pages/admin/dashboard.tsx
-
+// src/app/admin/dashboard/page.tsx
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import useSWR from "swr";
@@ -39,7 +38,7 @@ const fetcher = (url: string, token: string | null) => {
     },
   }).then((res) => {
     if (!res.ok) {
-      throw new Error("Failed to fetch data");
+      throw new Error(res.status === 401 ? "Unauthorized" : "Failed to fetch data");
     }
     return res.json();
   });
@@ -71,19 +70,26 @@ const AdminDashboard: React.FC = () => {
   );
 
   // Redirect to login if there's an authentication error
-  if (
-    statsError?.message === "Unauthorized" ||
-    usersError?.message === "Unauthorized" ||
-    unapprovedOrdersError?.message === "Unauthorized"
-  ) {
-    console.warn("Authentication error. Redirecting to login.");
-    router.push("/admin/login");
-    return null;
-  }
+  useEffect(() => {
+    if (
+      statsError?.message === "Unauthorized" ||
+      usersError?.message === "Unauthorized" ||
+      unapprovedOrdersError?.message === "Unauthorized"
+    ) {
+      console.warn("Authentication error. Redirecting to login.");
+      router.push("/admin/login");
+    }
+  }, [statsError, usersError, unapprovedOrdersError, router]);
 
-  console.log("Stats Data:", statsData);
-  console.log("Users Data:", usersData);
-  console.log("Unapproved Orders Data:", unapprovedOrdersData);
+  // Handle case where token might not exist
+  useEffect(() => {
+    if (!token) {
+      console.warn("No token found, redirecting to /admin/login");
+      router.push("/admin/login");
+    }
+  }, [token, router]);
+
+  if (!statsData || !usersData || !unapprovedOrdersData) return <p>Loading...</p>;
 
   return (
     <AdminLayout>
@@ -94,9 +100,7 @@ const AdminDashboard: React.FC = () => {
 
         {/* Statistics Section */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-8 w-full max-w-5xl px-4">
-          {!statsData ? (
-            <p>Loading statistics...</p>
-          ) : statsError ? (
+          {statsError ? (
             <div className="alert alert-error">
               <span>{statsError.message || "Failed to fetch statistics."}</span>
             </div>
@@ -133,9 +137,7 @@ const AdminDashboard: React.FC = () => {
         <div className="w-full max-w-5xl px-4">
           <h2 className="text-2xl font-semibold mb-4">User Management</h2>
 
-          {!usersData ? (
-            <p>Loading users...</p>
-          ) : usersError ? (
+          {usersError ? (
             <div className="alert alert-error">
               <span>{usersError.message || "Failed to fetch users."}</span>
             </div>

@@ -1,3 +1,4 @@
+// src/app/admin/login/page.tsx
 "use client";
 import React, { useState, useEffect } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -64,7 +65,7 @@ const Login: React.FC = () => {
 
       if (res.status === 200) {
         setToast({ type: "success", message: "Login successful!" });
-        Cookies.set("token", result.token, { expires: 1 }); // Store token in cookies
+        Cookies.set("token", result.token, { expires: 1, path: "/" }); // Store token in cookies
         setLoading(false);
         router.push("/admin");
       } else {

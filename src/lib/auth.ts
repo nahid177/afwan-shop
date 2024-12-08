@@ -1,24 +1,22 @@
-// lib/auth.ts
-import jwt from 'jsonwebtoken';
+import jwt, { JwtPayload } from 'jsonwebtoken';
 
-// Secret key for JWT (should be stored in environment variables)
-const JWT_SECRET = process.env.JWT_SECRET || 'secret';
+const JWT_SECRET = process.env.JWT_SECRET || '';
 
-// Interface for JWT payload
-interface JwtPayload {
-  userId: string;
-  deviceId: string;
-  iat: number;
-  exp: number;
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET not set in environment variables");
 }
 
-// Function to verify JWT token
-export const verifyToken = (token: string): JwtPayload | null => {
+export interface DecodedToken extends JwtPayload {
+  userId: string;
+  deviceId: string;
+}
+
+export function verifyToken(token: string): DecodedToken | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    const decoded = jwt.verify(token, JWT_SECRET) as DecodedToken;
     return decoded;
   } catch (error) {
-    console.error('JWT Verification Error:', error);
+    console.error("Token verification failed:", error);
     return null;
   }
-};
+}

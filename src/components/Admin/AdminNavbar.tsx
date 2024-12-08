@@ -1,3 +1,4 @@
+// src/components/AdminNavbar.tsx
 "use client";
 
 import React from "react";
@@ -24,14 +25,14 @@ const AdminNavbar: React.FC = () => {
 
       if (response.ok) {
         localStorage.removeItem("deviceId");
-        Cookies.remove("token");
-        router.push("/login");
+        Cookies.remove("token", { path: "/" });
+        router.push("/admin/login");
       } else {
         console.error("Failed to log out");
       }
     } else {
-      Cookies.remove("token");
-      router.push("/login");
+      Cookies.remove("token", { path: "/" });
+      router.push("/admin/login");
     }
   };
 
