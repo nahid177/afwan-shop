@@ -14,19 +14,27 @@ const SmsLogin: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const router = useRouter();
 
-  // Check if the user is already logged in
+  // Check if the user is already logged in on component mount
   useEffect(() => {
-    const storedUsername = localStorage.getItem('username');
-    const storedUserId = localStorage.getItem('userId');
-    if (storedUsername && storedUserId) {
-      setUsername(storedUsername);
-      setIsLoggedIn(true);
-      setMessage(`Welcome back, ${storedUsername}!`);
-      setMessageType('success');
+    if (typeof window !== 'undefined') {
+      const storedUsername = localStorage.getItem('username');
+      const storedUserId = localStorage.getItem('userId');
+      const storedToken = localStorage.getItem('token');
+
+      if (storedUsername && storedUserId && storedToken) {
+        setUsername(storedUsername);
+        setIsLoggedIn(true);
+        setMessage(`Welcome back, ${storedUsername}!`);
+        setMessageType('success');
+      }
     }
   }, []);
 
+  // Handle login functionality
   const handleLogin = async () => {
+    // Prevent multiple submissions
+    if (loading) return;
+
     setLoading(true);
     setMessage('');
     setMessageType('');
@@ -45,12 +53,14 @@ const SmsLogin: React.FC = () => {
       if (res.status === 200) {
         setMessage('Login successful!');
         setMessageType('success');
-        // Store both userId and username in localStorage
+
+        // Store userId, username, and token in localStorage
         localStorage.setItem('userId', data.user.id);
         localStorage.setItem('username', data.user.username);
+        localStorage.setItem('token', data.token); // Store the token
         setIsLoggedIn(true);
 
-        // Redirect after a short delay
+        // Redirect to the Contact Us page after a short delay
         setTimeout(() => {
           router.push('/contactUs');
         }, 1500);
@@ -62,16 +72,20 @@ const SmsLogin: React.FC = () => {
       console.error('Login Error:', error);
       setMessage('Login failed due to a network error.');
       setMessageType('error');
-      // Redirect to the network problem page
-      router.push('/yournetworkproblem');
+      // Optionally, redirect to a network problem page
+      // router.push('/yournetworkproblem');
     } finally {
       setLoading(false);
     }
   };
 
+  // Handle logout functionality
   const handleLogout = () => {
-    localStorage.removeItem('userId');
-    localStorage.removeItem('username');
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('userId');
+      localStorage.removeItem('username');
+      localStorage.removeItem('token');
+    }
     setUsername('');
     setIsLoggedIn(false);
     setMessage('You have been logged out.');
@@ -80,11 +94,13 @@ const SmsLogin: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-base-200">
-                  <ChatIcon />
+      {/* Optional: Add a Chat Icon or Logo */}
+      <ChatIcon />
 
-      <div className="card w-full max-w-sm shadow-2xl bg-base-100">
+      <div className="card w-full max-w-sm shadow-2xl bg-base-100 mt-8">
         <div className="card-body">
           <h2 className="card-title text-center">SMS Login</h2>
+
           {isLoggedIn ? (
             <>
               <p className="text-lg text-center mb-4">Hello, {username}!</p>
@@ -103,6 +119,11 @@ const SmsLogin: React.FC = () => {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="input input-bordered w-full"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !loading && username.trim()) {
+                    handleLogin();
+                  }
+                }}
               />
               <button
                 onClick={handleLogin}
@@ -123,8 +144,14 @@ const SmsLogin: React.FC = () => {
               </div>
             </>
           )}
+
+          {/* Display Messages */}
           {message && (
-            <div className={`alert ${messageType === 'success' ? 'alert-success' : 'alert-error'} mt-4`}>
+            <div
+              className={`alert mt-4 ${
+                messageType === 'success' ? 'alert-success' : 'alert-error'
+              }`}
+            >
               <span>{message}</span>
             </div>
           )}

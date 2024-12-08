@@ -6,9 +6,9 @@ import React, { useState, useRef, useEffect } from "react";
 import useSWR, { mutate } from "swr";
 import Image from "next/image";
 import { PhotoProvider, PhotoView } from "react-photo-view";
-import "react-photo-view/dist/react-photo-view.css"; // Import PhotoView styles
-import { TiUploadOutline } from "react-icons/ti"; // Import the TiUploadOutline icon
-import { useRouter } from "next/navigation"; // Import useRouter
+import "react-photo-view/dist/react-photo-view.css";
+import { TiUploadOutline } from "react-icons/ti";
+import { useRouter } from "next/navigation";
 
 interface ChatMessage {
   id: string;
@@ -16,12 +16,12 @@ interface ChatMessage {
   senderName?: string;
   userId: string;
   message: string;
-  imageUrl?: string; // Optional: URL of the image
+  imageUrl?: string;
   status: "sent" | "seen";
   time: string;
 }
 
-// Define the fetcher function with authorization
+// Fetcher function that includes the Authorization header
 const fetcher = (url: string, token: string) => {
   if (!token) {
     throw new Error("Unauthorized");
@@ -76,14 +76,6 @@ const ChatComponent: React.FC = () => {
       dedupingInterval: 1000, // Deduplicate requests within 1 second
       onError: (err: unknown) => {
         console.error("Error fetching messages:", err);
-        // Optionally, you can perform type checking here
-        if (err instanceof Error) {
-          // Handle specific error messages if needed
-          // For example:
-          // if (err.message === "Failed to fetch") {
-          //   router.push('/yournetworkproblem');
-          // }
-        }
         // Redirect to the "Network Problem" page regardless of error type
         router.push('/yournetworkproblem');
       },
@@ -237,7 +229,7 @@ const ChatComponent: React.FC = () => {
 
   return (
     <PhotoProvider>
-      <div className=" max-w-full sm:max-w-4xl mx-auto p-4 sm:p-6 space-y-6 bg-white rounded-lg shadow-md mt-16">
+      <div className="max-w-full sm:max-w-4xl mx-auto p-4 sm:p-6 space-y-6 bg-white rounded-lg shadow-md mt-16">
         {/* Error Message */}
         {error && (
           <div className="p-4 bg-red-100 text-red-700 rounded-md">
@@ -246,7 +238,7 @@ const ChatComponent: React.FC = () => {
         )}
 
         {/* Chat Messages */}
-        <div className=" flex flex-col space-y-4 overflow-y-auto max-h-80 sm:max-h-96 lg:max-h-[500px] px-2 sm:px-4">
+        <div className="flex flex-col space-y-4 overflow-y-auto max-h-80 sm:max-h-96 lg:max-h-[500px] px-2 sm:px-4">
           {(!messages || messages.length === 0) && !error && (
             <div className="text-center text-gray-500">
               No messages yet. Start the conversation!
@@ -381,7 +373,7 @@ const ChatComponent: React.FC = () => {
                 }
               }}
               placeholder="Type a message..."
-              className=" w-14 flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0"
+              className="w-14 flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0"
             />
 
             {/* Send Button */}
