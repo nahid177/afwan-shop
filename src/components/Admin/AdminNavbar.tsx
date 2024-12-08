@@ -1,10 +1,9 @@
-// src/components/AdminNavbar.tsx
-
 "use client";
 
 import React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Cookies from "js-cookie";
 import { usePathname } from 'next/navigation'; // To determine the active route
 
 const AdminNavbar: React.FC = () => {
@@ -14,47 +13,25 @@ const AdminNavbar: React.FC = () => {
   const handleLogout = async () => {
     const deviceId = localStorage.getItem("deviceId");
 
-    try {
-      if (deviceId) {
-        const response = await fetch("/api/admin/logout", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ deviceId }),
-          credentials: "include", // Include cookies in the request
-        });
+    if (deviceId) {
+      const response = await fetch("/api/admin/logout", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ deviceId }),
+      });
 
-        if (response.ok) {
-          localStorage.removeItem("deviceId");
-          router.push("/login");
-        } else {
-          const errorData = await response.json();
-          console.error("Failed to log out:", errorData.message);
-          // Optionally, display an error message to the user
-        }
+      if (response.ok) {
+        localStorage.removeItem("deviceId");
+        Cookies.remove("token");
+        router.push("/login");
       } else {
-        // If deviceId is not found, still attempt to log out to clear the cookie
-        const response = await fetch("/api/admin/logout", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ deviceId: null }), // Device ID is not provided
-          credentials: "include",
-        });
-
-        if (response.ok) {
-          router.push("/login");
-        } else {
-          const errorData = await response.json();
-          console.error("Failed to log out:", errorData.message);
-          // Optionally, display an error message to the user
-        }
+        console.error("Failed to log out");
       }
-    } catch (error) {
-      console.error("Logout error:", error);
-      // Optionally, display a generic error message to the user
+    } else {
+      Cookies.remove("token");
+      router.push("/login");
     }
   };
 

@@ -1,67 +1,58 @@
-// src/app/api/admin/login/route.ts
-import { NextResponse } from "next/server";
-import dbConnect from "@/lib/dbConnect";
-import User from "@/models/User";
-import { SignJWT } from "jose";
-import { compare } from "bcrypt"; // assuming passwords are hashed with bcrypt
+import { NextResponse } from 'next/server';
+import dbConnect from '@/lib/dbConnect';
+import AdminUser from '@/models/AdminUser';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error("JWT_SECRET is not defined");
-}
+// Connect to the database
+dbConnect();
 
+// Secret key for JWT (should be stored in environment variables)
+const JWT_SECRET = process.env.JWT_SECRET || 'secret';
+
+// Handle POST request for admin login
 export async function POST(req: Request) {
-  await dbConnect();
-
   try {
-    const { username, password } = await req.json();
+    const { username, password, deviceId } = await req.json();
 
-    if (!username || !password) {
-      return NextResponse.json(
-        { message: "Username and password are required." },
-        { status: 400 }
-      );
+    // Validate input
+    if (!username || !password || !deviceId) {
+      return NextResponse.json({ message: 'Username, password, and device ID are required' }, { status: 400 });
     }
 
-    const user = await User.findOne({ username });
-    if (!user) {
-      return NextResponse.json({ message: "User not found." }, { status: 404 });
+    // Find the user by username
+    const adminUser = await AdminUser.findOne({ username });
+    if (!adminUser) {
+      return NextResponse.json({ message: 'User not found' }, { status: 404 });
     }
 
-    const isValidPassword = await compare(password, user.password);
-    if (!isValidPassword) {
-      return NextResponse.json({ message: "Invalid credentials." }, { status: 401 });
+    // Check if the password is correct
+    const isPasswordCorrect = await bcrypt.compare(password, adminUser.password);
+    if (!isPasswordCorrect) {
+      return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
 
-    const token = await new SignJWT({ userId: user._id.toString() })
-      .setProtectedHeader({ alg: "HS256" })
-      .setIssuedAt()
-      .setExpirationTime("1d")
-      .sign(new TextEncoder().encode(JWT_SECRET));
+    // Check if the device is already registered
+    if (adminUser.devices.includes(deviceId)) {
+      // Device is already registered, generate JWT
+      const token = jwt.sign({ userId: adminUser._id, deviceId }, JWT_SECRET, { expiresIn: '1h' });
+      return NextResponse.json({ message: 'Login successful', token }, { status: 200 });
+    }
 
-    const response = NextResponse.json(
-      {
-        message: "Login successful",
-        user: {
-          id: user._id.toString(),
-          username: user.username,
-        },
-      },
-      { status: 200 }
-    );
+    // If there are already 2 devices registered, deny access
+    if (adminUser.devices.length >= 2) {
+      return NextResponse.json({ message: 'Maximum devices reached. Cannot log in from this device.' }, { status: 403 });
+    }
 
-    response.cookies.set("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      path: "/",
-      sameSite: "strict",
-      maxAge: 60 * 60 * 24, // 1 day in seconds
-    });
+    // Register the new device
+    adminUser.devices.push(deviceId);
+    await adminUser.save();
 
-    return response;
-
+    // Generate JWT
+    const token = jwt.sign({ userId: adminUser._id, deviceId }, JWT_SECRET, { expiresIn: '1h' });
+    return NextResponse.json({ message: 'Login successful (new device registered)', token }, { status: 200 });
   } catch (error) {
-    console.error("Login API Error:", error);
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    console.error('Error logging in admin:', error);
+    return NextResponse.json({ message: 'Error logging in admin' }, { status: 500 });
   }
 }

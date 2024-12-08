@@ -1,5 +1,3 @@
-// src/components/Login.tsx
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -157,15 +155,15 @@ const Login: React.FC = () => {
           </form>
 
           {toast.message && (
-            <div className="fixed top-4 left-1/2 transform -translate-x-1/2 sm:left-auto sm:right-4 sm:translate-x-0 w-full max-w-xs px-4 sm:px-0 z-50">
+            <div className="fixed top-4 right-4 w-full max-w-xs px-4 sm:px-0 z-50">
               {toast.type === "success" && (
                 <div
-                  className={`flex items-center w-full p-4 mb-4 text-gray-500 ${
+                  className={`flex items-center p-4 mb-4 text-gray-500 ${
                     theme === "light" ? "bg-white" : "bg-gray-800"
                   } rounded-lg shadow`}
                   role="alert"
                 >
-                  <div className="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-green-500 bg-green-100 rounded-lg dark:bg-green-800 dark:text-green-200">
+                  <div className="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-green-500 bg-green-100 rounded-lg">
                     <svg
                       className="w-5 h-5"
                       xmlns="http://www.w3.org/2000/svg"
@@ -183,12 +181,12 @@ const Login: React.FC = () => {
 
               {toast.type === "error" && (
                 <div
-                  className={`flex items-center w-full p-4 mb-4 text-gray-500 ${
+                  className={`flex items-center p-4 mb-4 text-gray-500 ${
                     theme === "light" ? "bg-white" : "bg-gray-800"
                   } rounded-lg shadow`}
                   role="alert"
                 >
-                  <div className="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-red-500 bg-red-100 rounded-lg dark:bg-red-800 dark:text-red-200">
+                  <div className="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 text-red-500 bg-red-100 rounded-lg">
                     <svg
                       className="w-5 h-5"
                       xmlns="http://www.w3.org/2000/svg"

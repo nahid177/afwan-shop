@@ -1,14 +1,15 @@
+// src/pages/admin/dashboard.tsx
+
 "use client";
 
-import React, { useEffect } from "react";
+import React from "react";
 import { useRouter } from "next/navigation";
+import Cookies from "js-cookie";
 import useSWR from "swr";
 import StatsCard from "@/components/StatsCard";
 import Link from "next/link";
 import AdminLayout from "@/app/admin/AdminLayout";
-import fetcher from "@/hooks/useFetcher"; // Import the fetcher
 
-// Define interfaces for data
 interface User {
   _id: string;
   username: string;
@@ -27,48 +28,62 @@ interface ApiUnapprovedOrdersResponse {
   unapprovedOrders: number;
 }
 
+const fetcher = (url: string, token: string | null) => {
+  if (!token) {
+    throw new Error("Unauthorized");
+  }
+
+  return fetch(url, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  }).then((res) => {
+    if (!res.ok) {
+      throw new Error("Failed to fetch data");
+    }
+    return res.json();
+  });
+};
+
 const AdminDashboard: React.FC = () => {
   const router = useRouter();
+  const token = Cookies.get("token") || null;
 
   // Fetching general stats
   const { data: statsData, error: statsError } = useSWR<ApiAdminStatsResponse>(
-    "/api/admin/stats",
-    fetcher,
-    { refreshInterval: 5000, dedupingInterval: 5000 }
+    token ? ["/api/admin/stats", token] : null,
+    ([url, token]: [string, string | null]) => fetcher(url, token),
+    { refreshInterval: 5000, dedupingInterval: 5000 } // Adjusted intervals for performance
   );
 
   // Fetching users data
   const { data: usersData, error: usersError } = useSWR<{ users: User[] }>(
-    "/api/admin/users",
-    fetcher,
-    { refreshInterval: 5000, dedupingInterval: 5000 }
+    token ? ["/api/admin/users", token] : null,
+    ([url, token]: [string, string | null]) => fetcher(url, token),
+    { refreshInterval: 5000, dedupingInterval: 5000 } // Adjusted intervals for performance
   );
 
   // Fetching unapproved orders count
   const { data: unapprovedOrdersData, error: unapprovedOrdersError } = useSWR<ApiUnapprovedOrdersResponse>(
-    "/api/admin/orders/unapproved/count",
-    fetcher,
-    { refreshInterval: 5000, dedupingInterval: 5000 }
+    token ? ["/api/admin/orders/unapproved/count", token] : null,
+    ([url, token]: [string, string | null]) => fetcher(url, token),
+    { refreshInterval: 5000, dedupingInterval: 5000 } // Adjusted intervals for performance
   );
 
   // Redirect to login if there's an authentication error
-  useEffect(() => {
-    if (
-      statsError?.message === "Unauthorized" ||
-      usersError?.message === "Unauthorized" ||
-      unapprovedOrdersError?.message === "Unauthorized"
-    ) {
-      console.warn("Authentication error. Redirecting to login.");
-      router.push("/login");
-    }
-  }, [statsError, usersError, unapprovedOrdersError, router]);
+  if (
+    statsError?.message === "Unauthorized" ||
+    usersError?.message === "Unauthorized" ||
+    unapprovedOrdersError?.message === "Unauthorized"
+  ) {
+    console.warn("Authentication error. Redirecting to login.");
+    router.push("/admin/login");
+    return null;
+  }
 
-  // Debug: Log fetched data
-  useEffect(() => {
-    if (statsData) console.log("Stats Data:", statsData);
-    if (usersData) console.log("Users Data:", usersData);
-    if (unapprovedOrdersData) console.log("Unapproved Orders Data:", unapprovedOrdersData);
-  }, [statsData, usersData, unapprovedOrdersData]);
+  console.log("Stats Data:", statsData);
+  console.log("Users Data:", usersData);
+  console.log("Unapproved Orders Data:", unapprovedOrdersData);
 
   return (
     <AdminLayout>
@@ -141,11 +156,10 @@ const AdminDashboard: React.FC = () => {
                       <td>{user.username}</td>
                       <td>{new Date(user.createdAt).toLocaleString()}</td>
                       <td
-                        className={`${
-                          user.sentStatsCount > 0
+                        className={`${user.sentStatsCount > 0
                             ? "bg-red-200 text-red-800 font-semibold"
                             : ""
-                        } px-4 py-2 rounded`}
+                          } px-4 py-2 rounded`}
                       >
                         {user.sentStatsCount}
                       </td>
