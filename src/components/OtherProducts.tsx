@@ -42,10 +42,10 @@ const OtherProducts: React.FC<OtherProductsProps> = ({ categoryName, id }) => {
         setLoading(false);
       }
     };
-  
+
     fetchOtherProducts();
   }, [categoryName, id]);
-  
+
 
   if (loading) {
     return (
@@ -65,7 +65,7 @@ const OtherProducts: React.FC<OtherProductsProps> = ({ categoryName, id }) => {
 
   return (
     <div className={`mt-10 ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"}`}>
-      <h3 className="text-2xl font-semibold mb-4">Other Products You May Like</h3>
+      <h3 className="text-2xl font-semibold mb-4 text-center">Other Products You May Like</h3>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {otherProducts.map((product) => (
           <div key={product._id} className="border rounded-lg p-4 bg-white dark:bg-gray-800">
@@ -76,7 +76,7 @@ const OtherProducts: React.FC<OtherProductsProps> = ({ categoryName, id }) => {
               height={200}
               className="object-cover rounded-lg"
             />
-            <h4 className="text-xl font-semibold mt-4">{product.product_name}</h4>
+            <h4 className="text-sm font-semibold mt-4">{product.product_name}</h4>
             <div className="flex gap-2 items-center">
               <p className="text-lg text-red-500">{product.offerPrice}৳</p>
               {product.originalPrice && product.originalPrice > product.offerPrice && (
@@ -85,7 +85,7 @@ const OtherProducts: React.FC<OtherProductsProps> = ({ categoryName, id }) => {
             </div>
             <Link href={`/products/details/${id}/${categoryName}/${product._id}`}>
               <button
-                className="w-full mt-4 py-2 text-center rounded-lg btn-gradient-blue"
+                className="btn-gradient-blue text-sm flex items-center justify-center w-full py-2 px-4 rounded-lg transition-transform hover:scale-105 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 View Details
               </button>

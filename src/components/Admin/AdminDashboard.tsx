@@ -93,13 +93,13 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <AdminLayout>
-      <div className="min-h-screen flex flex-col items-center py-12 bg-gray-100">
+      <div className=" mt-20 min-h-screen flex flex-col items-center py-12 bg-gray-100">
         <h1 className="text-3xl font-bold mb-8 text-center text-gray-800">
           Admin Dashboard
         </h1>
 
         {/* Statistics Section */}
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-8 w-full max-w-5xl px-4">
+        <div className=" grid grid-cols-1 sm:grid-cols-4 gap-8 w-full max-w-5xl px-4">
           {statsError ? (
             <div className="alert alert-error">
               <span>{statsError.message || "Failed to fetch statistics."}</span>

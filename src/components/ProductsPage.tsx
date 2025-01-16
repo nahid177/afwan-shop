@@ -121,7 +121,6 @@ const ProductsPage: React.FC = () => {
             >
               {productType.product_catagory.map((category) => (
                 <div key={category.catagory_name} className="flex flex-col">
-                  <h3 className="text-xl font-medium mb-2 text-center">{category.catagory_name}</h3>
                   <div className="flex overflow-x-auto gap-4 pb-4 scroll-smooth">
                     {category.product.length > 0 ? (
                       category.product.map((product) => (

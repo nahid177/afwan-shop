@@ -7,6 +7,7 @@ import ProductsPage from '@/components/ProductsPage';
 import Footer from '@/components/Footer';
 import ChatIcon from '@/components/ChatIcon';
 import CustomerReviews from '@/components/CustomerReviews';
+import IconshowPage from '@/components/Iconshow';
 
 const Page = () => {
   return (
@@ -15,6 +16,8 @@ const Page = () => {
           <ChatIcon />
         <CarouselPage />
         <FeatureSection />
+        <IconshowPage />
+
         <div className='lg:px-20 md:px-8'>
           <ProductsPage />
           <h2 className="text-2xl font-semibold text-center mb-4 relative">

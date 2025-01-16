@@ -1,7 +1,7 @@
 // src/components/NavBar/shared/ButtomNavbar.tsx
 
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import axios from "axios";
 import { usePathname } from "next/navigation";
@@ -20,7 +20,21 @@ interface ProductType {
 const ButtomNavbar: React.FC = () => {
   const [productTypes, setProductTypes] = useState<ProductType[]>([]);
   const pathname = usePathname(); // Get the current path
+  const [isScrolled, setIsScrolled] = useState(false);
+  const navRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 0) {
+        setIsScrolled(true); // If scrolled down
+      } else {
+        setIsScrolled(false); // If at the top
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   // Fetch product types on component mount
   useEffect(() => {
     const fetchProductTypes = async () => {
@@ -42,13 +56,17 @@ const ButtomNavbar: React.FC = () => {
   if (isAdminPage) return null;
 
   return (
-    <nav className="w-full bg-white text-black dark:bg-gray-900 dark:text-white shadow-md hidden lg:block ">
-      <div className="container mx-auto px-4 py-3 flex items-center justify-between flex-col">
+    <nav
+      ref={navRef}
+      className={`${isScrolled ? 'fixed top-0 w-full' : 'relative'
+        } bg-white hidden lg:block text-black dark:bg-gray-900 dark:text-white transition-all`}
+      aria-label="Primary Navigation"
+    >      <div className="container mx-auto px-4 py-3 flex items-center justify-between flex-col">
         {/* Desktop Menu */}
         <div className="flex space-x-6 items-center">
-         <Link href={"/"}>
-          <div className="font-medium hover:text-blue-500 cursor-pointer">Home</div>
-         </Link>
+          <Link href={"/"}>
+            <div className="font-medium hover:text-blue-500 cursor-pointer">Home</div>
+          </Link>
           {productTypes.map((type) => (
             <div key={type._id} className="relative group">
               <Link href={`/products/${type._id}`}>

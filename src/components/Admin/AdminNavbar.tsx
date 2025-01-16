@@ -127,7 +127,7 @@ const AdminNavbar: React.FC = () => {
                 <path d="M7 10l5 5 5-5H7z" />
               </svg>
             </Link>
-            <ul className="absolute hidden group-hover:flex flex-col mt-2 shadow-lg rounded-lg bg-white p-2 space-y-1">
+            <ul className="absolute  hidden group-hover:flex flex-col mt-2 shadow-lg rounded-lg bg-white p-2 space-y-1">
               <li>
                 <Link href="/admin/carousel" className={`hover:text-primary ${isActive("/admin/carousel") ? "font-bold" : ""}`}>
                   View Carousel
@@ -138,6 +138,17 @@ const AdminNavbar: React.FC = () => {
                   Create Carousel
                 </Link>
               </li>
+              <li>
+                <Link href="/admin/Iconshow/create" className={`hover:text-primary ${isActive("/admin/carousel/create") ? "font-bold" : ""}`}>
+                  Create Iconshow
+                </Link>
+              </li>
+              <li>
+                <Link href="/admin/Iconshow" className={`hover:text-primary ${isActive("/admin/carousel/create") ? "font-bold" : ""}`}>
+                View Iconshow
+                </Link>
+              </li>
+              
             </ul>
           </li>
 
