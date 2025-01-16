@@ -6,7 +6,7 @@ import axios from "axios";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { FaSpinner } from "react-icons/fa";
+import { FaEye, FaSpinner } from "react-icons/fa";
 import { FiShoppingCart, FiCheckCircle, FiXCircle } from "react-icons/fi";
 import { useTheme } from "@/mode/ThemeContext";
 import { useCart, CartItem } from "@/context/CartContext";
@@ -341,7 +341,6 @@ const SearchResultsPage: React.FC = () => {
               </div>
 
               {/* "Buy Now" button */}
-              <div className="px-4">
                 <button
                   onClick={() => openModal(p)}
                   className="btn-gradient-blue flex items-center justify-center w-full lg:text-xs md:text-xs text-[9px] py-2 px-2 rounded-lg transition-transform hover:scale-105 mb-4"
@@ -350,8 +349,17 @@ const SearchResultsPage: React.FC = () => {
                   <FiShoppingCart className="mr-2 mb-1" />
                   Buy Now
                 </button>
+                <Link
+                href={`/products/details/${p.productTypeId || "unknown"}/${p.categoryName || "unknown"}/${p._id}`}
+              >
+                <button
+            className={`flex items-center justify-center w-full text-xs   py-2 bg-gray-200 hover:bg-gray-300 rounded-lg transition-all ${theme === "light" ? "" : "bg-gray-700 text-white"}`}
+          >
+            <FaEye className="mr-2" />
+            <span>See Details</span>
+          </button>
+        </Link>
               </div>
-            </div>
           ))}
         </div>
       )}

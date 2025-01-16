@@ -256,7 +256,7 @@ const ProductDetailsPage: React.FC = () => {
           </p>
 
           {/* Actions */}
-          <div className="xl:flex  gap-4 mb-9 xl:space-y-0 lg:space-y-4 md:space-y-4 sm:space-y-4">
+          <div className="xl:flex  gap-4 mb-9 xl:space-y-0 lg:space-y-4 md:space-y-4 space-y-4">
             <button
               onClick={() => setIsModalOpen(true)}
               className="btn-gradient-blue px-4 py-2 rounded-lg  text-xs  flex items-center justify-center "
