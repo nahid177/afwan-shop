@@ -5,7 +5,7 @@
 import React, { createContext, useContext, ReactNode, useEffect } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
-interface CartItem {
+export interface CartItem {
   id: string;
   name: string;
   price: number;
