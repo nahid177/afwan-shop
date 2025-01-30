@@ -38,13 +38,17 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
     {/* Video Only */}
-<div className="video-section w-full ">
-  <video className="w-full" autoPlay loop>
-    <source src="/afwan.mp4" type="video/mp4" />
-    Your browser does not support the video tag.
-  </video>
-</div>
-
+    <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute top-0 left-0 w-full h-full object-cover"
+        >
+          <source src="/afwan.mp4" type="video/mp4" />
+        </video>
+      </div>
           
           {/* Commented out the ThemeProvider and CartProvider sections */}
         {/* 
