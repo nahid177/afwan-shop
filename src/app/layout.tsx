@@ -3,10 +3,12 @@
 import React from "react";
 import localFont from "next/font/local";
 import "./globals.css";
+ {/* 
 import { ThemeProvider } from "@/mode/ThemeContext";
 import { CartProvider } from "@/context/CartContext"; // Import the CartProvider
 import TopNavbar from "@/components/NavBar/shared/TopNavbar";
-import ButtomNavbar from "@/components/NavBar/shared/ButtomNavbar";
+import ButtomNavbar from "@/components/NavBar/shared/ButtomNavbar";     
+*/}
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -26,7 +28,7 @@ export const metadata = {
 };
 
 export default function RootLayout({
-  children,
+ // children,
 }: {
   children: React.ReactNode;
 }) {
@@ -35,14 +37,25 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+    {/* Video Only */}
+<div className="video-section w-full ">
+  <video className="w-full" autoPlay loop>
+    <source src="/afwan.mp4" type="video/mp4" />
+    Your browser does not support the video tag.
+  </video>
+</div>
+
+          
+          {/* Commented out the ThemeProvider and CartProvider sections */}
+        {/* 
         <ThemeProvider>
           <CartProvider>
-            {/* Wrap your application with CartProvider */}
             <TopNavbar />
             <ButtomNavbar />
             <main>{children}</main>
           </CartProvider>
-        </ThemeProvider>
+        </ThemeProvider> 
+        */}
       </body>
     </html>
   );
