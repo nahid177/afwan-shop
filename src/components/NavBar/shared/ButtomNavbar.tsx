@@ -4,7 +4,6 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import axios from "axios";
 
 interface ProductCategory {
   _id: string;
@@ -21,7 +20,7 @@ interface ButtomNavbarProps {
   productTypes: ProductType[];
 }
 
-const ButtomNavbar: React.FC<ButtomNavbarProps> = ({ productTypes = [] }) => {
+const ButtomNavbar: React.FC<ButtomNavbarProps> = ({ productTypes }) => {
   const pathname = usePathname(); // Get the current path
   const [isScrolled, setIsScrolled] = useState(false);
 
@@ -86,11 +85,14 @@ const ButtomNavbar: React.FC<ButtomNavbarProps> = ({ productTypes = [] }) => {
   );
 };
 
-// Server-side function to fetch product types before rendering the page using axios
+// Server-side function to fetch product types before rendering the page
 export async function getServerSideProps() {
   try {
-    const response = await axios.get(`/api/product-types`);
-    const productTypes: ProductType[] = response.data || []; // Fallback to empty array if data is undefined
+    const response = await fetch(`/api/product-types`);
+    if (!response.ok) {
+      throw new Error('Failed to fetch product types');
+    }
+    const productTypes: ProductType[] = await response.json();
 
     return {
       props: { productTypes },
