@@ -1,20 +1,33 @@
 "use client";
 
 import React from 'react';
-import CarouselPage from '@/components/Admin/Carousel';
-import FeatureSection from '@/components/FeatureSection';
-import ProductsPage from '@/components/ProductsPage';
-import Footer from '@/components/Footer';
 import ChatIcon from '@/components/ChatIcon';
-import CustomerReviews from '@/components/CustomerReviews';
-import IconshowPage from '@/components/Iconshow';
+
+// import CarouselPage from '@/components/Admin/Carousel';
+// import FeatureSection from '@/components/FeatureSection';
+// import ProductsPage from '@/components/ProductsPage';
+// import Footer from '@/components/Footer';
+// import CustomerReviews from '@/components/CustomerReviews';
+// import IconshowPage from '@/components/Iconshow';
 
 const Page = () => {
   return (
    
       <div className="w-full">
           <ChatIcon />
-        <CarouselPage />
+           {/* Video Only */}
+    <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute top-0 left-0 w-full h-full object-cover"
+        >
+          <source src="/afwan.mp4" type="video/mp4" />
+        </video>
+      </div>
+        {/* <CarouselPage />
         <FeatureSection />
         <IconshowPage />
 
@@ -29,8 +42,8 @@ const Page = () => {
         <CustomerReviews />
         </div>
         
-        <Footer />
-      </div>
+        <Footer />*/}
+      </div> 
    
   );
 };
