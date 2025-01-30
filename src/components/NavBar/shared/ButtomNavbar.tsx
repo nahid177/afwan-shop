@@ -1,10 +1,10 @@
 // src/components/NavBar/shared/ButtomNavbar.tsx
 
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import axios from "axios";
 import { usePathname } from "next/navigation";
+import axios from "axios";
 
 interface ProductCategory {
   _id: string;
@@ -17,52 +17,36 @@ interface ProductType {
   product_catagory: ProductCategory[];
 }
 
-const ButtomNavbar: React.FC = () => {
-  const [productTypes, setProductTypes] = useState<ProductType[]>([]);
+interface ButtomNavbarProps {
+  productTypes: ProductType[];
+}
+
+const ButtomNavbar: React.FC<ButtomNavbarProps> = ({ productTypes = [] }) => {
   const pathname = usePathname(); // Get the current path
   const [isScrolled, setIsScrolled] = useState(false);
-  const navRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
-      if (window.scrollY > 0) {
-        setIsScrolled(true); // If scrolled down
-      } else {
-        setIsScrolled(false); // If at the top
-      }
+      setIsScrolled(window.scrollY > 0); // Check if user scrolled
     };
 
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-  // Fetch product types on component mount
-  useEffect(() => {
-    const fetchProductTypes = async () => {
-      try {
-        const response = await axios.get("/api/product-types");
-        setProductTypes(response.data);
-      } catch (error) {
-        console.error("Error fetching product types:", error);
-      }
-    };
+    window.addEventListener("scroll", handleScroll);
 
-    fetchProductTypes();
+    // Cleanup on unmount
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Check if the current page is an admin page
-  const isAdminPage = pathname.startsWith("/admin");
-
-  // Return nothing if it's an admin page
-  if (isAdminPage) return null;
+  // Skip rendering if it's an admin page
+  if (pathname.startsWith("/admin")) return null;
 
   return (
     <nav
-      ref={navRef}
-      className={`${isScrolled ? 'fixed top-0 w-full' : 'relative'
-        } bg-white hidden lg:block text-black dark:bg-gray-900 dark:text-white transition-all`}
+      className={`${
+        isScrolled ? "fixed top-0 w-full" : "relative"
+      } bg-white hidden lg:block text-black dark:bg-gray-900 dark:text-white transition-all`}
       aria-label="Primary Navigation"
-    >      <div className="container mx-auto px-4 py-3 flex items-center justify-between flex-col">
-        {/* Desktop Menu */}
+    >
+      <div className="container mx-auto px-4 py-3 flex items-center justify-between flex-col">
         <div className="flex space-x-6 items-center">
           <Link href={"/"}>
             <div className="font-medium hover:text-blue-500 cursor-pointer">Home</div>
@@ -101,5 +85,22 @@ const ButtomNavbar: React.FC = () => {
     </nav>
   );
 };
+
+// Server-side function to fetch product types before rendering the page using axios
+export async function getServerSideProps() {
+  try {
+    const response = await axios.get(`/api/product-types`);
+    const productTypes: ProductType[] = response.data || []; // Fallback to empty array if data is undefined
+
+    return {
+      props: { productTypes },
+    };
+  } catch (error) {
+    console.error("Error fetching product types:", error);
+    return {
+      props: { productTypes: [] }, // Provide fallback if error occurs
+    };
+  }
+}
 
 export default ButtomNavbar;

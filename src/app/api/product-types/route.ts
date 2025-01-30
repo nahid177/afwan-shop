@@ -10,7 +10,8 @@ dbConnect();
 // Handle the GET request
 export async function GET() {
   try {
-    const productTypes = await ProductTypes.find();
+    // Limit and paginate the number of items fetched
+    const productTypes = await ProductTypes.find().limit(10);  // You can adjust the limit as needed
     return NextResponse.json(productTypes, { status: 200 });
   } catch (error) {
     console.error('Error fetching product types:', error);
@@ -20,7 +21,6 @@ export async function GET() {
     );
   }
 }
-
 // Handle the POST request
 export async function POST(req: Request) {
   try {

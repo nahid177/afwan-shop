@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import { Order } from '@/models/Order';
-import { verifyToken } from '@/lib/auth'; // Updated import
+import { verifyToken } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
   console.log('Received GET request at /api/admin/orders/unapproved/count');
