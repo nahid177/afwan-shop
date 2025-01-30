@@ -1,9 +1,8 @@
 // src/components/NavBar/shared/ButtomNavbar.tsx
 
 "use client";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import axios from "axios";
 import { usePathname } from "next/navigation";
 
 interface ProductCategory {
@@ -17,11 +16,13 @@ interface ProductType {
   product_catagory: ProductCategory[];
 }
 
-const ButtomNavbar: React.FC = () => {
-  const [productTypes, setProductTypes] = useState<ProductType[]>([]);
+interface ButtomNavbarProps {
+  productTypes: ProductType[];
+}
+
+const ButtomNavbar: React.FC<ButtomNavbarProps> = ({ productTypes }) => {
   const pathname = usePathname(); // Get the current path
   const [isScrolled, setIsScrolled] = useState(false);
-  const navRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -35,19 +36,6 @@ const ButtomNavbar: React.FC = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-  // Fetch product types on component mount
-  useEffect(() => {
-    const fetchProductTypes = async () => {
-      try {
-        const response = await axios.get("/api/product-types");
-        setProductTypes(response.data);
-      } catch (error) {
-        console.error("Error fetching product types:", error);
-      }
-    };
-
-    fetchProductTypes();
-  }, []);
 
   // Check if the current page is an admin page
   const isAdminPage = pathname.startsWith("/admin");
@@ -57,11 +45,11 @@ const ButtomNavbar: React.FC = () => {
 
   return (
     <nav
-      ref={navRef}
       className={`${isScrolled ? 'fixed top-0 w-full' : 'relative'
         } bg-white hidden lg:block text-black dark:bg-gray-900 dark:text-white transition-all`}
       aria-label="Primary Navigation"
-    >      <div className="container mx-auto px-4 py-3 flex items-center justify-between flex-col">
+    >
+      <div className="container mx-auto px-4 py-3 flex items-center justify-between flex-col">
         {/* Desktop Menu */}
         <div className="flex space-x-6 items-center">
           <Link href={"/"}>
@@ -101,5 +89,26 @@ const ButtomNavbar: React.FC = () => {
     </nav>
   );
 };
+
+// Fetch product types server-side before rendering the page
+export async function getServerSideProps() {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/product-types`);
+    const productTypes: ProductType[] = await response.json();
+    
+    return {
+      props: {
+        productTypes
+      }
+    };
+  } catch (error) {
+    console.error("Error fetching product types:", error);
+    return {
+      props: {
+        productTypes: []
+      }
+    };
+  }
+}
 
 export default ButtomNavbar;

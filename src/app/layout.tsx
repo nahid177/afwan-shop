@@ -3,12 +3,11 @@
 import React from "react";
 import localFont from "next/font/local";
 import "./globals.css";
- {/* 
 import { ThemeProvider } from "@/mode/ThemeContext";
 import { CartProvider } from "@/context/CartContext"; // Import the CartProvider
 import TopNavbar from "@/components/NavBar/shared/TopNavbar";
-import ButtomNavbar from "@/components/NavBar/shared/ButtomNavbar";     
-*/}
+import ButtomNavbar from "@/components/NavBar/shared/ButtomNavbar";
+import axios from "axios";
 
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -27,39 +26,37 @@ export const metadata = {
   description: "Welcome to my Afwan shop",
 };
 
-export default function RootLayout({
- // children,
+// Fetch product types server-side
+async function fetchProductTypes() {
+  try {
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_BASE_URL}/api/product-types`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching product types:", error);
+    return [];
+  }
+}
+
+export default async function RootLayout({
+  children,
 }: {
   children: React.ReactNode;
 }) {
+  const productTypes = await fetchProductTypes(); // Fetch data here
+
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-    {/* Video Only */}
-    <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
-        <video
-          autoPlay
-          loop
-          muted
-          playsInline
-          className="absolute top-0 left-0 w-full h-full object-cover"
-        >
-          <source src="/afwan.mp4" type="video/mp4" />
-        </video>
-      </div>
-          
-          {/* Commented out the ThemeProvider and CartProvider sections */}
-        {/* 
         <ThemeProvider>
           <CartProvider>
+            {/* Pass productTypes to ButtomNavbar */}
             <TopNavbar />
-            <ButtomNavbar />
+            <ButtomNavbar productTypes={productTypes} />
             <main>{children}</main>
           </CartProvider>
-        </ThemeProvider> 
-        */}
+        </ThemeProvider>
       </body>
     </html>
   );
