@@ -1,5 +1,3 @@
-// src/components/Admin/product-types-page/CategoryPage.tsx
-
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -112,6 +110,92 @@ const CategoryPage: React.FC = () => {
     setIsImageModalOpen(false);
   };
 
+  /**
+   * Handle printing product info as a 38×25mm label using a hidden iframe.
+   */
+  const handlePrintLabel = (product: IProduct) => {
+    // 1. Create a hidden iframe
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "absolute";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    iframe.style.visibility = "hidden";
+
+    document.body.appendChild(iframe);
+
+    // 2. Prepare the label HTML
+    const labelHtml = `
+      <html>
+        <head>
+          <title>Print Label - ${product.product_name}</title>
+          <style>
+            @page {
+              size: 35mm 24mm; /* Set label size */
+              margin: 0;       /* No margin for label printing */
+            }
+            body {
+              margin: 0;
+              padding: 0;
+            }
+            .label-container {
+              width: 35mm;
+              height: 24mm;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+              align-items: center;
+              border: 1px solid #000;
+              box-sizing: border-box;
+              overflow: hidden;
+            }
+            .product-name {
+              font-size: 10px;
+              font-weight: bold;
+              margin: 0;
+              text-align: center;
+            }
+            .product-info {
+              font-size: 8px;
+              margin: 2px 0;
+              text-align: center;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="label-container">
+            <p class="product-info">Code: ${product.code.join(", ")}</p>
+            <p class="product-info">Size: ${product.sizes.map(s => s.size).join(", ")}</p>
+            <p class="product-info">Color: ${product.colors.map(c => c.color).join(", ")}</p>
+          </div>
+        </body>
+      </html>
+    `;
+
+    // 3. Write the HTML to the iframe
+    const iframeDoc = iframe.contentWindow?.document;
+    if (iframeDoc) {
+      iframeDoc.open();
+      iframeDoc.write(labelHtml);
+      iframeDoc.close();
+    } else {
+      console.error("Could not access iframe document.");
+      return;
+    }
+
+    // 4. Give the browser a moment to render
+    setTimeout(() => {
+      // 5. Trigger the print from the iframe
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+
+      // 6. Remove the iframe after printing
+      setTimeout(() => {
+        document.body.removeChild(iframe);
+      }, 500);
+    }, 500);
+  };
+
   if (loading) {
     return (
       <AdminLayout>
@@ -154,7 +238,7 @@ const CategoryPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {products.map((product) => (
                   <div
-                    key={product._id ? product._id.toString() : product.product_name}
+                    key={product._id?.toString() ?? product.product_name}
                     className="border rounded-lg p-6 shadow-lg bg-white hover:shadow-xl transition-shadow duration-300"
                   >
                     <div className="flex flex-col items-center">
@@ -162,13 +246,15 @@ const CategoryPage: React.FC = () => {
                       {product.images.length > 0 ? (
                         <div
                           className="w-[300px] h-[300px] relative mb-4 cursor-pointer"
-                          onClick={() => openImageModal(product.images, product.product_name)}
+                          onClick={() =>
+                            openImageModal(product.images, product.product_name)
+                          }
                         >
                           <Image
                             src={product.images[0]}
-                            alt={`Product Image 1`}
-                            layout="fill"
-                            objectFit="cover"
+                            alt={"Product Image 1"}
+                            fill
+                            style={{ objectFit: "cover" }}
                             className="rounded-md"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
@@ -185,7 +271,7 @@ const CategoryPage: React.FC = () => {
                       )}
 
                       {/* Product Details */}
-                      <h2 className="text-2xl font-semibold mb-2 text-center  break-words">
+                      <h2 className="text-2xl font-semibold mb-2 text-center break-words">
                         {product.product_name}
                       </h2>
                       <p className="text-gray-600 mb-4 text-center">
@@ -218,7 +304,7 @@ const CategoryPage: React.FC = () => {
                         <div className="mb-2">
                           <span className="font-semibold break-words">Sizes:</span>{" "}
                           {product.sizes
-                            .map((size) => `${size.size} (${size.quantity})`)
+                            .map((s) => `${s.size} (${s.quantity})`)
                             .join(", ")}
                         </div>
                         <div className="mb-2">
@@ -238,7 +324,7 @@ const CategoryPage: React.FC = () => {
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex space-x-4 mt-4">
+                      <div className="flex flex-wrap gap-2 mt-4 justify-center">
                         <button
                           onClick={() => openEditModal(product)}
                           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
@@ -246,10 +332,19 @@ const CategoryPage: React.FC = () => {
                           Edit
                         </button>
                         <button
-                          onClick={() => handleDeleteProduct(product._id?.toString())}
+                          onClick={() =>
+                            handleDeleteProduct(product._id?.toString())
+                          }
                           className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
                         >
                           Delete
+                        </button>
+                        {/* Print Label Button */}
+                        <button
+                          onClick={() => handlePrintLabel(product)}
+                          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
+                        >
+                          Print Label
                         </button>
                       </div>
                     </div>
@@ -275,7 +370,6 @@ const CategoryPage: React.FC = () => {
             product={productToEdit}
             onProductUpdated={handleProductUpdated}
             onClose={closeEditModal}
-            
           />
         )}
 
@@ -316,13 +410,13 @@ const CategoryPage: React.FC = () => {
                     <Image
                       src={imageUrl}
                       alt={`${currentProductName} Image ${index + 1}`}
-                      layout="fill"
-                      objectFit="cover"
+                      fill
+                      style={{ objectFit: "cover" }}
                       className="rounded"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
                         target.onerror = null;
-                        target.src = "/fallback-image.png"; // Path to a fallback image
+                        target.src = "/fallback-image.png";
                       }}
                       loading="lazy"
                     />
