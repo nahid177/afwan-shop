@@ -151,7 +151,7 @@ const CategoryPage: React.FC = () => {
               padding: 0mm;
               box-sizing: border-box;
               text-align: center;
-              font-size: 8px;
+              font-size: 10px;
             }
             .label-header {
               font-size: 10px;
@@ -159,7 +159,7 @@ const CategoryPage: React.FC = () => {
               margin-top: 1mm;
               margin-bottom: 0mm;
               text-transform: uppercase;
-            }
+            } 
             .product-info {
              font-size: 10px;
              font-weight: bold;              
@@ -172,10 +172,10 @@ const CategoryPage: React.FC = () => {
             .barcode {
               font-size: 15px;
               font-weight: bold;
-              
+  
             }
             .barcode img {
-              width: 50%;
+              width: 75%;
               height: auto;
             }
           </style>
@@ -188,7 +188,6 @@ const CategoryPage: React.FC = () => {
             <div class="product-info">
               <span><strong></strong> ${product.offerPrice.toFixed(0)}Tk + VAT</span>
               <span><strong>Size:</strong> ${sizeName}</span>
-
             </div>
             <div class="barcode">
               <img src="${barcodeUrl}" alt="Barcode" />
@@ -209,20 +208,17 @@ const CategoryPage: React.FC = () => {
       return;
     }
   
-    // Print the label for the selected size based on its quantity
-    for (let i = 0; i < quantity; i++) {
-      setTimeout(() => {
-        iframe.contentWindow?.focus();
-        iframe.contentWindow?.print();
-      }, i * 500); // Delay to print each label separately
-    }
+    // Print the label for the selected size (only once, no loop)
+    setTimeout(() => {
+      iframe.contentWindow?.focus();
+      iframe.contentWindow?.print();
+    }, 500); // Delay the printing slightly
   
     // Remove the iframe after printing
     setTimeout(() => {
       document.body.removeChild(iframe);
     }, 500);
   };
-  
   
   if (loading) {
     return (
