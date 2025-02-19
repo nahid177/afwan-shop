@@ -49,7 +49,7 @@ const AdminMain = () => {
       try {
         const response = await axios.get(`/api/products/search?query=${query}`);
         if (response.status === 200) {
-          setProductResults(response.data); // Assuming response is an array of products
+          setProductResults(response.data); // Now expecting direct product data
         } else {
           setProductResults([]); // Clear the results if no products are found
         }
