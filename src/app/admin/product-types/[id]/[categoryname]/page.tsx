@@ -112,8 +112,7 @@ const CategoryPage: React.FC = () => {
   /**
    * Handle printing product info as a 38×25mm label using a hidden iframe.
    */
-
-  const handlePrintLabelForSize = (product: IProduct, sizeName: string, quantity: number) => {
+  const handlePrintLabelForSize = (product: IProduct, sizeName: string) => {
     // Create a hidden iframe for printing
     const iframe = document.createElement("iframe");
     iframe.style.position = "absolute";
@@ -122,10 +121,10 @@ const CategoryPage: React.FC = () => {
     iframe.style.border = "none";
     iframe.style.visibility = "hidden";
     document.body.appendChild(iframe);
-  
+
     // Generate the TEC-IT Barcode URL using the product code
     const barcodeUrl = `https://barcode.tec-it.com/barcode.ashx?data=${product.code[0]}&code=Code128&translate-esc=on`;
-  
+
     // Prepare the label HTML with TEC-IT Barcode for the selected size
     const labelHtml = `
       <html>
@@ -172,7 +171,6 @@ const CategoryPage: React.FC = () => {
             .barcode {
               font-size: 15px;
               font-weight: bold;
-  
             }
             .barcode img {
               width: 75%;
@@ -196,7 +194,7 @@ const CategoryPage: React.FC = () => {
         </body>
       </html>
     `;
-  
+
     // Write the HTML to the iframe
     const iframeDoc = iframe.contentWindow?.document;
     if (iframeDoc) {
@@ -207,19 +205,19 @@ const CategoryPage: React.FC = () => {
       console.error("Could not access iframe document.");
       return;
     }
-  
+
     // Print the label for the selected size (only once, no loop)
     setTimeout(() => {
       iframe.contentWindow?.focus();
       iframe.contentWindow?.print();
     }, 500); // Delay the printing slightly
-  
+
     // Remove the iframe after printing
     setTimeout(() => {
       document.body.removeChild(iframe);
     }, 500);
   };
-  
+
   if (loading) {
     return (
       <AdminLayout>
@@ -355,7 +353,7 @@ const CategoryPage: React.FC = () => {
                             <li key={idx} className="flex justify-between items-center">
                               <span><strong>{size.size}:</strong> {size.quantity}</span>
                               <button
-                                onClick={() => handlePrintLabelForSize(product, size.size, size.quantity)}
+                                onClick={() => handlePrintLabelForSize(product, size.size)}
                                 className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition"
                               >
                                 Print {size.size} Labels
@@ -364,6 +362,20 @@ const CategoryPage: React.FC = () => {
                           ))}
                         </ul>
                       </div>
+
+                      {/* Edit and Delete buttons */}
+                      <button
+                        onClick={() => openEditModal(product)}
+                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition mt-2"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteProduct(product._id?.toString())}
+                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition mt-2"
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
                 ))}
