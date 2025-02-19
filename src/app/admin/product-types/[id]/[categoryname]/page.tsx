@@ -155,7 +155,7 @@ const CategoryPage: React.FC = () => {
             .label-header {
               font-size: 10px;
               font-weight: bold;
-              margin-top: 1mm;
+              margin-top: 0mm;
               margin-bottom: 0mm;
               text-transform: uppercase;
             } 
