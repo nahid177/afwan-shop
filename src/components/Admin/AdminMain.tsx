@@ -43,15 +43,15 @@ const AdminMain = () => {
   const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
-  
-    // Search for products based on the barcode or product name
+
+    // Debounced search
     if (query) {
       try {
         const response = await axios.get(`/api/products/search?query=${query}`);
         if (response.status === 200) {
-          setProductResults(response.data); // Now expecting direct product data
+          setProductResults(response.data.slice(0, 1)); // Show only the first result
         } else {
-          setProductResults([]); // Clear the results if no products are found
+          setProductResults([]); // Clear results if no products found
         }
       } catch (error) {
         console.error('Error searching for products:', error);
@@ -59,15 +59,14 @@ const AdminMain = () => {
         setProductResults([]); // Ensure the result is cleared on error
       }
     } else {
-      setProductResults([]); // Clear the search results if input is empty
+      setProductResults([]); // Clear results if search query is empty
     }
   };
-  
 
   const handleBarcodeScan = (event: React.ChangeEvent<HTMLInputElement>) => {
-    // Barcode scan logic here - if barcode scanner triggers an event
-    const barcode = event.target.value; // Assume barcode scanner inputs directly into the search field
-    setSearchQuery(barcode);
+    // Barcode scanner inputs directly into the search field
+    const barcode = event.target.value;
+    setSearchQuery(barcode); // Update search query with barcode
     handleSearchChange(event); // Trigger the search change with the scanned barcode
   };
 
@@ -97,18 +96,19 @@ const AdminMain = () => {
       <div className="p-4">
         <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
 
-        {/* Search bar */}
+        {/* Search Bar */}
         <div className="mb-6">
           <input
             type="text"
             value={searchQuery}
-            onChange={handleSearchChange}
-            onInput={handleBarcodeScan}
+            onChange={handleSearchChange} // Handle normal text input
+            onInput={handleBarcodeScan} // Handle barcode input as well
             placeholder="Search by barcode or product name..."
             className="px-4 py-2 border rounded-lg w-full"
           />
         </div>
 
+        {/* Dashboard Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="bg-white p-6 rounded-lg shadow flex items-center">
             <div className="p-4 bg-blue-100 rounded-full">
@@ -131,7 +131,7 @@ const AdminMain = () => {
         </div>
 
         {/* Show filtered products */}
-        {productResults.length > 0 && (
+        {productResults.length > 0 ? (
           <div className="mb-8">
             <h2 className="text-xl font-bold mb-4">Search Results</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -143,6 +143,8 @@ const AdminMain = () => {
               ))}
             </div>
           </div>
+        ) : (
+          <div className="p-4">No product found matching your search.</div>
         )}
       </div>
     </AdminLayout>

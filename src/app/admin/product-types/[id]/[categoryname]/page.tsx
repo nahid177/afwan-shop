@@ -155,12 +155,12 @@ const CategoryPage: React.FC = () => {
             .label-header {
               font-size: 10px;
               font-weight: bold;
-              margin-top: 0.8mm;
+              margin-top: 1.8mm;
               margin-bottom: 0mm;
               text-transform: uppercase;
             } 
             .product-info {
-             font-size: 10px;
+             font-size: 12px;
              font-weight: bold;              
              margin-top: 0mm;
             }
@@ -173,7 +173,7 @@ const CategoryPage: React.FC = () => {
               font-weight: bold;
             }
             .barcode img {
-              width: 75%;
+              width: 90%;
               height: auto;
             }
           </style>
