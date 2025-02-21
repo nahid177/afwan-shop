@@ -22,6 +22,8 @@ export interface ISubtitle {
 
 // Product Interface
 export interface IProduct {
+  productType?: string; // Add this line if optional
+
   imageFiles?: File[]; // Optional
   _id?: mongoose.Types.ObjectId;
   product_name: string;

@@ -138,8 +138,7 @@ const AdminMain = () => {
               {productResults.map((product) => (
                 <ProductCardsc
                   key={String(product._id)} // Ensure that the key is a string
-                  product={product}
-                />
+                  product={product} orderId={''}                />
               ))}
             </div>
           </div>

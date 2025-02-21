@@ -1,5 +1,3 @@
-"use client";
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
@@ -9,103 +7,27 @@ import Image from "next/image";
 import {
   FaEye,
   FaEyeSlash,
-  FaChevronDown,
-  FaChevronUp,
+  FaPrint
 } from "react-icons/fa";
-import mongoose from 'mongoose';
-import { StaticImageData } from 'next/image';
 
-export interface IColorQuantity {
-  color: string;
-  quantity: number;
-}
-
-export interface ISizeQuantity {
-  size: string;
-  quantity: number;
-}
-
-export interface ISubtitle {
-  title: string;
-  titledetail: string;
-}
-
-export interface IProduct {
-  imageFiles?: File[]; 
-  _id?: mongoose.Types.ObjectId;
-  product_name: string;
-  code: string[];
-  colors: IColorQuantity[];
-  sizes: ISizeQuantity[];
-  originalPrice: number;
-  offerPrice: number;
-  buyingPrice: number;
-  title: string[];
-  subtitle: ISubtitle[];
-  description: string;
-  images: string[];
-  totalQuantity?: number;
-}
-
-export interface IProductCategory {
-  category_name: string; 
-  product: IProduct[];
-}
-
-export interface IProductType {
-  product_catagory: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+interface IStoreOrder {
   _id: string;
-  types_name: string;
-  product_category: IProductCategory[];
-}
-
-// Update this to match the backend schema ('open'|'closed')
-export type OrderStatus = "open" | "closed";
-
-// Interfaces for orders
-export interface IStoreOrderProduct {
-  productCode: string;
-  _id?: string;
-  offerPrice: number;
-  productName: string;
-  productImage: string;
-  product?: mongoose.Types.ObjectId; 
-  quantity: number;
-  color?: string;
-  size?: string;
-  buyingPrice?: number; 
-  productId?: string;
-  productType?: string; 
-}
-
-export interface IStoreOrder {
-  status: OrderStatus; 
   code: string;
-  image: string | StaticImageData; 
-  buyingPrice: number; 
-  _id: string;
   customerName: string;
-  customerEmail: string;
   customerPhone: string;
-  products: IStoreOrderProduct[];
   totalAmount: number;
+  status: string;
   approved: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-  totalBeforeDiscount?: number;  
-}
-
-export interface IOrderProduct {
-  productType: string;
-  productId: string;
-  productName: string;
-  productCode: string;
-  quantity: number;
-  color?: string;
-  size?: string;
-  buyingPrice?: number;
-  offerPrice: number;
-  productImage: string;
+  createdAt: string;
+  products: {
+    productName: string;
+    color?: string;
+    size?: string;
+    quantity: number;
+    offerPrice: number;
+    buyingPrice?: number;
+    productImage?: string;
+  }[];
 }
 
 const OpenStoreOrders: React.FC = () => {
@@ -129,31 +51,12 @@ const OpenStoreOrders: React.FC = () => {
     useState<boolean>(false);
   const [orderToConfirm, setOrderToConfirm] = useState<string>("");
 
-  // Confirmation Modal state for Closing
-  const [isCloseModalOpen, setIsCloseModalOpen] = useState<boolean>(false);
-  const [orderToClose] = useState<string>("");
-
-  // Confirmation Modal state for Closing All Orders
-  const [isCloseAllModalOpen, setIsCloseAllModalOpen] =
-    useState<boolean>(false);
-
-  // Number of confirmations left for closing all orders
-  const [closeAllConfirmationsLeft, setCloseAllConfirmationsLeft] =
-    useState<number>(0);
-
   // State to manage visibility of sensitive information
   const [showSensitiveInfo, setShowSensitiveInfo] =
     useState<boolean>(false);
 
-  // State to manage expanded rows
-  const [expandedOrders, setExpandedOrders] = useState<Set<string>>(
-    new Set()
-  );
-
-  // State to manage image modal
-  const [isImageModalOpen, setIsImageModalOpen] =
-    useState<boolean>(false);
-  const [selectedImage, setSelectedImage] = useState<string>("");
+  // State to manage image modal visibility
+  const [, setIsImageModalOpen] = useState<boolean>(false);
 
   // Helper function to extract error message
   const getErrorMessage = (error: unknown, defaultMessage: string): string => {
@@ -237,98 +140,66 @@ const OpenStoreOrders: React.FC = () => {
     }
   };
 
-  const handleClose = async () => {
-    try {
-      const response = await axios.patch<IStoreOrder>(
-        `/api/storeOrders/${orderToClose}`,
-        {
-          status: "closed",
-        }
-      );
-      // Update the specific order in the state
-      setStoreOrders(
-        storeOrders.map((order) =>
-          order._id === response.data._id ? response.data : order
-        )
-      );
-      setToastMessage("Order closed successfully.");
-      setToastType("success");
-      setToastVisible(true);
-    } catch (error: unknown) {
-      console.error("Error closing store order:", error);
+  const handlePrint = (orderId: string) => {
+    const order = storeOrders.find((order) => order._id === orderId);
 
-      const message = getErrorMessage(error, "Failed to close store order.");
-      setToastMessage(message);
-      setToastType("error");
-      setToastVisible(true);
-    } finally {
-      setIsCloseModalOpen(false);
-    }
-  };
+    if (!order) return;
 
-  // Function to close all approved open orders with triple confirmation
-  const handleCloseAllConfirm = async () => {
-    if (closeAllConfirmationsLeft > 1) {
-      // Decrement the confirmations left
-      setCloseAllConfirmationsLeft(closeAllConfirmationsLeft - 1);
-      // Keep the modal open
-      setIsCloseAllModalOpen(true);
-    } else {
-      // Proceed to close all orders
-      await handleCloseAll();
-      // Reset confirmations left
-      setCloseAllConfirmationsLeft(0);
-    }
-  };
+    const printWindow = window.open("", "_blank", "width=800,height=600");
 
-  // Function to close all approved open orders
-  const handleCloseAll = async () => {
-    try {
-      // Filter out orders that are both open and approved
-      const openApprovedOrders = storeOrders.filter(
-        (order) => order.status === "open" && order.approved
-      );
+    if (printWindow) {
+      const receiptContent = `
+        <html>
+          <head>
+            <title>Receipt ${order.code}</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+              .receipt { width: 82mm; font-size: 12px; color: black; background-color: white; }
+              table { width: 100%; border-collapse: collapse; }
+              th, td { padding: 8px; border: 1px solid #ddd; text-align: left; }
+            </style>
+          </head>
+          <body>
+            <div class="receipt">
+              <h1 style="text-align: center;">Money Receipt</h1>
+              <p><strong>Receipt ID:</strong> ${order.code}</p>
+              <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleDateString()}</p>
+              <p><strong>Customer Name:</strong> ${order.customerName}</p>
+              <p><strong>Phone:</strong> ${order.customerPhone}</p>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Product Name</th>
+                    <th>Color</th>
+                    <th>Size</th>
+                    <th>Quantity</th>
+                    <th>Price (Tk.)</th>
+                    <th>Total (Tk.)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${order.products.map((product) => `
+                    <tr>
+                      <td>${product.productName}</td>
+                      <td>${product.color || "N/A"}</td>
+                      <td>${product.size || "N/A"}</td>
+                      <td>${product.quantity}</td>
+                      <td>${product.offerPrice.toFixed(2)}</td>
+                      <td>${(product.offerPrice * product.quantity).toFixed(2)}</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+              <p><strong>Total Amount:</strong> Tk. ${order.totalAmount.toFixed(2)}</p>
+              <p style="text-align: center;">Thank you for your purchase!</p>
+            </div>
+          </body>
+        </html>
+      `;
 
-      if (openApprovedOrders.length === 0) {
-        setToastMessage("No approved open orders to close.");
-        setToastType("warning");
-        setToastVisible(true);
-        return;
-      }
-
-      // Use Promise.all to close all approved open orders concurrently
-      await Promise.all(
-        openApprovedOrders.map((order) =>
-          axios.patch<IStoreOrder>(`/api/storeOrders/${order._id}`, {
-            status: "closed",
-          })
-        )
-      );
-
-      // Update the orders in the state
-      setStoreOrders(
-        storeOrders.map((order) =>
-          openApprovedOrders.find((o) => o._id === order._id)
-            ? { ...order, status: "closed" }
-            : order
-        )
-      );
-
-      setToastMessage("All approved open orders closed successfully.");
-      setToastType("success");
-      setToastVisible(true);
-    } catch (error: unknown) {
-      console.error("Error closing all approved open store orders:", error);
-
-      const message = getErrorMessage(
-        error,
-        "Failed to close all approved open store orders."
-      );
-      setToastMessage(message);
-      setToastType("error");
-      setToastVisible(true);
-    } finally {
-      setIsCloseAllModalOpen(false);
+      printWindow.document.write(receiptContent);
+      printWindow.document.close();
+      printWindow.print();
     }
   };
 
@@ -341,39 +212,6 @@ const OpenStoreOrders: React.FC = () => {
     setOrderToConfirm(orderId);
     setIsConfirmModalOpen(true);
   };
-
-
-  const openCloseAllModal = () => {
-    setCloseAllConfirmationsLeft(3); 
-    setIsCloseAllModalOpen(true);
-  };
-
-  const toggleExpandOrder = (orderId: string) => {
-    const newExpandedOrders = new Set(expandedOrders);
-    if (expandedOrders.has(orderId)) {
-      newExpandedOrders.delete(orderId);
-    } else {
-      newExpandedOrders.add(orderId);
-    }
-    setExpandedOrders(newExpandedOrders);
-  };
-
-  // Function to open image modal
-  const openImageModal = (imageUrl: string) => {
-    setSelectedImage(imageUrl);
-    setIsImageModalOpen(true);
-  };
-
-  // Function to close image modal
-  const closeImageModal = () => {
-    setIsImageModalOpen(false);
-    setSelectedImage("");
-  };
-
-  // Check if there are any approved open orders
-  const openOrdersExist = storeOrders.some(
-    (order) => order.status === "open" && order.approved
-  );
 
   if (loading) {
     return (
@@ -398,19 +236,6 @@ const OpenStoreOrders: React.FC = () => {
       {/* Header and Buttons */}
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Open Store Orders</h1>
-        <div>
-          <button
-            onClick={openCloseAllModal}
-            className={`px-4 py-2 text-white rounded-lg ${
-              openOrdersExist
-                ? "bg-yellow-600 hover:bg-yellow-700"
-                : "bg-gray-400 cursor-not-allowed"
-            }`}
-            disabled={!openOrdersExist}
-          >
-            Close All Orders
-          </button>
-        </div>
       </div>
 
       {/* Toast Notification */}
@@ -424,31 +249,6 @@ const OpenStoreOrders: React.FC = () => {
         </div>
       )}
 
-      {/* Image Modal */}
-      {isImageModalOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
-          onClick={closeImageModal}
-        >
-          <div className="relative">
-            <Image
-              src={selectedImage}
-              alt="Full Size Image"
-              width={800}
-              height={800}
-              className="max-w-full max-h-full"
-            />
-            <button
-              onClick={closeImageModal}
-              className="absolute top-2 right-2 text-white text-2xl font-bold"
-              aria-label="Close image"
-            >
-              &times;
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Orders Table */}
       {storeOrders.length === 0 ? (
         <p>No store orders found.</p>
@@ -457,7 +257,6 @@ const OpenStoreOrders: React.FC = () => {
           <table className="min-w-full bg-white dark:bg-gray-800">
             <thead>
               <tr>
-                {/* Headers */}
                 <th className="py-2 px-4 border-b">Code</th>
                 <th className="py-2 px-4 border-b">Customer Name</th>
                 <th className="py-2 px-4 border-b">Phone</th>
@@ -499,8 +298,6 @@ const OpenStoreOrders: React.FC = () => {
                 const profit =
                   (order.totalAmount || 0) - totalBuyingPrice;
 
-                const isExpanded = expandedOrders.has(order._id);
-
                 const rowClasses = `text-center ${
                   order.status === "closed"
                     ? "bg-gray-300 text-gray-600"
@@ -510,172 +307,102 @@ const OpenStoreOrders: React.FC = () => {
                 } hover:bg-gray-200 transition-colors duration-200`;
 
                 return (
-                  <React.Fragment key={order._id}>
-                    <tr className={rowClasses}>
-                      <td className="py-2 px-4 border-b">{order.code}</td>
-                      <td className="py-2 px-4 border-b">{order.customerName}</td>
-                      <td className="py-2 px-4 border-b">{order.customerPhone}</td>
-                      <td className="py-2 px-4 border-b">
-                        {order.products &&
-                        order.products.length > 0 &&
-                        order.products[0].productImage ? (
-                          <button
-                            onClick={() =>
-                              openImageModal(order.products[0].productImage)
-                            }
-                            className="focus:outline-none"
-                            aria-label="View full image"
-                          >
-                            <Image
-                              src={order.products[0].productImage}
-                              alt="Product Image"
-                              width={50}
-                              height={50}
-                              className="mx-auto"
-                            />
-                          </button>
-                        ) : (
-                          "N/A"
-                        )}
-                      </td>
-                      <td className="py-2 px-4 border-b">
-                        Tk. {order.totalAmount ? order.totalAmount.toFixed(2) : "0.00"}
-                      </td>
-                      <td className="py-2 px-4 border-b">
-                        {showSensitiveInfo ? (
-                          <>Tk. {totalBuyingPrice.toFixed(2)}</>
-                        ) : (
-                          <span className="text-gray-500">•••••</span>
-                        )}
-                      </td>
-                      <td className="py-2 px-4 border-b">
-                        {showSensitiveInfo ? (
-                          <>Tk. {profit.toFixed(2)}</>
-                        ) : (
-                          <span className="text-gray-500">•••••</span>
-                        )}
-                      </td>
-                      <td className="py-2 px-4 border-b">
-                        {order.status === "closed" ? (
-                          <span className="text-red-600 font-semibold">Closed</span>
-                        ) : order.approved ? (
-                          <span className="text-green-600 font-semibold">Approved</span>
-                        ) : (
-                          <span className="text-yellow-600 font-semibold">Pending</span>
-                        )}
-                      </td>
-                      <td className="py-2 px-4 border-b">
-                        <Link href={`/admin/storeOrders/${order._id}`}>
-                          <button className="mr-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
-                            View
-                          </button>
-                        </Link>
-                        {!order.approved && order.status !== "closed" && (
-                          <button
-                            onClick={() => openConfirmModal(order._id)}
-                            className="mr-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
-                            aria-label={`Confirm order ${order.code}`}
-                          >
-                            Confirm
-                          </button>
-                        )}
+                  <tr className={rowClasses} key={order._id}>
+                    <td className="py-2 px-4 border-b">{order.code}</td>
+                    <td className="py-2 px-4 border-b">{order.customerName}</td>
+                    <td className="py-2 px-4 border-b">{order.customerPhone}</td>
+                    <td className="py-2 px-4 border-b">
+                      {order.products &&
+                      order.products.length > 0 &&
+                      order.products[0].productImage ? (
                         <button
-                          onClick={() => openDeleteModal(order._id)}
-                          className="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
-                          aria-label={`Delete order ${order.code}`}
+                          onClick={() =>
+                            setIsImageModalOpen(true)
+                          }
+                          className="focus:outline-none"
+                          aria-label="View full image"
                         >
-                          Delete
+                          <Image
+                            src={order.products[0].productImage}
+                            alt="Product Image"
+                            width={50}
+                            height={50}
+                            className="mx-auto"
+                          />
                         </button>
-                      </td>
-                      <td className="py-2 px-4 border-b">
-                        {order.products && order.products.length > 0 ? (
-                          <button
-                            onClick={() => toggleExpandOrder(order._id)}
-                            className="flex items-center justify-center px-2 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
-                            aria-label={
-                              isExpanded
-                                ? `Hide products for order ${order.code}`
-                                : `View products for order ${order.code}`
-                            }
-                          >
-                            {isExpanded ? (
-                              <>
-                                Hide Products <FaChevronUp className="ml-1" />
-                              </>
-                            ) : (
-                              <>
-                                View Products <FaChevronDown className="ml-1" />
-                              </>
-                            )}
-                          </button>
-                        ) : (
-                          <span>N/A</span>
-                        )}
-                      </td>
-                    </tr>
-                    {isExpanded && (
-                      <tr>
-                        <td colSpan={10} className="bg-gray-100">
-                          <div className="p-4">
-                            <h2 className="text-lg font-semibold mb-2">Products</h2>
-                            <table className="min-w-full bg-white dark:bg-gray-700">
-                              <thead>
-                                <tr>
-                                  <th className="py-2 px-4 border-b">Product Name</th>
-                                  <th className="py-2 px-4 border-b">Product Code</th>
-                                  <th className="py-2 px-4 border-b">Image</th>
-                                  <th className="py-2 px-4 border-b">Quantity</th>
-                                  <th className="py-2 px-4 border-b">Color</th>
-                                  <th className="py-2 px-4 border-b">Size</th>
-                                  <th className="py-2 px-4 border-b">Buying Price</th>
-                                  <th className="py-2 px-4 border-b">Offer Price</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {order.products.map((product) => (
-                                  <tr
-                                    key={product._id}
-                                    className="text-center hover:bg-gray-200 transition-colors duration-200"
-                                  >
-                                    <td className="py-2 px-4 border-b">{product.productName}</td>
-                                    <td className="py-2 px-4 border-b">{product.productCode}</td>
-                                    <td className="py-2 px-4 border-b">
-                                      {product.productImage ? (
-                                        <button
-                                          onClick={() => openImageModal(product.productImage)}
-                                          className="focus:outline-none"
-                                          aria-label="View full image"
-                                        >
-                                          <Image
-                                            src={product.productImage}
-                                            alt={product.productName}
-                                            width={50}
-                                            height={50}
-                                            className="mx-auto"
-                                          />
-                                        </button>
-                                      ) : (
-                                        "N/A"
-                                      )}
-                                    </td>
-                                    <td className="py-2 px-4 border-b">{product.quantity}</td>
-                                    <td className="py-2 px-4 border-b">{product.color || "N/A"}</td>
-                                    <td className="py-2 px-4 border-b">{product.size || "N/A"}</td>
-                                    <td className="py-2 px-4 border-b">
-                                      Tk. {(product.buyingPrice?.toFixed(2) || "0.00")}
-                                    </td>
-                                    <td className="py-2 px-4 border-b">
-                                      Tk. {product.offerPrice.toFixed(2)}
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </td>
-                      </tr>
-                    )}
-                  </React.Fragment>
+                      ) : (
+                        "N/A"
+                      )}
+                    </td>
+                    <td className="py-2 px-4 border-b">
+                      Tk. {order.totalAmount ? order.totalAmount.toFixed(2) : "0.00"}
+                    </td>
+                    <td className="py-2 px-4 border-b">
+                      {showSensitiveInfo ? (
+                        <>Tk. {totalBuyingPrice.toFixed(2)}</>
+                      ) : (
+                        <span className="text-gray-500">•••••</span>
+                      )}
+                    </td>
+                    <td className="py-2 px-4 border-b">
+                      {showSensitiveInfo ? (
+                        <>Tk. {profit.toFixed(2)}</>
+                      ) : (
+                        <span className="text-gray-500">•••••</span>
+                      )}
+                    </td>
+                    <td className="py-2 px-4 border-b">
+                      {order.status === "closed" ? (
+                        <span className="text-red-600 font-semibold">Closed</span>
+                      ) : order.approved ? (
+                        <span className="text-green-600 font-semibold">Approved</span>
+                      ) : (
+                        <span className="text-yellow-600 font-semibold">Pending</span>
+                      )}
+                    </td>
+                    <td className="py-2 px-4 border-b">
+                      <Link href={`/admin/storeOrders/${order._id}`}>
+                        <button className="mr-2 px-2 py-1 bg-blue-500 text-white rounded hover:bg-blue-600">
+                          View
+                        </button>
+                      </Link>
+                      {!order.approved && order.status !== "closed" && (
+                        <button
+                          onClick={() => openConfirmModal(order._id)}
+                          className="mr-2 px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600"
+                          aria-label={`Confirm order ${order.code}`}
+                        >
+                          Confirm
+                        </button>
+                      )}
+                      <button
+                        onClick={() => openDeleteModal(order._id)}
+                        className="mr-2 px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+                        aria-label={`Delete order ${order.code}`}
+                      >
+                        Delete
+                      </button>
+                      <button
+                        onClick={() => handlePrint(order._id)}
+                        className="px-2 py-1 bg-gray-500 text-white rounded hover:bg-gray-600"
+                        aria-label={`Print order ${order.code}`}
+                      >
+                        <FaPrint />
+                      </button>
+                    </td>
+                    <td className="py-2 px-4 border-b">
+                      {order.products && order.products.length > 0 ? (
+                        <button
+                          onClick={() => {}}
+                          className="flex items-center justify-center px-2 py-1 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+                        >
+                          View Products
+                        </button>
+                      ) : (
+                        <span>N/A</span>
+                      )}
+                    </td>
+                  </tr>
                 );
               })}
             </tbody>
@@ -699,31 +426,6 @@ const OpenStoreOrders: React.FC = () => {
         message="Are you sure you want to confirm this order?"
         onConfirm={handleConfirm}
         onCancel={() => setIsConfirmModalOpen(false)}
-      />
-
-      {/* Confirmation Modal for Closing */}
-      <ConfirmationModal
-        isOpen={isCloseModalOpen}
-        title="Close Order"
-        message="Are you sure you want to close this order?"
-        onConfirm={handleClose}
-        onCancel={() => setIsCloseModalOpen(false)}
-      />
-
-      {/* Confirmation Modal for Closing All Orders */}
-      <ConfirmationModal
-        isOpen={isCloseAllModalOpen}
-        title="Close All Orders"
-        message={`Are you sure you want to close all approved open orders? This action cannot be undone.${
-          closeAllConfirmationsLeft > 1
-            ? `\n\nYou need to confirm ${closeAllConfirmationsLeft} more time(s).`
-            : ""
-        }`}
-        onConfirm={handleCloseAllConfirm}
-        onCancel={() => {
-          setIsCloseAllModalOpen(false);
-          setCloseAllConfirmationsLeft(0);
-        }}
       />
     </div>
   );
