@@ -2,13 +2,15 @@ import React, { useState, useEffect } from "react";
 import { IProduct, IProductType } from "@/types"; // Import IProductType
 import Image from "next/image";
 import axios from "axios"; // Add AxiosError
+import { useRouter } from "next/navigation"; // Import useRouter for navigation
+import Toast from "@/components/Toast/Toast"; // Import the Toast component
 
 interface ProductCardProps {
   product: IProduct;
   orderId: string;
-  
 }
 
+type ToastType = "success" | "error" | "warning"; // Explicitly define the type
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [quantity, setQuantity] = useState<number>(1);
@@ -20,18 +22,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   const [discount, setDiscount] = useState<number>(0);
   const [totalAmount, setTotalAmount] = useState<number>(0);
   const [productTypes, setProductTypes] = useState<IProductType[]>([]); // State for product types
+  const [toast, setToast] = useState<{ type: ToastType; message: string }>({
+    type: "success", // Default to "success" or "error" as a fallback
+    message: "",
+  });
+  const router = useRouter(); // Router to navigate to other pages
 
   useEffect(() => {
     const fetchProductTypes = async () => {
       try {
         const response = await axios.get<IProductType[]>("/api/product-types");
-        console.log("Fetched product types:", response.data);  // Log the response data for debugging
+        console.log("Fetched product types:", response.data); // Log the response data for debugging
         setProductTypes(response.data);
       } catch (error) {
         console.error("Error fetching product types:", error);
       }
     };
-  
+
     fetchProductTypes();
   }, []);
 
@@ -69,21 +76,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
 
       const response = await axios.post("/api/storeOrders", orderData);
       if (response.status === 201) {
-        alert("Order created successfully!");
-        
+        setToast({ type: "success", message: "Order created successfully!" });
+        router.push("/admin/storeOrders"); // Navigate to /admin/storeOrders after successful order creation
       } else {
-        alert("Error creating order.");
+        setToast({ type: "error", message: "Error creating order." });
       }
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         console.error("Error creating store order:", error);
-        alert(`Error creating store order: ${error?.response?.data?.message || error.message}`);
+        setToast({
+          type: "error",
+          message: `Error creating store order: ${error?.response?.data?.message || error.message}`,
+        });
       } else {
         console.error("Unexpected error:", error);
-        alert("An unexpected error occurred.");
+        setToast({ type: "error", message: "An unexpected error occurred." });
       }
     }
-    
   };
 
   return (
@@ -227,6 +236,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
           Confirm Order
         </button>
       </div>
+
+      {/* Toast Notification */}
+      {toast.message && (
+        <Toast type={toast.type} message={toast.message} onClose={() => setToast({ type: "success", message: "" })} />
+      )}
     </div>
   );
 };

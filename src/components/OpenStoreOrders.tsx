@@ -188,7 +188,7 @@ const OpenStoreOrders: React.FC = () => {
                   `).join("")}
                 </tbody>
               </table>
-              <p style="font-size: 12px;"><strong>Total Amount:</strong> Tk. ${order.totalAmount.toFixed(0)}</p>
+              <p style="font-size: 16px;"><strong>Total Amount:</strong> Tk. ${order.totalAmount.toFixed(0)}</p>
               <p style="text-align: center;">Thank you for your purchase!</p>
               <p style="text-align: center;">Visit us again at www.afwan.shop</p>
             </div>
