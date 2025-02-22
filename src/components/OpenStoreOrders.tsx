@@ -154,14 +154,14 @@ const OpenStoreOrders: React.FC = () => {
             <title>Receipt ${order.code}</title>
             <style>
               body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-              .receipt { width: 82mm; font-size: 12px; color: black; background-color: white; }
+              .receipt { width: 80mm; font-size: 12px; color: black; background-color: white; }
               table { width: 100%; border-collapse: collapse; }
               th, td { padding: 8px; border: 1px solid #ddd; text-align: left; }
             </style>
           </head>
           <body>
             <div class="receipt">
-              <h1 style="text-align: center;">Money Receipt</h1>
+              <h1 style="text-align: center;">Afwan Money Receipt</h1>
               <p><strong>Receipt ID:</strong> ${order.code}</p>
               <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleDateString()}</p>
               <p><strong>Customer Name:</strong> ${order.customerName}</p>
@@ -174,7 +174,6 @@ const OpenStoreOrders: React.FC = () => {
                     <th>Size</th>
                     <th>Quantity</th>
                     <th>Price (Tk.)</th>
-                    <th>Total (Tk.)</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -184,14 +183,14 @@ const OpenStoreOrders: React.FC = () => {
                       <td>${product.color || "N/A"}</td>
                       <td>${product.size || "N/A"}</td>
                       <td>${product.quantity}</td>
-                      <td>${product.offerPrice.toFixed(2)}</td>
-                      <td>${(product.offerPrice * product.quantity).toFixed(2)}</td>
+                      <td>${product.offerPrice.toFixed(0)}</td>
                     </tr>
                   `).join("")}
                 </tbody>
               </table>
-              <p><strong>Total Amount:</strong> Tk. ${order.totalAmount.toFixed(2)}</p>
+              <p style="font-size: 12px;"><strong>Total Amount:</strong> Tk. ${order.totalAmount.toFixed(0)}</p>
               <p style="text-align: center;">Thank you for your purchase!</p>
+              <p style="text-align: center;">Visit us again at www.afwan.shop</p>
             </div>
           </body>
         </html>
