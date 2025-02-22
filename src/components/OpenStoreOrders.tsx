@@ -154,8 +154,8 @@ const OpenStoreOrders: React.FC = () => {
             <title>Receipt ${order.code}</title>
             <style>
               body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-              .receipt { width: 80mm; font-size: 12px; color: black; background-color: white; }
-              table { width: 100%; border-collapse: collapse; }
+              .receipt { width: 82mm; font-size: 12px; color: black; background-color: white; }
+              table { width: 80%; border-collapse: collapse; }
               th, td { padding: 8px; border: 1px solid #ddd; text-align: left; }
             </style>
           </head>
@@ -169,21 +169,21 @@ const OpenStoreOrders: React.FC = () => {
               <table>
                 <thead>
                   <tr>
-                    <th>Product Name</th>
-                    <th>Color</th>
-                    <th>Size</th>
-                    <th>Quantity</th>
-                    <th>Price (Tk.)</th>
+                    <th style="font-size: 12px;">Product Name</th>
+                    <th style="font-size: 12px;">Color</th>
+                    <th style="font-size: 12px;">Size</th>
+                    <th style="font-size: 12px;">Quantity</th>
+                    <th style="font-size: 12px;">Price (Tk.)</th>
                   </tr>
                 </thead>
                 <tbody>
                   ${order.products.map((product) => `
                     <tr>
-                      <td>${product.productName}</td>
-                      <td>${product.color || "N/A"}</td>
-                      <td>${product.size || "N/A"}</td>
-                      <td>${product.quantity}</td>
-                      <td>${product.offerPrice.toFixed(0)}</td>
+                      <td style="font-size: 12px;">${product.productName}</td>
+                      <td style="font-size: 12px;">${product.color || "N/A"}</td>
+                      <td style="font-size: 12px;">${product.size || "N/A"}</td>
+                      <td style="font-size: 12px;">${product.quantity}</td>
+                      <td style="font-size: 12px;">${product.offerPrice.toFixed(0)}</td>
                     </tr>
                   `).join("")}
                 </tbody>
