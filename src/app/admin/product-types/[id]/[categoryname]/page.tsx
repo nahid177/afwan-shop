@@ -160,7 +160,7 @@ const CategoryPage: React.FC = () => {
               text-transform: uppercase;
             } 
             .product-info {
-             font-size: 12px;
+             font-size: 14px;
              font-weight: bold;              
              margin-top: 0mm;
             }
@@ -173,7 +173,7 @@ const CategoryPage: React.FC = () => {
               font-weight: bold;
             }
             .barcode img {
-              width: 90%;
+              width: 80%;
               height: auto;
             }
           </style>
@@ -184,7 +184,7 @@ const CategoryPage: React.FC = () => {
               ${product.product_name}
             </div>
             <div class="product-info">
-              <span><strong></strong> ${product.offerPrice.toFixed(0)}Tk + VAT</span>
+              <span><strong></strong> ${product.offerPrice.toFixed(0)}Tk</span>
               <span><strong>Size:</strong> ${sizeName}</span>
             </div>
             <div class="barcode">
