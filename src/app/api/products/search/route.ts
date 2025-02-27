@@ -11,7 +11,6 @@ interface Product {
   originalPrice: number;
   offerPrice: number;
   totalQuantity: number;
-  // Add any other necessary fields from the product
 }
 
 dbConnect();
@@ -28,7 +27,7 @@ export const GET = async (req: NextRequest) => {
     // Escape special characters for regex matching
     const escapedQuery = query.replace(/[.*+?^=!:${}()|\[\]\/\\]/g, '\\$&');
 
-    // Searching for products based on product code or name (using $regex for partial matches)
+    // Handle product code and name search with regex for flexible matching
     const products = await ProductTypes.aggregate([
       { $unwind: "$product_catagory" },
       { $unwind: "$product_catagory.product" },
@@ -40,10 +39,10 @@ export const GET = async (req: NextRequest) => {
           ]
         }
       },
-      { 
-        $project: { 
-          product: "$product_catagory.product" // Flatten the product data
-        } 
+      {
+        $project: {
+          product: "$product_catagory.product"
+        }
       }
     ]);
 
@@ -51,7 +50,7 @@ export const GET = async (req: NextRequest) => {
       return NextResponse.json({ message: 'No products found' }, { status: 404 });
     }
 
-    // Map the products array to only return the 'product' data with the correct type
+    // Return product data in the correct format
     return NextResponse.json(products.map((p: { product: Product }) => p.product), { status: 200 });
   } catch (error) {
     console.error('Error searching products:', error);

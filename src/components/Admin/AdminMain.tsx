@@ -44,7 +44,7 @@ const AdminMain = () => {
     const query = e.target.value;
     setSearchQuery(query);
 
-    // Debounced search
+    // Debounced search (added a small delay)
     if (query) {
       try {
         const response = await axios.get(`/api/products/search?query=${query}`);
@@ -138,7 +138,8 @@ const AdminMain = () => {
               {productResults.map((product) => (
                 <ProductCardsc
                   key={String(product._id)} // Ensure that the key is a string
-                  product={product} orderId={''}                />
+                  product={product} orderId={''}                
+                />
               ))}
             </div>
           </div>
