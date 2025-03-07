@@ -1,5 +1,4 @@
 "use client";
-
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import axios from "axios";
@@ -113,66 +112,90 @@ const CategoryPage: React.FC = () => {
   /**
    * Handle printing product info as a 38×25mm label using a hidden iframe.
    */
-  const handlePrintLabel = (product: IProduct) => {
-    // 1. Create a hidden iframe
+  const handlePrintLabelForSize = (product: IProduct, sizeName: string) => {
+    // Create a hidden iframe for printing
     const iframe = document.createElement("iframe");
     iframe.style.position = "absolute";
     iframe.style.width = "0";
     iframe.style.height = "0";
-    iframe.style.border = "0";
+    iframe.style.border = "none";
     iframe.style.visibility = "hidden";
-
     document.body.appendChild(iframe);
 
-    // 2. Prepare the label HTML
+    // Generate the TEC-IT Barcode URL using the product code
+    const barcodeUrl = `https://barcode.tec-it.com/barcode.ashx?data=${product.code[0]}&code=Code128&translate-esc=on`;
+
+    // Prepare the label HTML with TEC-IT Barcode for the selected size
     const labelHtml = `
       <html>
         <head>
           <title>Print Label - ${product.product_name}</title>
           <style>
             @page {
-              size: 35mm 24mm; /* Set label size */
-              margin: 0;       /* No margin for label printing */
+              size: 38mm 25mm; /* Adjust label size */
+              margin: 0;
             }
             body {
               margin: 0;
               padding: 0;
-            }
-            .label-container {
-              width: 35mm;
-              height: 24mm;
+              font-family: Arial, sans-serif;
               display: flex;
-              flex-direction: column;
               justify-content: center;
               align-items: center;
-              border: 1px solid #000;
-              box-sizing: border-box;
-              overflow: hidden;
+              height: 100%;
             }
-            .product-name {
+            .label-container {
+              width: 38mm;
+              height: 25mm;
+              padding: 0mm;
+              box-sizing: border-box;
+              text-align: center;
+              font-size: 10px;
+            }
+            .label-header {
               font-size: 10px;
               font-weight: bold;
-              margin: 0;
-              text-align: center;
-            }
+              margin-top: 1.8mm;
+              margin-bottom: 0mm;
+              text-transform: uppercase;
+            } 
             .product-info {
-              font-size: 8px;
-              margin: 2px 0;
-              text-align: center;
+             font-size: 14px;
+             font-weight: bold;              
+             margin-top: 0mm;
+            }
+            .product-info span {
+              display: block;
+              margin-bottom: 0mm;
+            }
+            .barcode {
+              font-size: 15px;
+              font-weight: bold;
+            }
+            .barcode img {
+              width: 80%;
+              height: auto;
             }
           </style>
         </head>
         <body>
           <div class="label-container">
-            <p class="product-info">Code: ${product.code.join(", ")}</p>
-            <p class="product-info">Size: ${product.sizes.map(s => s.size).join(", ")}</p>
-            <p class="product-info">Color: ${product.colors.map(c => c.color).join(", ")}</p>
+            <div class="label-header">
+              ${product.product_name}
+            </div>
+            <div class="product-info">
+              <span><strong></strong> ${product.offerPrice.toFixed(0)}Tk</span>
+              <span><strong>Size:</strong> ${sizeName}</span>
+            </div>
+            <div class="barcode">
+              <img src="${barcodeUrl}" alt="Barcode" />
+            </div>
           </div>
         </body>
       </html>
     `;
 
-    // 3. Write the HTML to the iframe
+    // Write the HTML to the iframe
     const iframeDoc = iframe.contentWindow?.document;
     if (iframeDoc) {
       iframeDoc.open();
@@ -183,16 +206,15 @@ const CategoryPage: React.FC = () => {
       return;
     }
 
-    // 4. Give the browser a moment to render
+    // Print the label for the selected size (only once, no loop)
     setTimeout(() => {
-      // 5. Trigger the print from the iframe
       iframe.contentWindow?.focus();
       iframe.contentWindow?.print();
+    }, 500); // Delay the printing slightly
 
-      // 6. Remove the iframe after printing
-      setTimeout(() => {
-        document.body.removeChild(iframe);
-      }, 500);
+    // Remove the iframe after printing
+    setTimeout(() => {
+      document.body.removeChild(iframe);
     }, 500);
   };
 
@@ -324,29 +346,36 @@ const CategoryPage: React.FC = () => {
                       </div>
 
                       {/* Action Buttons */}
-                      <div className="flex flex-wrap gap-2 mt-4 justify-center">
-                        <button
-                          onClick={() => openEditModal(product)}
-                          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() =>
-                            handleDeleteProduct(product._id?.toString())
-                          }
-                          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
-                        >
-                          Delete
-                        </button>
-                        {/* Print Label Button */}
-                        <button
-                          onClick={() => handlePrintLabel(product)}
-                          className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition"
-                        >
-                          Print Label
-                        </button>
+                      <div className="mb-2">
+                        <span className="font-semibold">Sizes:</span>
+                        <ul className="list-disc list-inside">
+                          {product.sizes.map((size, idx) => (
+                            <li key={idx} className="flex justify-between items-center">
+                              <span><strong>{size.size}:</strong> {size.quantity}</span>
+                              <button
+                                onClick={() => handlePrintLabelForSize(product, size.size)}
+                                className="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition"
+                              >
+                                Print {size.size} Labels
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
+
+                      {/* Edit and Delete buttons */}
+                      <button
+                        onClick={() => openEditModal(product)}
+                        className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition mt-2"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteProduct(product._id?.toString())}
+                        className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition mt-2"
+                      >
+                        Delete
+                      </button>
                     </div>
                   </div>
                 ))}
