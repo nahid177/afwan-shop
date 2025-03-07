@@ -1,5 +1,3 @@
-// src/components/ChatComponent.tsx
-
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
@@ -219,8 +217,8 @@ const ChatComponent: React.FC = () => {
 
   if (fetchError) {
     return (
-      <div className="max-w-full sm:max-w-4xl mx-auto p-4 sm:p-6 space-y-6 bg-white rounded-lg shadow-md mt-16">
-        <div className="p-4 bg-red-100 text-red-700 rounded-md">
+      <div className="max-w-full sm:max-w-4xl mx-auto p-4 sm:p-6 space-y-6 bg-white dark:bg-gray-800 rounded-lg shadow-md mt-16">
+        <div className="p-4 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 rounded-md">
           {error || "Failed to load messages."}
         </div>
       </div>
@@ -229,10 +227,10 @@ const ChatComponent: React.FC = () => {
 
   return (
     <PhotoProvider>
-      <div className="max-w-full sm:max-w-4xl mx-auto p-4 sm:p-6 space-y-6 bg-white rounded-lg shadow-md mt-16">
+      <div className="max-w-full sm:max-w-4xl mx-auto p-4 sm:p-6 space-y-6 bg-white dark:bg-gray-800 rounded-lg shadow-md mt-16">
         {/* Error Message */}
         {error && (
-          <div className="p-4 bg-red-100 text-red-700 rounded-md">
+          <div className="p-4 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 rounded-md">
             {error}
           </div>
         )}
@@ -240,7 +238,7 @@ const ChatComponent: React.FC = () => {
         {/* Chat Messages */}
         <div className="flex flex-col space-y-4 overflow-y-auto max-h-80 sm:max-h-96 lg:max-h-[500px] px-2 sm:px-4">
           {(!messages || messages.length === 0) && !error && (
-            <div className="text-center text-gray-500">
+            <div className="text-center text-gray-500 dark:text-gray-300">
               No messages yet. Start the conversation!
             </div>
           )}
@@ -265,10 +263,10 @@ const ChatComponent: React.FC = () => {
                         isUser ? "flex-row-reverse" : ""
                       }`}
                     >
-                      <div className="text-sm sm:text-base font-medium text-gray-700">
+                      <div className="text-sm sm:text-base font-medium text-gray-700 dark:text-gray-300">
                         {isUser ? "You" : "Admin"}
                       </div>
-                      <time className="text-xs sm:text-sm text-gray-400">
+                      <time className="text-xs sm:text-sm text-gray-400 dark:text-gray-500">
                         {chat.time}
                       </time>
                     </div>
@@ -299,7 +297,7 @@ const ChatComponent: React.FC = () => {
                     )}
                     {/* Status */}
                     <div
-                      className={`text-xs sm:text-sm text-gray-500 ${
+                      className={`text-xs sm:text-sm text-gray-500 dark:text-gray-300 ${
                         isUser ? "text-right" : "text-left"
                       }`}
                     >
@@ -315,8 +313,8 @@ const ChatComponent: React.FC = () => {
         {/* Input Box, Image Upload, and Send Button */}
         <div className="flex items-center space-x-2 sm:space-x-4">
           {/* Image Upload Input */}
-          <label className="cursor-pointer flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-100 hover:bg-gray-200 transition-colors flex-shrink-0">
-            <TiUploadOutline className="h-6 w-6 text-gray-600 sm:h-7 sm:w-7" />
+          <label className="cursor-pointer flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-gray-100 dark:bg-gray-600 hover:bg-gray-200 dark:hover:bg-gray-500 transition-colors flex-shrink-0">
+            <TiUploadOutline className="h-6 w-6 text-gray-600 dark:text-gray-200 sm:h-7 sm:w-7" />
             <input
               type="file"
               accept="image/*"
@@ -357,7 +355,7 @@ const ChatComponent: React.FC = () => {
           )}
 
           {/* Text Input and Send Button */}
-          <div className="flex-1 flex items-center space-x-2 sm:space-x-4">
+          <div className="flex-1 flex items-center space-x-2 sm:space-x-4 ">
             {/* Text Input */}
             <input
               type="text"
@@ -373,7 +371,7 @@ const ChatComponent: React.FC = () => {
                 }
               }}
               placeholder="Type a message..."
-              className="w-14 flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0"
+              className="bg-white dark:bg-black w-14 flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0"
             />
 
             {/* Send Button */}

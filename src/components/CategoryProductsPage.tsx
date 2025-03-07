@@ -10,7 +10,6 @@ import {  FiShoppingCart, FiCheckCircle, FiXCircle } from "react-icons/fi";
 import { useTheme } from "@/mode/ThemeContext"; // Import the theme context
 import { useCart } from "@/context/CartContext"; // Import the cart context
 import Toast from "@/components/Toast/Toast"; // Import Toast component
-import Footer from "@/components/Footer";
 import ChatIcon from "@/components/ChatIcon";
 
 interface Subtitle {
@@ -155,7 +154,6 @@ const CategoryProductsPage: React.FC = () => {
           />
         ))}
       </div>
-      <Footer />
     </div>
   );
 };

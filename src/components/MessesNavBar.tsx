@@ -1,5 +1,3 @@
-// src/components/MessesNavBar.tsx
-
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -30,14 +28,14 @@ const MessesNavBar: React.FC = () => {
   };
 
   return (
-    <nav className="bg-white shadow-lg">
+    <nav className="bg-white dark:bg-gray-800 shadow-lg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Left Section: Logo or Title */}
           <div className="flex-shrink-0 flex items-center">
             <a
               href="#"
-              className="text-xl font-bold text-gray-800 hover:text-blue-600"
+              className="text-xl font-bold text-gray-800 dark:text-white hover:text-blue-600 dark:hover:text-blue-400"
             >
               Contact Us
             </a>
@@ -47,7 +45,9 @@ const MessesNavBar: React.FC = () => {
           <div className="hidden md:flex md:items-center md:space-x-4">
             {username ? (
               <div className="flex items-center space-x-4">
-                <span className="text-lg text-gray-700">Hello, {username}</span>
+                <span className="text-lg text-gray-700 dark:text-white">
+                  Hello, {username}
+                </span>
                 <button
                   className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
                   onClick={handleLogout}
@@ -77,7 +77,7 @@ const MessesNavBar: React.FC = () => {
           <div className="flex items-center md:hidden">
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              className="text-gray-700 dark:text-white hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
               aria-label="Toggle menu"
             >
               {isMenuOpen ? (
@@ -100,19 +100,17 @@ const MessesNavBar: React.FC = () => {
         leaveFrom="translate-y-0 opacity-100"
         leaveTo="-translate-y-full opacity-0"
       >
-        {/* 
-          The child function receives a 'ref' and other props.
-          Destructure 'ref' and 'className' from the props and spread them onto the div.
-        */}
         {(refProps) => (
           <div className="md:hidden ">
             <div
               {...refProps}
-              className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white "
+              className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white dark:bg-gray-800"
             >
               {username ? (
                 <div className="flex flex-col items-start space-y-4">
-                  <span className="text-lg text-gray-700">Hello, {username}</span>
+                  <span className="text-lg text-gray-700 dark:text-white">
+                    Hello, {username}
+                  </span>
                   <button
                     className="w-full px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition"
                     onClick={handleLogout}

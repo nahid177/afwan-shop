@@ -351,7 +351,7 @@ const PlaceOrderPage: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className={`w-full py-2 px-4 rounded-md transition-transform disabled:opacity-50 btn-gradient-blue`}
+              className={`mb-20 w-full py-2 px-4 rounded-md transition-transform disabled:opacity-50 btn-gradient-blue`}
             >
               {loading ? "Placing Order..." : "Place Order"}
             </button>

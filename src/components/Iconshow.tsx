@@ -43,22 +43,23 @@ const IconshowPage = () => {
   }
 
   return (
-    <div className={`p-4 sm:p-8 ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"}`}>
+    <div className=''>
+       <div className={` p-4 sm:p-8 ${theme === "light" ? "bg-white text-black" : "bg-gray-900 text-white"}`}>
       {/* Adjusted Grid for Smaller Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+      <div className=" grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
         {carouselItems.map((item) => (
           <div
             key={item.id}
-            className=" bg-white dark:bg-gray-800 shadow-lg rounded-lg overflow-hidden w-[150px] max-w-xs mx-auto"
+            className=" bg-white dark:bg-gray-800  overflow-hidden w-full lg:mx-[300px] mx-auto max-w-xs "
           >
             {/* If link exists, wrap image with Link */}
             {item.link ? (
               <Link href={item.link}>
-                <div className=" w-[150px] h-[150px] flex justify-center items-center">
+                <div className=" w-full h-[70px]  flex justify-center items-center">
                   <Image
                     src={item.imageUrl}
                     alt={item.name}
-                    width={70} // Set fixed width
+                    width={120} // Set fixed width
                     height={70} // Set fixed height
                     objectFit="cover"
                     className="rounded-t-lg"
@@ -78,14 +79,13 @@ const IconshowPage = () => {
               </div>
             )}
 
-            {/* Adjusted Card Content */}
-            <div className="p-2"> {/* Reduced padding for smaller cards */}
-              <h3 className="text-center text-sm font-semibold">{item.name}</h3> {/* Reduced font size */}
-            </div>
+          
           </div>
         ))}
       </div>
     </div>
+    </div>
+   
   );
 };
 

@@ -1,5 +1,3 @@
-// src/app/contactUs/page.tsx
-
 "use client";
 
 import React, { useEffect, useState } from 'react';
@@ -21,29 +19,25 @@ const ContactUsPage: React.FC = () => {
     }, []);
 
     return (
-        
         <div className='h-full'>
             <MessesNavBar />
-         
-
-         
 
             <div className="p-4 mb-12">
                 {isLoggedIn ? (
                     <ChatComponent />
                 ) : (
-                    <div className="  max-w-full sm:max-w-4xl mx-auto p-4 sm:p-6 space-y-6 bg-white rounded-lg shadow-md mt-48 mb-60 text-center">
+                    <div className="max-w-full sm:max-w-4xl mx-auto p-4 sm:p-6 space-y-6 bg-white dark:bg-gray-800 rounded-lg shadow-md mt-48 mb-60 text-center">
                         
-                        <h2 className="text-2xl font-semibold text-gray-800">
+                        <h2 className="text-2xl font-semibold text-gray-800 dark:text-white">
                             Please Log In to Use the Chat
                         </h2>
-                        <p className="text-gray-600">
+                        <p className="text-gray-600 dark:text-gray-300">
                             You need to be logged in to access the chat feature. Please{' '}
-                            <Link href="/smsLogin" className="text-blue-500 hover:underline">
+                            <Link href="/smsLogin" className="text-blue-500 hover:underline dark:text-blue-400">
                                 log in
                             </Link>{' '}
                             or{' '}
-                            <Link href="/register" className="text-blue-500 hover:underline">
+                            <Link href="/register" className="text-blue-500 hover:underline dark:text-blue-400">
                                 register
                             </Link>{' '}
                             to start chatting with us.

@@ -11,7 +11,6 @@ import { FiShoppingCart, FiCheckCircle, FiXCircle } from "react-icons/fi";
 import { useTheme } from "@/mode/ThemeContext"; // Use the theme context
 import { useCart } from "@/context/CartContext"; // Import the cart context
 import Toast from "@/components/Toast/Toast"; // Import Toast component
-import Footer from "@/components/Footer";
 import ChatIcon from "@/components/ChatIcon";
 
 interface Subtitle {
@@ -167,7 +166,6 @@ const ProductTypePage: React.FC = () => {
       ) : (
         <p className="text-gray-500">No product categories available.</p>
       )}
-      <Footer />
     </div>
   );
 };

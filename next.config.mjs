@@ -13,6 +13,11 @@ const nextConfig = {
           hostname: 'afwanimage.s3.us-east-1.amazonaws.com',
           pathname: '/**',
         },
+        {
+          protocol: 'https',
+          hostname: 'techmade.s3.us-east-1.amazonaws.com',
+          pathname: '/**',
+        },
       ],
       
       },

@@ -71,7 +71,7 @@ const CarouselPage = () => {
                   alt={item.name}
                   width={1200}  // Increase width for large screens
                   height={600}  // Increase height for large screens
-                  className="w-full h-auto max-h-[600px] object-cover"
+                  className="w-full h-auto max-h-[800px] object-cover"
                 />
               </Link>
             ) : (

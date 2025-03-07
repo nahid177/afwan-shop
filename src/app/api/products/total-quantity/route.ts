@@ -1,4 +1,3 @@
-// src/app/api/products/total-quantity/route.ts
 import { NextResponse } from 'next/server';
 import dbConnect from '@/lib/dbConnect';
 import { ProductTypes } from '@/models/ProductTypes';
@@ -69,7 +68,14 @@ export async function GET() {
     const totalProductQuantity =
       result.length > 0 ? result[0].totalProductQuantity : 0;
 
-    return NextResponse.json(totalProductQuantity, { status: 200 });
+    const response = NextResponse.json(totalProductQuantity, { status: 200 });
+
+    // Disable caching for this response
+    response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+
+    return response;
   } catch (error: unknown) {
     console.error('Error fetching total product quantity:', error);
 
@@ -78,9 +84,16 @@ export async function GET() {
       message = error.message;
     }
 
-    return NextResponse.json(
+    const response = NextResponse.json(
       { message },
       { status: 500 }
     );
+
+    // Disable caching for error responses as well
+    response.headers.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+
+    return response;
   }
 }

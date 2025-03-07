@@ -11,7 +11,6 @@ import { FiShoppingCart, FiCheckCircle, FiXCircle } from "react-icons/fi";
 import { useTheme } from "@/mode/ThemeContext";
 import { useCart, CartItem } from "@/context/CartContext";
 import Toast from "@/components/Toast/Toast";
-import Footer from "@/components/Footer";
 import ChatIcon from "@/components/ChatIcon";
 
 /* -----------------------------------------------------
@@ -364,7 +363,6 @@ const SearchResultsPage: React.FC = () => {
         </div>
       )}
 
-      <Footer />
 
       {/* ============= "Buy Now" / "Add to Cart" Modal ============= */}
       {isModalOpen && selectedProduct && (
